@@ -1,0 +1,61 @@
+@{
+    ViewData["Title"] = "First Aid Guide - LarvaX";
+}
+
+<div class="mb-4">
+    <h2 class="fw-bold"><i class="bi bi-heart-pulse-fill text-danger me-2"></i>First Aid Emergency Guide</h2>
+    <p class="text-muted">Select an emergency type for step-by-step guided instructions.</p>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm text-center p-3 border-top border-danger border-4">
+            <div class="card-body">
+                <div class="fs-1 mb-2">🦟</div>
+                <h5 class="fw-bold">Dengue Shock Signs</h5>
+                <p class="text-muted small">Manage dengue hemorrhagic fever and shock syndrome signs.</p>
+                <a asp-action="Guide" asp-route-type="dengue" class="btn btn-danger btn-sm rounded-pill px-3">View Guide</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm text-center p-3 border-top border-warning border-4">
+            <div class="card-body">
+                <div class="fs-1 mb-2">😮</div>
+                <h5 class="fw-bold">Choking</h5>
+                <p class="text-muted small">Abdominal thrusts (Heimlich maneuver) and back blows for choking adults.</p>
+                <a asp-action="Guide" asp-route-type="choking" class="btn btn-warning btn-sm rounded-pill px-3 text-dark">View Guide</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm text-center p-3 border-top border-success border-4">
+            <div class="card-body">
+                <div class="fs-1 mb-2">🐍</div>
+                <h5 class="fw-bold">Snake Bite</h5>
+                <p class="text-muted small">Emergency first-aid for venomous snake bites in Bangladesh.</p>
+                <a asp-action="Guide" asp-route-type="snakebite" class="btn btn-success btn-sm rounded-pill px-3">View Guide</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm text-center p-3 border-top border-primary border-4">
+            <div class="card-body">
+                <div class="fs-1 mb-2">❤️</div>
+                <h5 class="fw-bold">Heart Attack</h5>
+                <p class="text-muted small">Recognize signs and perform CPR for cardiac emergencies.</p>
+                <a asp-action="Guide" asp-route-type="heartattack" class="btn btn-primary btn-sm rounded-pill px-3">View Guide</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm text-center p-3 border-top border-secondary border-4">
+            <div class="card-body">
+                <div class="fs-1 mb-2">😵</div>
+                <h5 class="fw-bold">Fainting</h5>
+                <p class="text-muted small">Recovery position and safe response for fainting episodes.</p>
+                <a asp-action="Guide" asp-route-type="fainting" class="btn btn-secondary btn-sm rounded-pill px-3">View Guide</a>
+            </div>
+        </div>
+    </div>
+</div>

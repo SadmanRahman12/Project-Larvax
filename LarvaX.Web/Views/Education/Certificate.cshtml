@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Certificate";
+}
+
+<div class="card shadow-sm border-0 mx-auto" style="max-width: 900px;">
+    <div class="card-body p-5 text-center" style="border: 8px solid #0d6efd; border-radius: 1rem; background: linear-gradient(135deg, #eef7ff, #ffffff);">
+        <div class="text-uppercase text-primary fw-bold mb-3">LarvaX Health Education</div>
+        <h1 class="fw-bold display-5 mb-3">Certificate of Completion</h1>
+        <p class="fs-5 mb-4">This certifies that the learner successfully completed the dengue awareness module.</p>
+        <div class="border-top border-bottom py-3 my-4">
+            <div class="fw-bold fs-2">Community Health Champion</div>
+        </div>
+        <p class="mb-0 text-muted">Issued on @DateTime.Now.ToString("dd MMM yyyy")</p>
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <button class="btn btn-primary" onclick="window.print()">Print certificate</button>
+</div>

@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Quiz Result";
+    var score = ViewBag.Score ?? 0;
+    var total = ViewBag.Total ?? 0;
+    var passed = ViewBag.Passed ?? false;
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4 text-center">
+        <h2 class="fw-bold">Quiz Complete</h2>
+        <p class="lead mb-4">Your score: <strong>@score / @total</strong></p>
+
+        @if (passed)
+        {
+            <div class="alert alert-success" role="alert">
+                Excellent! You passed the dengue awareness check and can download your completion certificate.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning" role="alert">
+                You are close. Review the prevention tips and try the quiz again to strengthen your dengue knowledge.
+            </div>
+        }
+
+        <a asp-action="Certificate" class="btn btn-success me-2">View certificate</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Explore more articles</a>
+    </div>
+</div>

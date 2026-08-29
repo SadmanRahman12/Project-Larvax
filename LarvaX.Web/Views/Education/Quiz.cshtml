@@ -1,0 +1,30 @@
+@model IEnumerable<LarvaX.Web.Controllers.QuizQuestion>
+@{
+    ViewData["Title"] = "Dengue Awareness Quiz";
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+        <h2 class="fw-bold mb-3">Dengue Awareness Quiz</h2>
+        <p class="text-muted">First question designed to build confidence. Answer all questions to receive a certificate.</p>
+
+        <form asp-action="QuizSubmit" method="post">
+            @for (var i = 0; i < Model.Count(); i++)
+            {
+                var question = Model.ElementAt(i);
+                <div class="mb-4 p-3 border rounded">
+                    <p class="fw-semibold mb-3">@(i + 1). @question.Prompt</p>
+                    @for (var j = 0; j < question.Options.Length; j++)
+                    {
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="answers[@i]" id="q@(i)_@(j)" value="@j" required />
+                            <label class="form-check-label" for="q@(i)_@(j)">@question.Options[j]</label>
+                        </div>
+                    }
+                </div>
+            }
+
+            <button type="submit" class="btn btn-primary">Submit answers</button>
+        </form>
+    </div>
+</div>

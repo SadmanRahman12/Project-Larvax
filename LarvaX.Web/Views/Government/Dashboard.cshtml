@@ -1,0 +1,118 @@
+@model LarvaX.Web.Controllers.GovernmentDashboardViewModel
+@{
+    ViewData["Title"] = "Government Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Government Surveillance Dashboard</h2>
+        <p class="text-muted mb-0">National and regional dengue intelligence overview.</p>
+    </div>
+    <div class="btn-group" role="group">
+        <a asp-action="ExportCsv" class="btn btn-outline-success">Export CSV</a>
+        <a asp-action="ExportJson" class="btn btn-outline-primary">Export JSON</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Total reports</div>
+                <h3 class="fw-bold mb-0">@Model.TotalReports</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">High-risk zones</div>
+                <h3 class="fw-bold text-danger mb-0">@Model.HighRiskZones</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Insufficient data</div>
+                <h3 class="fw-bold text-warning mb-0">@Model.InsufficientDataZones</h3>
+                <small class="text-muted">Distinct from low-risk status</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0 fw-bold">Regional risk zones</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th>Disease</th>
+                        <th>Risk Level</th>
+                        <th>Data Sufficiency</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var zone in Model.RiskZones)
+                    {
+                        <tr>
+                            <td>@zone.Region</td>
+                            <td>@zone.DiseaseType</td>
+                            <td>
+                                @if (zone.DataSufficiency == DataSufficiency.Insufficient)
+                                {
+                                    <span class="badge bg-warning text-dark">Insufficient data</span>
+                                }
+                                else
+                                {
+                                    <span class="badge @(zone.RiskLevel == RiskLevel.High ? "bg-danger" : zone.RiskLevel == RiskLevel.Medium ? "bg-warning text-dark" : "bg-success")">@zone.RiskLevel</span>
+                                }
+                            </td>
+                            <td>@zone.DataSufficiency</td>
+                            <td>@zone.ConfidenceScore</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white">
+        <h5 class="mb-0 fw-bold">Recent surveillance reports</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Disease</th>
+                        <th>Status</th>
+                        <th>Verification</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var report in Model.LatestReports)
+                    {
+                        <tr>
+                            <td>#@report.Id</td>
+                            <td>@report.DiseaseType</td>
+                            <td>@report.Status</td>
+                            <td>@report.Verification</td>
+                            <td>@report.CreatedAt.ToLocalTime()</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

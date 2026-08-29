@@ -1,0 +1,73 @@
+@model LarvaX.Web.Controllers.IcuBedFinderViewModel
+@{
+    ViewData["Title"] = "ICU Bed Finder";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">ICU Bed Finder</h2>
+            <p class="text-muted mb-0">Bangladesh emergency reference for severe dengue and critical care.</p>
+        </div>
+        <div class="badge bg-warning text-dark px-3 py-2">Last updated: @Model.LastUpdated.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</div>
+    </div>
+
+    <div class="alert alert-info" role="alert">
+        <strong>Important:</strong> ICU availability changes quickly. This page is a practical reference only — call the hospital directly before travelling.
+    </div>
+
+    <form asp-action="Index" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
+        <div class="row g-2 align-items-end">
+            <div class="col-md-9">
+                <label for="searchText" class="form-label fw-semibold">Search hospital or city</label>
+                <input id="searchText" name="searchText" value="@Model.SearchText" class="form-control" placeholder="Search Dhaka, Chattogram, Apollo, BSMMU..." />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row g-4">
+        @foreach (var facility in Model.Facilities)
+        {
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                            <div>
+                                <h5 class="fw-bold mb-1">@facility.Name</h5>
+                                <div class="text-muted small">@facility.Type</div>
+                            </div>
+                            <span class="badge bg-danger-subtle text-danger">Critical care</span>
+                        </div>
+
+                        <p class="mb-2"><strong>City:</strong> @facility.City</p>
+                        <p class="mb-2"><strong>Phone:</strong> @facility.Contact</p>
+                        <p class="mb-0 text-muted">@facility.Note</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Facilities.Any())
+    {
+        <div class="alert alert-secondary mt-4" role="alert">
+            No hospitals matched your search. Try a city name or a hospital name.
+        </div>
+    }
+
+    <div class="card shadow-sm border-0 mt-5">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">Emergency guidance for severe dengue</h5>
+            <ul class="mb-0">
+                <li>Call the hospital or emergency desk before arriving.</li>
+                <li>Bring the patient’s age, fever duration, blood pressure, and any recent bleeding history.</li>
+                <li>If the patient has breathing trouble, severe abdominal pain, confusion, or heavy bleeding, go to the nearest emergency department immediately.</li>
+                <li>For public hospitals, ask if an ICU or HDU bed is available and whether referral is required.</li>
+            </ul>
+        </div>
+    </div>
+</div>

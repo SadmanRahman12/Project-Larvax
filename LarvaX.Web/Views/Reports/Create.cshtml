@@ -1,0 +1,87 @@
+@model LarvaX.Web.Models.ReportCreateViewModel
+@{
+    ViewData["Title"] = "Report Breeding Site / Hazard - LarvaX";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-danger text-white py-3">
+                <h4 class="mb-0 fw-bold"><i class="bi bi-camera-fill me-2"></i>Report Breeding Site / Suspected Case</h4>
+                <small class="text-white-50">Help health workers identify and eradicate mosquito hotspots</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="DiseaseType" class="form-label fw-semibold">Disease Type</label>
+                        <select asp-for="DiseaseType" class="form-select">
+                            <option value="Dengue">Dengue Fever (ডেঙ্গু)</option>
+                            <option value="Chikungunya">Chikungunya (চিকুনগুনিয়া)</option>
+                            <option value="Malaria">Malaria (ম্যালেরিয়া)</option>
+                            <option value="Zika">Zika Virus (জিকা ভাইরাস)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Photo" class="form-label fw-semibold">Photo Evidence (Water pot, drain, stagnant water)</label>
+                        <input asp-for="Photo" type="file" class="form-control" accept="image/*" capture="environment" />
+                        <div class="form-text">Take a photo or upload an image of the breeding site.</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Latitude" class="form-label fw-semibold">Latitude</label>
+                            <input asp-for="Latitude" id="latInput" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Longitude" class="form-label fw-semibold">Longitude</label>
+                            <input asp-for="Longitude" id="lngInput" class="form-control" readonly />
+                        </div>
+                        <div class="col-12 mt-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="getLocation()">
+                                <i class="bi bi-geo-alt me-1"></i>Detect My Current Location (GPS)
+                            </button>
+                            <span id="locStatus" class="small text-muted ms-2"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label fw-semibold">Description / Landmark details</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="e.g. Stagnant rainwater in flower pots on roof, construction basement pool near Road 12..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 py-2 fw-semibold">
+                        <i class="bi bi-send-fill me-1"></i> Submit Report (Status: Received)
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function getLocation() {
+            const status = document.getElementById('locStatus');
+            if (navigator.geolocation) {
+                status.innerText = "Locating via GPS...";
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        document.getElementById('latInput').value = position.coords.latitude.toFixed(6);
+                        document.getElementById('lngInput').value = position.coords.longitude.toFixed(6);
+                        status.innerText = "Location detected successfully!";
+                        status.className = "small text-success ms-2";
+                    },
+                    (error) => {
+                        status.innerText = "GPS unavailable. Using default coordinates.";
+                        status.className = "small text-danger ms-2";
+                    }
+                );
+            } else {
+                status.innerText = "Geolocation is not supported by your browser.";
+            }
+        }
+    </script>
+}
