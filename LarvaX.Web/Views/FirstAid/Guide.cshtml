@@ -1,4 +1,3 @@
-@using Microsoft.AspNetCore.Html
 @model string
 @{
     ViewData["Title"] = "First Aid Guide - LarvaX";
@@ -9,19 +8,32 @@
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to All Guides</a>
 </div>
 
-@* Partial helper rendered inline - avoids @functions void issue in ASP.NET Core Razor *@
-
 @if (type == "dengue")
 {
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-danger text-white py-3"><h4 class="mb-0 fw-bold">🦟 Dengue Shock Syndrome — First Aid</h4></div>
         <div class="card-body">
             <div class="alert alert-danger"><strong>CALL 999 IMMEDIATELY</strong> if the patient loses consciousness or is unresponsive.</div>
-            @RenderStep(1, "Lay the patient down flat.", "Elevate legs about 30 cm unless there is head/chest injury.")
-            @RenderStep(2, "Keep the patient warm.", "Cover with a light blanket to prevent shock. Avoid overheating.")
-            @RenderStep(3, "Do NOT give food or water by mouth.", "The patient may vomit or choke. Wait for medical help.")
-            @RenderStep(4, "Monitor breathing every 2 minutes.", "If breathing stops, begin CPR only if trained to do so.")
-            @RenderStep(5, "Rush to hospital.", "Bring any previous blood test results and list current medications.")
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">1.</div>
+                <div><h5 class="fw-bold mb-1">Lay the patient down flat.</h5><p class="text-muted mb-0">Elevate legs about 30 cm unless there is head/chest injury.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">2.</div>
+                <div><h5 class="fw-bold mb-1">Keep the patient warm.</h5><p class="text-muted mb-0">Cover with a light blanket to prevent shock. Avoid overheating.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">3.</div>
+                <div><h5 class="fw-bold mb-1">Do NOT give food or water by mouth.</h5><p class="text-muted mb-0">The patient may vomit or choke. Wait for medical help.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">4.</div>
+                <div><h5 class="fw-bold mb-1">Monitor breathing every 2 minutes.</h5><p class="text-muted mb-0">If breathing stops, begin CPR only if trained to do so.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">5.</div>
+                <div><h5 class="fw-bold mb-1">Rush to hospital.</h5><p class="text-muted mb-0">Bring any previous blood test results and list current medications.</p></div>
+            </div>
         </div>
     </div>
 }
@@ -31,11 +43,26 @@ else if (type == "choking")
         <div class="card-header bg-warning text-dark py-3"><h4 class="mb-0 fw-bold">😮 Choking — Heimlich Maneuver</h4></div>
         <div class="card-body">
             <div class="alert alert-warning"><strong>Act immediately</strong> — choking can cause unconsciousness within minutes.</div>
-            @RenderStep(1, "Ask: \"Are you choking?\"", "If they cannot speak or cough effectively, act now.")
-            @RenderStep(2, "Give 5 firm back blows.", "Stand to the side, lean them forward, and hit firmly between shoulder blades with heel of hand.")
-            @RenderStep(3, "Give 5 abdominal thrusts.", "Stand behind them, make a fist just above belly button, push inward and upward sharply.")
-            @RenderStep(4, "Alternate until clear or unconscious.", "Keep repeating 5 back blows + 5 abdominal thrusts until object is expelled.")
-            @RenderStep(5, "If unconscious — call 999 and start CPR.", "Begin chest compressions immediately while waiting for help.")
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">1.</div>
+                <div><h5 class="fw-bold mb-1">Ask: "Are you choking?"</h5><p class="text-muted mb-0">If they cannot speak or cough effectively, act now.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">2.</div>
+                <div><h5 class="fw-bold mb-1">Give 5 firm back blows.</h5><p class="text-muted mb-0">Stand to the side, lean them forward, and hit firmly between shoulder blades with heel of hand.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">3.</div>
+                <div><h5 class="fw-bold mb-1">Give 5 abdominal thrusts.</h5><p class="text-muted mb-0">Stand behind them, make a fist just above belly button, push inward and upward sharply.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">4.</div>
+                <div><h5 class="fw-bold mb-1">Alternate until clear or unconscious.</h5><p class="text-muted mb-0">Keep repeating 5 back blows + 5 abdominal thrusts until object is expelled.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">5.</div>
+                <div><h5 class="fw-bold mb-1">If unconscious — call 999 and start CPR.</h5><p class="text-muted mb-0">Begin chest compressions immediately while waiting for help.</p></div>
+            </div>
         </div>
     </div>
 }
@@ -45,11 +72,26 @@ else if (type == "snakebite")
         <div class="card-header bg-success text-white py-3"><h4 class="mb-0 fw-bold">🐍 Snake Bite — Emergency Response</h4></div>
         <div class="card-body">
             <div class="alert alert-success"><strong>Call 999 and go to hospital immediately.</strong> Anti-venom is only available at hospitals.</div>
-            @RenderStep(1, "Keep still and calm.", "Movement speeds venom spreading. Sit or lie down with the bitten limb below heart level.")
-            @RenderStep(2, "Remove tight items.", "Remove watches, rings, and tight clothing near the bite — swelling may occur.")
-            @RenderStep(3, "Do NOT suck the venom.", "This is a myth. Mouth bacteria can worsen infection. Do not cut or suck the wound.")
-            @RenderStep(4, "Mark the bite site and time.", "Draw a circle around any swelling with a pen and note the time to track progression.")
-            @RenderStep(5, "Rush to hospital.", "Try to note or photograph the snake safely for identification — do not try to catch it.")
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">1.</div>
+                <div><h5 class="fw-bold mb-1">Keep still and calm.</h5><p class="text-muted mb-0">Movement speeds venom spreading. Sit or lie down with the bitten limb below heart level.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">2.</div>
+                <div><h5 class="fw-bold mb-1">Remove tight items.</h5><p class="text-muted mb-0">Remove watches, rings, and tight clothing near the bite — swelling may occur.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">3.</div>
+                <div><h5 class="fw-bold mb-1">Do NOT suck the venom.</h5><p class="text-muted mb-0">This is a myth. Mouth bacteria can worsen infection. Do not cut or suck the wound.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">4.</div>
+                <div><h5 class="fw-bold mb-1">Mark the bite site and time.</h5><p class="text-muted mb-0">Draw a circle around any swelling with a pen and note the time to track progression.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">5.</div>
+                <div><h5 class="fw-bold mb-1">Rush to hospital.</h5><p class="text-muted mb-0">Try to note or photograph the snake safely for identification — do not try to catch it.</p></div>
+            </div>
         </div>
     </div>
 }
@@ -59,11 +101,26 @@ else if (type == "heartattack")
         <div class="card-header bg-primary text-white py-3"><h4 class="mb-0 fw-bold">❤️ Heart Attack — Cardiac Emergency</h4></div>
         <div class="card-body">
             <div class="alert alert-primary"><strong>Call 999 immediately.</strong> Every minute counts during a heart attack.</div>
-            @RenderStep(1, "Recognize the signs.", "Chest pain or pressure, pain spreading to arm/jaw/neck, sweating, shortness of breath, nausea.")
-            @RenderStep(2, "Have them sit or lie down.", "Rest in a comfortable position. Loosen any tight clothing around neck and chest.")
-            @RenderStep(3, "Give aspirin if available.", "One standard 300mg aspirin — have them chew it slowly (unless allergic).")
-            @RenderStep(4, "If unconscious, begin CPR.", "30 chest compressions + 2 rescue breaths. Push hard and fast (100-120/min) on centre of chest.")
-            @RenderStep(5, "Use AED if available.", "Follow the AED voice instructions. Continue CPR until medical help arrives.")
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">1.</div>
+                <div><h5 class="fw-bold mb-1">Recognize the signs.</h5><p class="text-muted mb-0">Chest pain or pressure, pain spreading to arm/jaw/neck, sweating, shortness of breath, nausea.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">2.</div>
+                <div><h5 class="fw-bold mb-1">Have them sit or lie down.</h5><p class="text-muted mb-0">Rest in a comfortable position. Loosen any tight clothing around neck and chest.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">3.</div>
+                <div><h5 class="fw-bold mb-1">Give aspirin if available.</h5><p class="text-muted mb-0">One standard 300mg aspirin — have them chew it slowly (unless allergic).</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">4.</div>
+                <div><h5 class="fw-bold mb-1">If unconscious, begin CPR.</h5><p class="text-muted mb-0">30 chest compressions + 2 rescue breaths. Push hard and fast (100-120/min) on centre of chest.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">5.</div>
+                <div><h5 class="fw-bold mb-1">Use AED if available.</h5><p class="text-muted mb-0">Follow the AED voice instructions. Continue CPR until medical help arrives.</p></div>
+            </div>
         </div>
     </div>
 }
@@ -73,24 +130,26 @@ else if (type == "fainting")
         <div class="card-header bg-secondary text-white py-3"><h4 class="mb-0 fw-bold">😵 Fainting — Recovery Response</h4></div>
         <div class="card-body">
             <div class="alert alert-secondary"><strong>If not breathing normally, call 999 and start CPR.</strong></div>
-            @RenderStep(1, "Lay them flat immediately.", "Help them to the ground carefully to prevent head injury from falling.")
-            @RenderStep(2, "Raise their legs.", "Elevate legs about 30 cm above heart level to improve blood flow to the brain.")
-            @RenderStep(3, "Loosen tight clothing.", "Undo collar buttons, belts, and anything that restricts breathing or circulation.")
-            @RenderStep(4, "Check for responsiveness.", "Speak to them, tap shoulder gently. Most people recover in under 1 minute.")
-            @RenderStep(5, "When they recover — sit them up slowly.", "Do not let them stand quickly. Offer water if fully conscious.")
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">1.</div>
+                <div><h5 class="fw-bold mb-1">Lay them flat immediately.</h5><p class="text-muted mb-0">Help them to the ground carefully to prevent head injury from falling.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">2.</div>
+                <div><h5 class="fw-bold mb-1">Raise their legs.</h5><p class="text-muted mb-0">Elevate legs about 30 cm above heart level to improve blood flow to the brain.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">3.</div>
+                <div><h5 class="fw-bold mb-1">Loosen tight clothing.</h5><p class="text-muted mb-0">Undo collar buttons, belts, and anything that restricts breathing or circulation.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">4.</div>
+                <div><h5 class="fw-bold mb-1">Check for responsiveness.</h5><p class="text-muted mb-0">Speak to them, tap shoulder gently. Most people recover in under 1 minute.</p></div>
+            </div>
+            <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+                <div class="fw-bold fs-3 text-primary" style="min-width:48px;">5.</div>
+                <div><h5 class="fw-bold mb-1">When they recover — sit them up slowly.</h5><p class="text-muted mb-0">Do not let them stand quickly. Offer water if fully conscious.</p></div>
+            </div>
         </div>
     </div>
-}
-
-@functions {
-    HtmlString RenderStep(int num, string title, string detail)
-    {
-        return new HtmlString($@"<div class=""d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light"">
-            <div class=""fw-bold fs-3 text-primary"" style=""min-width:48px;"">{num}.</div>
-            <div>
-                <h5 class=""fw-bold mb-1"">{System.Web.HttpUtility.HtmlEncode(title)}</h5>
-                <p class=""text-muted mb-0"">{System.Web.HttpUtility.HtmlEncode(detail)}</p>
-            </div>
-        </div>");
-    }
 }
