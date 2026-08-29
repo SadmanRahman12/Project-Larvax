@@ -161,6 +161,64 @@
             </div>
         </div>
     }
+
+    <div class="card shadow-sm border-0 mt-5">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3">Scientific basis and formulas used</h4>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-primary">1. Holliday-Segar maintenance formula</h6>
+                        <p class="mb-2">This formula estimates daily maintenance fluid needs based on body weight.</p>
+                        <p class="mb-1"><strong>For weight ≤ 10 kg:</strong> 4 mL/kg/hr</p>
+                        <p class="mb-1"><strong>For 10–20 kg:</strong> 40 + 2 × (weight − 10) mL/hr</p>
+                        <p class="mb-1"><strong>For weight > 20 kg:</strong> 60 + 1 × (weight − 20) mL/hr</p>
+                        <p class="mb-0 text-muted">This is a standard pediatric maintenance estimate used to replace basal fluid and insensible losses.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-primary">2. Dehydration deficit</h6>
+                        <p class="mb-2">Deficit is calculated from the percentage dehydration and body weight.</p>
+                        <p class="mb-0"><strong>Deficit (mL) = Dehydration % × Weight (kg) × 10</strong></p>
+                        <p class="mt-2 text-muted">This reflects the volume loss that must be corrected over time, usually with a two-phase replacement approach.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-primary">3. Bolus resuscitation</h6>
+                        <p class="mb-2">Bolus volume is calculated from weight and the protocol selected for the patient.</p>
+                        <p class="mb-1"><strong>Standard bolus:</strong> 10 mL/kg</p>
+                        <p class="mb-0"><strong>Shock protocol:</strong> 20 mL/kg</p>
+                        <p class="mt-2 text-muted">This supports rapid intravascular expansion in shock or severe perfusion compromise, consistent with resuscitation principles used in dengue shock management.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-primary">4. 24-hour safety threshold</h6>
+                        <p class="mb-2">A patient should be reviewed when cumulative fluid exceeds the threshold adjusted for comorbidity.</p>
+                        <p class="mb-0"><strong>Base threshold:</strong> 70 mL/kg/24h<br /><strong>Cardiac or CKD:</strong> 42 mL/kg/24h</p>
+                        <p class="mt-2 text-muted">This guards against over-resuscitation and fluid overload, which are important risks in dengue management.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 border rounded p-3 bg-light">
+                <h6 class="fw-bold mb-2">Evidence base</h6>
+                <p class="mb-1">The calculations are based on widely used pediatric and adult fluid therapy principles from:</p>
+                <ul class="mb-0">
+                    <li>WHO Dengue Guidelines</li>
+                    <li>Ministry of Health clinical guidance</li>
+                    <li>Holliday-Segar maintenance fluid estimation</li>
+                    <li>Resuscitation and shock management protocols</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

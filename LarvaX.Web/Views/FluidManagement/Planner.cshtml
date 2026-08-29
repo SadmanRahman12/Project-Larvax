@@ -1,6 +1,11 @@
 @model LarvaX.Web.Controllers.OralRehydrationPlannerViewModel
 @{
     ViewData["Title"] = "Oral Rehydration Planner";
+
+    var initialBolus = Model.ShockStatus ? (Model.PatientType == "Pediatric" ? 20m * Model.Weight : 10m * Model.Weight) : 0m;
+    var maintenanceMl = Model.Weight <= 10m ? Model.Weight * 100m : (Model.Weight <= 20m ? 1000m + 50m * (Model.Weight - 10m) : 1500m + 20m * (Model.Weight - 20m));
+    var hourlyRate = Model.ShockStatus ? (Model.PatientType == "Pediatric" ? 5m * Model.Weight : 7m * Model.Weight) : (Model.DenguePhase == "CriticalPhase" ? 4m * Model.Weight : maintenanceMl / 24m);
+    var deficitMl = Model.DeficitPercent * Model.Weight * 10m;
 }
 
 <div class="container py-4">
@@ -80,10 +85,10 @@
             <div class="card-body p-4">
                 <h4 class="fw-bold mb-3">Plan summary</h4>
                 <div class="row g-3 mb-4">
-                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Initial bolus</small><div class="fw-bold">@((Model.ShockStatus ? 20m : 0m) * Model.Weight) mL</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Maintenance (24h)</small><div class="fw-bold">@((Model.Weight <= 10m ? Model.Weight * 100m : (Model.Weight <= 20m ? 1000m + 50m * (Model.Weight - 10m) : 1500m + 20m * (Model.Weight - 20m)))) mL</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Hourly rate</small><div class="fw-bold">@((Model.ShockStatus && Model.PatientType == "Pediatric" ? 5m * Model.Weight : (Model.ShockStatus && Model.PatientType == "Adult" ? 7m * Model.Weight : (Model.DenguePhase == "CriticalPhase" ? 4m * Model.Weight : (Model.Weight <= 10m ? Model.Weight * 100m / 24m : (Model.Weight <= 20m ? (1000m + 50m * (Model.Weight - 10m)) / 24m : (1500m + 20m * (Model.Weight - 20m)) / 24m))))) mL/hr</div></div></div>
-                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Deficit fluid</small><div class="fw-bold">@(Model.DeficitPercent * Model.Weight * 10m) mL</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Initial bolus</small><div class="fw-bold">@initialBolus.ToString("N0") mL</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Maintenance (24h)</small><div class="fw-bold">@maintenanceMl.ToString("N0") mL</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Hourly rate</small><div class="fw-bold">@hourlyRate.ToString("N1") mL/hr</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Deficit fluid</small><div class="fw-bold">@deficitMl.ToString("N0") mL</div></div></div>
                 </div>
 
                 <div class="table-responsive">
@@ -114,6 +119,54 @@
             </div>
         </div>
     }
+
+    <div class="card shadow-sm border-0 mt-5">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3">Formulas and clinical basis</h4>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-danger">1. Holliday-Segar maintenance formula</h6>
+                        <p class="mb-1"><strong>≤ 10 kg:</strong> 100 mL/kg/day</p>
+                        <p class="mb-1"><strong>10–20 kg:</strong> 1000 + 50 × (weight − 10) mL/day</p>
+                        <p class="mb-0"><strong>> 20 kg:</strong> 1500 + 20 × (weight − 20) mL/day</p>
+                        <p class="mt-2 text-muted">This calculation approximates daily maintenance requirements and is widely used for fluid replacement in pediatric and adult clinical calculations.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-danger">2. Deficit volume</h6>
+                        <p class="mb-0"><strong>Deficit (mL) = Dehydration % × Weight (kg) × 10</strong></p>
+                        <p class="mt-2 text-muted">The deficit represents estimated water and electrolyte loss, often replaced in stages to reduce the risk of complications from rapid volume correction.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-danger">3. Shock bolus protocol</h6>
+                        <p class="mb-1"><strong>Pediatric shock:</strong> 20 mL/kg bolus</p>
+                        <p class="mb-0"><strong>Adult shock:</strong> 10 mL/kg bolus</p>
+                        <p class="mt-2 text-muted">This protocol follows the principle of rapid crystalloid boluses for intravascular volume restoration while reassessing perfusion and response at short intervals.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-danger">4. Monitoring-based clinical reasoning</h6>
+                        <p class="mb-0">Hourly fluid planning is adjusted using urine output, hematocrit trends, blood pressure, pulse, and signs of fluid overload.</p>
+                        <p class="mt-2 text-muted">This watchful approach is used because dengue can progress rapidly from compensated shock to fluid overload if fluids are not titrated carefully.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 border rounded p-3 bg-light">
+                <h6 class="fw-bold mb-2">Clinical reference base</h6>
+                <p class="mb-0">These calculations are designed to be consistent with WHO dengue guidance, Ministry of Health recommendations, and standard resuscitation principles for hemodynamic assessment and fluid replacement.</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
