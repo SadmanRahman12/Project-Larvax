@@ -80,7 +80,7 @@
                 <div class="fs-1 text-primary mb-2"><i class="bi bi-chat-dots-fill"></i></div>
                 <h5 class="card-title fw-bold">DenAI Chatbot</h5>
                 <p class="card-text text-muted small">Bilingual AI assistant for dengue prevention, symptom queries, and triage support.</p>
-                <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="alert('DenAI Chatbot assistant is active in Phase 2 integration.')">Ask DenAI</button>
+                <a asp-controller="Chatbot" asp-action="Index" class="btn btn-outline-primary btn-sm rounded-pill px-3">Ask DenAI</a>
             </div>
         </div>
     </div>
@@ -91,7 +91,7 @@
                 <div class="fs-1 text-danger mb-2"><i class="bi bi-heart-pulse-fill"></i></div>
                 <h5 class="card-title fw-bold">AI Symptom Checker</h5>
                 <p class="card-text text-muted small">Step-by-step risk questionnaire with immediate emergency triage routing.</p>
-                <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="alert('AI Symptom Checker module is loaded.')">Check Symptoms</button>
+                <a asp-controller="SymptomChecker" asp-action="Index" class="btn btn-outline-danger btn-sm rounded-pill px-3">Check Symptoms</a>
             </div>
         </div>
     </div>
@@ -102,7 +102,7 @@
                 <div class="fs-1 text-danger mb-2"><i class="bi bi-droplet-fill"></i></div>
                 <h5 class="card-title fw-bold">Blood & Platelet Donors</h5>
                 <p class="card-text text-muted small">Find verified blood donors sorted by freshness timestamp and distance.</p>
-                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="alert('Blood donor network is accessible.')">Find Donors</button>
+                <a asp-controller="Donors" asp-action="Index" class="btn btn-outline-danger btn-sm rounded-pill px-3">Find Donors</a>
             </div>
         </div>
     </div>
