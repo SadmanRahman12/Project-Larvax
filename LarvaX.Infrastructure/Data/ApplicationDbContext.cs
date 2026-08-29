@@ -9,6 +9,7 @@ namespace LarvaX.Infrastructure.Data
         public DbSet<Report> Reports { get; set; } = null!;
         public DbSet<RiskZone> RiskZones { get; set; } = null!;
         public DbSet<Alert> Alerts { get; set; } = null!;
+        public DbSet<Donor> Donors { get; set; } = null!;
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -47,6 +48,11 @@ namespace LarvaX.Infrastructure.Data
                 .HasIndex(r => r.Region);
             builder.Entity<Alert>()
                 .HasIndex(a => a.SentAt);
+
+            // Donor enum
+            builder.Entity<Donor>()
+                .Property(d => d.BloodGroup)
+                .HasConversion<string>();
         }
     }
 }

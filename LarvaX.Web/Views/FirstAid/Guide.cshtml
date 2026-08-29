@@ -1,0 +1,93 @@
+@model string
+@{
+    ViewData["Title"] = "First Aid Guide - LarvaX";
+    string type = Model ?? "dengue";
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to All Guides</a>
+</div>
+
+@if (type == "dengue")
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-danger text-white py-3"><h4 class="mb-0 fw-bold">🦟 Dengue Shock Syndrome — First Aid</h4></div>
+        <div class="card-body">
+            <div class="alert alert-danger"><strong>CALL 999 IMMEDIATELY</strong> if the patient loses consciousness or is unresponsive.</div>
+            @{ RenderStep(1, "Lay the patient down flat.", "Elevate legs about 30 cm unless there is head/chest injury."); }
+            @{ RenderStep(2, "Keep the patient warm.", "Cover with a light blanket to prevent shock. Avoid overheating."); }
+            @{ RenderStep(3, "Do NOT give food or water by mouth.", "The patient may vomit or choke. Wait for medical help."); }
+            @{ RenderStep(4, "Monitor breathing every 2 minutes.", "If breathing stops, begin CPR only if trained to do so."); }
+            @{ RenderStep(5, "Rush to hospital.", "Bring any previous blood test results and list current medications."); }
+        </div>
+    </div>
+}
+else if (type == "choking")
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-warning text-dark py-3"><h4 class="mb-0 fw-bold">😮 Choking — Heimlich Maneuver</h4></div>
+        <div class="card-body">
+            <div class="alert alert-warning"><strong>Act immediately</strong> — choking can cause unconsciousness within minutes.</div>
+            @{ RenderStep(1, "Ask: 'Are you choking?'", "If they cannot speak or cough effectively, act now."); }
+            @{ RenderStep(2, "Give 5 firm back blows.", "Stand to the side, lean them forward, and hit firmly between shoulder blades with heel of hand."); }
+            @{ RenderStep(3, "Give 5 abdominal thrusts.", "Stand behind them, make a fist just above belly button, push inward and upward sharply."); }
+            @{ RenderStep(4, "Alternate until clear or unconscious.", "Keep repeating 5 back blows + 5 abdominal thrusts until object is expelled."); }
+            @{ RenderStep(5, "If unconscious — call 999 and start CPR.", "Begin chest compressions immediately while waiting for help."); }
+        </div>
+    </div>
+}
+else if (type == "snakebite")
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-success text-white py-3"><h4 class="mb-0 fw-bold">🐍 Snake Bite — Emergency Response</h4></div>
+        <div class="card-body">
+            <div class="alert alert-success"><strong>Call 999 and go to hospital immediately.</strong> Anti-venom is only available at hospitals.</div>
+            @{ RenderStep(1, "Keep still and calm.", "Movement speeds venom spreading. Sit or lie down with the bitten limb below heart level."); }
+            @{ RenderStep(2, "Remove tight items.", "Remove watches, rings, and tight clothing near the bite — swelling may occur."); }
+            @{ RenderStep(3, "Do NOT suck the venom.", "This is a myth. Mouth bacteria can worsen infection. Do not cut or suck the wound."); }
+            @{ RenderStep(4, "Mark the bite site and time.", "Draw a circle around any swelling with a pen and note the time to track progression."); }
+            @{ RenderStep(5, "Rush to hospital.", "Try to note or photograph the snake safely for identification — do not try to catch it."); }
+        </div>
+    </div>
+}
+else if (type == "heartattack")
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-3"><h4 class="mb-0 fw-bold">❤️ Heart Attack — Cardiac Emergency</h4></div>
+        <div class="card-body">
+            <div class="alert alert-primary"><strong>Call 999 immediately.</strong> Every minute counts during a heart attack.</div>
+            @{ RenderStep(1, "Recognize the signs.", "Chest pain or pressure, pain spreading to arm/jaw/neck, sweating, shortness of breath, nausea."); }
+            @{ RenderStep(2, "Have them sit or lie down.", "Rest in a comfortable position. Loosen any tight clothing around neck and chest."); }
+            @{ RenderStep(3, "Give aspirin if available.", "One standard 300mg aspirin — have them chew it slowly (unless allergic)."); }
+            @{ RenderStep(4, "If unconscious, begin CPR.", "30 chest compressions + 2 rescue breaths. Push hard and fast (100-120/min) on centre of chest."); }
+            @{ RenderStep(5, "Use AED if available.", "Follow the AED voice instructions. Continue CPR until medical help arrives."); }
+        </div>
+    </div>
+}
+else if (type == "fainting")
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-secondary text-white py-3"><h4 class="mb-0 fw-bold">😵 Fainting — Recovery Response</h4></div>
+        <div class="card-body">
+            <div class="alert alert-secondary"><strong>If not breathing normally, call 999 and start CPR.</strong></div>
+            @{ RenderStep(1, "Lay them flat immediately.", "Help them to the ground carefully to prevent head injury from falling."); }
+            @{ RenderStep(2, "Raise their legs.", "Elevate legs about 30 cm above heart level to improve blood flow to the brain."); }
+            @{ RenderStep(3, "Loosen tight clothing.", "Undo collar buttons, belts, and anything that restricts breathing or circulation."); }
+            @{ RenderStep(4, "Check for responsiveness.", "Speak to them, tap shoulder gently. Most people recover in under 1 minute."); }
+            @{ RenderStep(5, "When they recover — sit them up slowly.", "Do not let them stand quickly. Offer water if fully conscious."); }
+        </div>
+    </div>
+}
+
+@functions {
+    void RenderStep(int num, string title, string detail)
+    {
+        <div class="d-flex align-items-start gap-3 mb-4 p-3 border rounded bg-light">
+            <div class="fw-bold fs-3 text-primary" style="min-width:48px;">@num.</div>
+            <div>
+                <h5 class="fw-bold mb-1">@title</h5>
+                <p class="text-muted mb-0">@detail</p>
+            </div>
+        </div>
+    }
+}

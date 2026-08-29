@@ -31,6 +31,18 @@
                         <li class="nav-item">
                             <a class="nav-link text-white" asp-area="" asp-controller="Reports" asp-action="Index"><i class="bi bi-list-check me-1"></i>Community Reports</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white" href="#" id="healthServicesNav" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-heart-pulse me-1"></i>Health Tools
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="healthServicesNav">
+                                <li><a class="dropdown-item" asp-controller="SymptomChecker" asp-action="Index"><i class="bi bi-clipboard2-pulse me-2 text-danger"></i>AI Symptom Checker</a></li>
+                                <li><a class="dropdown-item" asp-controller="FirstAid" asp-action="Index"><i class="bi bi-heart-pulse me-2 text-danger"></i>First Aid Guide</a></li>
+                                <li><a class="dropdown-item" asp-controller="Chatbot" asp-action="Index"><i class="bi bi-chat-dots me-2 text-primary"></i>DenAI Chatbot</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="Donors" asp-action="Index"><i class="bi bi-droplet-fill me-2 text-danger"></i>Blood Donor Network</a></li>
+                            </ul>
+                        </li>
                         @if (User.IsInRole("Administrator"))
                         {
                             <li class="nav-item">

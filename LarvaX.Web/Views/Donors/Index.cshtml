@@ -1,0 +1,102 @@
+@model IEnumerable<LarvaX.Core.Entities.Donor>
+@{
+    ViewData["Title"] = "Blood Donor Network - LarvaX";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-droplet-fill text-danger me-2"></i>Blood Donor Network</h2>
+        <p class="text-muted mb-0">Find verified donors — sorted by <strong>freshness of availability confirmation</strong>, then blood group, then distance.</p>
+    </div>
+    <a asp-action="Register" class="btn btn-outline-danger"><i class="bi bi-plus-circle me-1"></i>Register as Donor</a>
+</div>
+
+<!-- Search Filter -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Blood Group</label>
+                <select name="bloodGroup" class="form-select">
+                    <option value="">All Blood Groups</option>
+                    <option value="A_Positive" selected="@(ViewBag.SelectedBloodGroup == "A_Positive")">A+ (A Positive)</option>
+                    <option value="A_Negative" selected="@(ViewBag.SelectedBloodGroup == "A_Negative")">A− (A Negative)</option>
+                    <option value="B_Positive" selected="@(ViewBag.SelectedBloodGroup == "B_Positive")">B+ (B Positive)</option>
+                    <option value="B_Negative" selected="@(ViewBag.SelectedBloodGroup == "B_Negative")">B− (B Negative)</option>
+                    <option value="AB_Positive" selected="@(ViewBag.SelectedBloodGroup == "AB_Positive")">AB+ (AB Positive)</option>
+                    <option value="AB_Negative" selected="@(ViewBag.SelectedBloodGroup == "AB_Negative")">AB− (AB Negative)</option>
+                    <option value="O_Positive" selected="@(ViewBag.SelectedBloodGroup == "O_Positive")">O+ (O Positive)</option>
+                    <option value="O_Negative" selected="@(ViewBag.SelectedBloodGroup == "O_Negative")">O− (O Negative)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">District / Area</label>
+                <input type="text" name="location" value="@ViewBag.SelectedLocation" class="form-control" placeholder="e.g. Dhaka, Mirpur, Uttara" />
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-danger w-100"><i class="bi bi-search me-1"></i>Search Donors</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    @if (!Model.Any())
+    {
+        <div class="col-12">
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-droplet display-2 mb-3 text-danger opacity-25"></i>
+                <h5>No donors found matching your criteria.</h5>
+                <p>Try a different blood group or location, or <a asp-action="Register" class="text-danger fw-semibold">register as a donor yourself!</a></p>
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var donor in Model)
+        {
+            var minutesAgo = (int)(DateTime.UtcNow - donor.LastConfirmedAvailable).TotalMinutes;
+            var freshnessLabel = minutesAgo < 60
+                ? $"{minutesAgo}m ago"
+                : minutesAgo < 1440
+                    ? $"{minutesAgo / 60}h ago"
+                    : $"{minutesAgo / 1440}d ago";
+            var freshnessClass = minutesAgo < 60 ? "text-success" : minutesAgo < 1440 ? "text-warning" : "text-danger";
+
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <!-- Freshness FIRST as required by spec -->
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-clock-history @freshnessClass"></i>
+                            <small class="@freshnessClass fw-semibold">Last confirmed available: @freshnessLabel</small>
+                        </div>
+                        <!-- Then blood group -->
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <div class="rounded-circle bg-danger text-white fw-bold d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:1.1rem;">
+                                @donor.BloodGroup.ToString().Replace("_Positive", "+").Replace("_Negative", "−")
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">@donor.User?.FullName</h5>
+                                <small class="text-muted"><i class="bi bi-geo-alt-fill text-secondary me-1"></i>@(donor.Location ?? "Location not specified")</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0 pb-3">
+                        @if (!string.IsNullOrEmpty(donor.ContactNumber))
+                        {
+                            <a href="tel:@donor.ContactNumber" class="btn btn-danger w-100">
+                                <i class="bi bi-telephone-fill me-1"></i>Contact Donor
+                            </a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-secondary w-100" disabled>Contact Not Listed</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

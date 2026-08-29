@@ -1,0 +1,81 @@
+@{
+    ViewData["Title"] = "Symptom Result - LarvaX";
+    string risk = ViewBag.RiskLevel as string ?? "Low";
+    bool isEmergency = ViewBag.IsEmergency == true;
+    string bgColor = risk switch {
+        "Emergency" => "bg-danger",
+        "High" => "bg-warning",
+        "Medium" => "bg-info",
+        _ => "bg-success"
+    };
+    string textColor = (risk == "High" || risk == "Emergency") ? "text-white" : "text-dark";
+}
+
+@if (isEmergency)
+{
+    <!-- Emergency interrupt screen — always shown BEFORE any other content -->
+    <div class="alert alert-danger border-0 rounded-3 shadow p-4 mb-4">
+        <div class="d-flex align-items-start gap-3">
+            <div class="fs-1"><i class="bi bi-exclamation-octagon-fill"></i></div>
+            <div>
+                <h4 class="fw-bold mb-1">🚨 Possible Medical Emergency Detected</h4>
+                <p class="mb-2">Your symptoms include severe warning signs. Please seek immediate care — do NOT wait.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="tel:999" class="btn btn-light fw-bold"><i class="bi bi-telephone-fill me-1"></i>Call Emergency: 999</a>
+                    <a asp-controller="FirstAid" asp-action="Index" class="btn btn-outline-light fw-bold"><i class="bi bi-heart-pulse me-1"></i>First Aid Guide</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow border-0 rounded-3 overflow-hidden">
+            <div class="card-header @bgColor @textColor py-4 text-center">
+                <h2 class="fw-bold mb-1 display-6">
+                    @if (risk == "Emergency") { <text>🚨</text> }
+                    else if (risk == "High") { <text>🔴</text> }
+                    else if (risk == "Medium") { <text>🟡</text> }
+                    else { <text>🟢</text> }
+                    Risk Level: @risk
+                </h2>
+                <small class="opacity-75">@ViewBag.ConfidenceNote</small>
+            </div>
+            <div class="card-body p-4">
+                <h5 class="fw-semibold"><i class="bi bi-clipboard2-pulse me-2 text-primary"></i>What This Means</h5>
+                <p class="text-muted">@ViewBag.Advice</p>
+
+                <hr />
+
+                <h6 class="fw-bold text-muted">Recommended Next Steps</h6>
+                <ul class="list-unstyled">
+                    @if (risk == "Emergency" || risk == "High")
+                    {
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-danger me-2"></i>Visit the nearest hospital or emergency clinic immediately.</li>
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-danger me-2"></i>Request an NS1 antigen or PCR dengue blood test.</li>
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-danger me-2"></i>Stay hydrated with ORS fluids.</li>
+                    }
+                    else if (risk == "Medium")
+                    {
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-warning me-2"></i>Monitor temperature every 4 hours.</li>
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-warning me-2"></i>Drink plenty of fluids. Avoid aspirin/ibuprofen.</li>
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-warning me-2"></i>See a doctor if fever continues beyond 48 hours.</li>
+                    }
+                    else
+                    {
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-success me-2"></i>Rest and stay hydrated.</li>
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-success me-2"></i>Avoid mosquito exposure — use repellent.</li>
+                        <li class="mb-2"><i class="bi bi-arrow-right-circle-fill text-success me-2"></i>Monitor if new symptoms appear.</li>
+                    }
+                </ul>
+
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Retake Checker</a>
+                    <a asp-controller="Chatbot" asp-action="Index" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots me-1"></i>Ask DenAI</a>
+                    <a asp-controller="FirstAid" asp-action="Index" class="btn btn-outline-danger btn-sm"><i class="bi bi-heart-pulse me-1"></i>First Aid Guide</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

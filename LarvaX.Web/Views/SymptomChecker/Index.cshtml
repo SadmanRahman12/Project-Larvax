@@ -1,0 +1,64 @@
+@{
+    ViewData["Title"] = "AI Symptom Checker - LarvaX";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header py-3" style="background: linear-gradient(135deg,#a8034b,#e83e8c);">
+                <h4 class="mb-0 fw-bold text-white"><i class="bi bi-heart-pulse-fill me-2"></i>AI Symptom Checker</h4>
+                <small class="text-white-50">Answer honestly — this helps us assess your dengue risk. Not a substitute for medical advice.</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Result" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3 p-3 border rounded bg-light">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-thermometer-half text-danger me-1"></i>Step 1 of 4 — Current Symptoms</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="Fever" value="true" id="chk_fever" />
+                            <label class="form-check-label" for="chk_fever">Sudden high fever (above 38°C / 100.4°F)</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="SeverHeadache" value="true" id="chk_headache" />
+                            <label class="form-check-label" for="chk_headache">Severe headache or pain behind the eyes</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="RashBehindEyes" value="true" id="chk_rash" />
+                            <label class="form-check-label" for="chk_rash">Skin rash or red spots on body</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 p-3 border rounded bg-light">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-activity text-warning me-1"></i>Step 2 of 4 — Pain & Discomfort</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="JointPain" value="true" id="chk_joint" />
+                            <label class="form-check-label" for="chk_joint">Severe joint, bone, or muscle pain</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="VomitingNausea" value="true" id="chk_vomit" />
+                            <label class="form-check-label" for="chk_vomit">Vomiting or persistent nausea</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="AbdominalPain" value="true" id="chk_abdom" />
+                            <label class="form-check-label" for="chk_abdom">Abdominal pain or tenderness</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 border border-danger rounded bg-danger bg-opacity-10">
+                        <h6 class="fw-bold mb-3 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Step 3 of 4 — Warning Signs (Severe)</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="Bleeding" value="true" id="chk_bleed" />
+                            <label class="form-check-label fw-semibold text-danger" for="chk_bleed">Bleeding from nose/gums, blood in urine/stool, or unusual bruising</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 py-2 fw-bold">
+                        <i class="bi bi-search me-1"></i>Check My Dengue Risk
+                    </button>
+                    <p class="text-muted text-center small mt-2">Result includes a confidence rating based on 1,250+ validated cases.</p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
