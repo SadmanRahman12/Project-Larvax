@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="LarvaX.Application/LarvaX.Application.csproj" />
+  <Project Path="LarvaX.Core/LarvaX.Core.csproj" />
+  <Project Path="LarvaX.Infrastructure/LarvaX.Infrastructure.csproj" />
+  <Project Path="LarvaX.Tests/LarvaX.Tests.csproj" />
+  <Project Path="LarvaX.Web/LarvaX.Web.csproj" />
+</Solution>
