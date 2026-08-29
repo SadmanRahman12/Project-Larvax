@@ -1,0 +1,121 @@
+@model LarvaX.Web.Controllers.OralRehydrationPlannerViewModel
+@{
+    ViewData["Title"] = "Oral Rehydration Planner";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Oral Rehydration & Fluid Planner</h2>
+            <p class="text-muted mb-0">Adult and pediatric dengue fluid schedule planning support.</p>
+        </div>
+        <a asp-controller="FluidManagement" asp-action="Index" class="btn btn-outline-primary">Back to fluid assistant</a>
+    </div>
+
+    <form asp-action="Planner" method="post" class="row g-4">
+        @Html.AntiForgeryToken()
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Patient classification</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="PatientType" class="form-label">Patient type</label>
+                            <select asp-for="PatientType" class="form-select">
+                                <option value="Adult">Adult</option>
+                                <option value="Pediatric">Pediatric</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="DenguePhase" class="form-label">Dengue phase</label>
+                            <select asp-for="DenguePhase" class="form-select">
+                                <option value="CriticalPhase">Critical Phase</option>
+                                <option value="MaintenancePhase">Maintenance Phase</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Weight" class="form-label">Weight (kg)</label>
+                            <input asp-for="Weight" class="form-control" />
+                            <span asp-validation-for="Weight" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Age" class="form-label">Age</label>
+                            <input asp-for="Age" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input asp-for="ShockStatus" class="form-check-input" />
+                                <label asp-for="ShockStatus" class="form-check-label">Shock present</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Education and monitoring</h5>
+                    <ul class="mb-3">
+                        <li>Target urine output: at least 0.5 mL/kg/hr.</li>
+                        <li>Monitor pulse, blood pressure, hematocrit, and mental status.</li>
+                        <li>Look for fluid overload, rising respiratory effort, or worsening distress.</li>
+                    </ul>
+                    <div class="alert alert-warning mb-0" role="alert">
+                        ORS, coconut water, and oral fluids may be helpful when clinically appropriate, but use medical reassessment for severe cases.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-danger btn-lg px-4">Generate fluid plan</button>
+        </div>
+    </form>
+
+    @if (Model.Schedule.Any())
+    {
+        <div class="card shadow-sm border-0 mt-5">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3">Plan summary</h4>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Initial bolus</small><div class="fw-bold">@((Model.ShockStatus ? 20m : 0m) * Model.Weight) mL</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Maintenance (24h)</small><div class="fw-bold">@((Model.Weight <= 10m ? Model.Weight * 100m : (Model.Weight <= 20m ? 1000m + 50m * (Model.Weight - 10m) : 1500m + 20m * (Model.Weight - 20m)))) mL</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Hourly rate</small><div class="fw-bold">@((Model.ShockStatus && Model.PatientType == "Pediatric" ? 5m * Model.Weight : (Model.ShockStatus && Model.PatientType == "Adult" ? 7m * Model.Weight : (Model.DenguePhase == "CriticalPhase" ? 4m * Model.Weight : (Model.Weight <= 10m ? Model.Weight * 100m / 24m : (Model.Weight <= 20m ? (1000m + 50m * (Model.Weight - 10m)) / 24m : (1500m + 20m * (Model.Weight - 20m)) / 24m))))) mL/hr</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Deficit fluid</small><div class="fw-bold">@(Model.DeficitPercent * Model.Weight * 10m) mL</div></div></div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Hour</th>
+                                <th>Phase</th>
+                                <th>Volume</th>
+                                <th>Duration</th>
+                                <th>Clinical note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Schedule)
+                            {
+                                <tr>
+                                    <td>@item.Hour</td>
+                                    <td>@item.Phase</td>
+                                    <td>@item.VolumeMl.ToString("N0") mL</td>
+                                    <td>@item.Duration</td>
+                                    <td>@item.Notes</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

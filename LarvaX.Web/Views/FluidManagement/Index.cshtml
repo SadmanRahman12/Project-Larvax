@@ -1,0 +1,168 @@
+@model LarvaX.Web.Controllers.FluidManagementViewModel
+@{
+    ViewData["Title"] = "Fluid Management Assistant";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Dengue Fluid Management Assistant</h2>
+            <p class="text-muted mb-0">Clinical decision support for personalized fluid therapy planning.</p>
+        </div>
+        <span class="badge bg-primary px-3 py-2">English / বাংলা</span>
+    </div>
+
+    <form asp-action="Index" method="post" class="row g-4">
+        @Html.AntiForgeryToken()
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Patient data</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Weight" class="form-label">Weight (kg)</label>
+                            <input asp-for="Weight" class="form-control" />
+                            <span asp-validation-for="Weight" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Age" class="form-label">Age (years)</label>
+                            <input asp-for="Age" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="HeartRate" class="form-label">Heart Rate (bpm)</label>
+                            <input asp-for="HeartRate" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SystolicBloodPressure" class="form-label">Systolic BP</label>
+                            <input asp-for="SystolicBloodPressure" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="RespiratoryRate" class="form-label">Respiratory Rate</label>
+                            <input asp-for="RespiratoryRate" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SpO2" class="form-label">SpO₂ (%)</label>
+                            <input asp-for="SpO2" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CapillaryRefillTime" class="form-label">Capillary refill (s)</label>
+                            <input asp-for="CapillaryRefillTime" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Hematocrit" class="form-label">Hematocrit (%)</label>
+                            <input asp-for="Hematocrit" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="UrineOutput" class="form-label">Urine output (mL/hr)</label>
+                            <input asp-for="UrineOutput" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="OngoingLosses" class="form-label">Ongoing losses (mL/hr)</label>
+                            <input asp-for="OngoingLosses" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SerumSodium" class="form-label">Serum sodium (mmol/L)</label>
+                            <input asp-for="SerumSodium" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SerumGlucose" class="form-label">Serum glucose</label>
+                            <input asp-for="SerumGlucose" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Clinical mode and safety modifiers</h5>
+
+                    <div class="mb-4">
+                        <label asp-for="ClinicalMode" class="form-label">Clinical mode</label>
+                        <select asp-for="ClinicalMode" class="form-select">
+                            <option value="DengueNoWarning">Dengue (no warning signs)</option>
+                            <option value="DengueWarning">Dengue with warning signs</option>
+                            <option value="DengueShock">Dengue shock</option>
+                            <option value="MildDehydration">Dehydration - mild</option>
+                            <option value="ModerateDehydration">Dehydration - moderate</option>
+                            <option value="SevereDehydration">Dehydration - severe</option>
+                            <option value="GeneralResuscitation">General resuscitation</option>
+                            <option value="MaintenanceOnly">Maintenance only</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="DehydrationPercent" class="form-label">Dehydration %</label>
+                        <input asp-for="DehydrationPercent" class="form-control" />
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input asp-for="Pregnancy" class="form-check-input" />
+                                <label asp-for="Pregnancy" class="form-check-label">Pregnancy status</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input asp-for="HeartFailure" class="form-check-input" />
+                                <label asp-for="HeartFailure" class="form-check-label">Heart failure history</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input asp-for="Ckd" class="form-check-input" />
+                                <label asp-for="Ckd" class="form-check-label">Chronic kidney disease</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 text-center mt-2">
+            <button type="submit" class="btn btn-primary btn-lg px-4">Calculate fluid plan</button>
+            <a asp-controller="FluidManagement" asp-action="Planner" class="btn btn-outline-secondary btn-lg ms-2">Open oral rehydration planner</a>
+        </div>
+    </form>
+
+    @if (Model.Results != null)
+    {
+        <div class="row g-4 mt-2">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Fluid summary</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between"><span>Clinical mode</span><strong>@Model.Results.ModeLabel</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>Maintenance fluid (24h)</span><strong>@Model.Results.Maintenance24h.ToString("N0") mL</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>Bolus volume</span><strong>@Model.Results.BolusVolume.ToString("N0") mL</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>Deficit</span><strong>@Model.Results.DehydrationDeficit.ToString("N0") mL</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>24h cumulative</span><strong>@Model.Results.Total24hVolume.ToString("N0") mL</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>Safety target</span><strong>@Model.Results.SafetyTarget.ToString("N0") mL</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Safety and electrolyte advice</h5>
+                        <div class="alert @(Model.Results.IsOverThreshold ? "alert-warning" : "alert-success")" role="alert">
+                            @Model.Results.SafetyAlert
+                        </div>
+                        <p class="mb-3"><strong>Sodium guidance:</strong> @Model.Results.SodiumAdvice</p>
+                        <p class="mb-0"><strong>Recommended hourly rate:</strong> @Model.Results.RecommendedRateHour.ToString("N1") mL/hr</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
