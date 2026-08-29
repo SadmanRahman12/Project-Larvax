@@ -1,0 +1,129 @@
+@{
+    ViewData["Title"] = "DenAI Chatbot - LarvaX";
+}
+
+<div class="row justify-content-center mt-2">
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow border-0 rounded-3 overflow-hidden">
+            <div class="card-header py-3 text-white" style="background: linear-gradient(135deg,#1e3c72,#2a5298);">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="fs-3">🤖</div>
+                    <div>
+                        <h5 class="mb-0 fw-bold">DenAI — Dengue Health Assistant</h5>
+                        <small class="opacity-75">Bilingual support: English / বাংলা &nbsp;|&nbsp; Powered by LarvaX AI</small>
+                    </div>
+                    <div class="ms-auto">
+                        <select id="langSelector" class="form-select form-select-sm text-dark" style="width:auto;">
+                            <option value="en">English</option>
+                            <option value="bn">বাংলা</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Interrupt Banner (hidden by default) -->
+            <div id="emergencyBanner" class="d-none alert alert-danger rounded-0 m-0 border-0 py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-octagon-fill fs-4"></i>
+                    <div>
+                        <strong id="emergencyMsg"></strong>
+                        <div class="d-flex gap-2 mt-1">
+                            <a href="tel:999" class="btn btn-light btn-sm"><i class="bi bi-telephone-fill me-1"></i>Call 999</a>
+                            <a href="/FirstAid" class="btn btn-outline-light btn-sm"><i class="bi bi-heart-pulse me-1"></i>First Aid</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div id="chatMessages" class="p-3" style="height: 400px; overflow-y: auto; background: #f8f9fa;">
+                <div class="mb-3 d-flex gap-2">
+                    <div class="fs-5">🤖</div>
+                    <div class="card border-0 shadow-sm p-2 px-3" style="max-width:85%; background:#e8f4fd;">
+                        <p class="mb-0 small">Hi! I'm <strong>DenAI</strong>, your dengue health assistant. Ask me about symptoms, prevention, fever management, or when to seek emergency care.<br><em class="text-muted">আমি DenAI। জ্বর, উপসর্গ, প্রতিরোধ বা জরুরি সেবা সম্পর্কে জিজ্ঞাসা করুন।</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <div class="card-footer bg-white p-3 border-top">
+                <div class="d-flex gap-2">
+                    <input id="chatInput" type="text" class="form-control" placeholder="Type your question... (e.g. 'I have fever and joint pain')" maxlength="300" />
+                    <button id="sendBtn" class="btn btn-primary px-4" onclick="sendMessage()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+                <div class="mt-2 d-flex flex-wrap gap-1">
+                    <small class="text-muted me-1">Quick:</small>
+                    <button class="btn btn-light btn-sm border rounded-pill" onclick="quickAsk('What are dengue symptoms?')">Symptoms</button>
+                    <button class="btn btn-light btn-sm border rounded-pill" onclick="quickAsk('How do I prevent dengue?')">Prevention</button>
+                    <button class="btn btn-light btn-sm border rounded-pill" onclick="quickAsk('I have fever and headache')">Fever help</button>
+                    <button class="btn btn-light btn-sm border rounded-pill" onclick="quickAsk('Find blood donor')">Blood donor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function getLang() { return document.getElementById('langSelector').value; }
+
+    function appendMessage(text, fromBot, isEmergency = false) {
+        const box = document.getElementById('chatMessages');
+        const wrap = document.createElement('div');
+        wrap.className = 'mb-3 d-flex gap-2 ' + (fromBot ? '' : 'justify-content-end');
+        const bubble = document.createElement('div');
+        bubble.className = 'card border-0 shadow-sm p-2 px-3 small';
+        bubble.style.maxWidth = '85%';
+        bubble.style.background = fromBot ? '#e8f4fd' : '#d4edda';
+        bubble.innerHTML = (fromBot ? '<span class="me-1">🤖</span>' : '') + text;
+        if (isEmergency) bubble.classList.add('border', 'border-danger');
+        wrap.appendChild(bubble);
+        box.appendChild(wrap);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function showEmergency(msg) {
+        const banner = document.getElementById('emergencyBanner');
+        document.getElementById('emergencyMsg').innerText = msg;
+        banner.classList.remove('d-none');
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const msg = input.value.trim();
+        if (!msg) return;
+        appendMessage(msg, false);
+        input.value = '';
+        document.getElementById('sendBtn').disabled = true;
+
+        try {
+            const res = await fetch('/Chatbot/Reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg, language: getLang() })
+            });
+            const data = await res.json();
+            if (data.isEmergency && data.emergencyMessage) {
+                showEmergency(data.emergencyMessage);
+                appendMessage('⚠️ ' + data.emergencyMessage, true, true);
+            }
+            appendMessage(data.reply, true);
+        } catch (e) {
+            appendMessage('Sorry, I encountered an error. Please try again.', true);
+        }
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('chatInput').focus();
+    }
+
+    function quickAsk(text) {
+        document.getElementById('chatInput').value = text;
+        sendMessage();
+    }
+
+    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+</script>
+}

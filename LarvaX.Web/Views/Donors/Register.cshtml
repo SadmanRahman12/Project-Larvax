@@ -1,0 +1,51 @@
+@model LarvaX.Web.Models.DonorRegisterViewModel
+@{
+    ViewData["Title"] = "Register as Blood Donor - LarvaX";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-danger text-white py-3">
+                <h4 class="mb-0 fw-bold"><i class="bi bi-droplet-fill me-2"></i>Register as Blood Donor</h4>
+                <small class="text-white-50">Help save lives — your donation can help dengue patients in need of platelet transfusions.</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Register" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="BloodGroup" class="form-label fw-semibold">Blood Group</label>
+                        <select asp-for="BloodGroup" class="form-select">
+                            <option value="A_Positive">A+ (A Positive)</option>
+                            <option value="A_Negative">A− (A Negative)</option>
+                            <option value="B_Positive">B+ (B Positive)</option>
+                            <option value="B_Negative">B− (B Negative)</option>
+                            <option value="AB_Positive">AB+ (AB Positive)</option>
+                            <option value="AB_Negative">AB− (AB Negative)</option>
+                            <option value="O_Positive">O+ (O Positive)</option>
+                            <option value="O_Negative">O− (O Negative)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Location" class="form-label fw-semibold">District / Area</label>
+                        <input asp-for="Location" class="form-control" placeholder="e.g. Mirpur-10, Dhaka" />
+                        <span asp-validation-for="Location" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ContactNumber" class="form-label fw-semibold">Contact Number</label>
+                        <input asp-for="ContactNumber" type="tel" class="form-control" placeholder="+8801XXXXXXXXX" />
+                        <span asp-validation-for="ContactNumber" class="text-danger small"></span>
+                        <div class="form-text text-muted">This will be displayed to people seeking blood donors.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 py-2 fw-semibold">
+                        <i class="bi bi-heart-fill me-1"></i>Register as Donor
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

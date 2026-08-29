@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Dengue Surveillance & Health Intelligence";
+}
+
+<!-- Hero Risk Status Section -->
+<div class="p-4 p-md-5 mb-4 rounded-3 text-white bg-dark shadow position-relative overflow-hidden" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+    <div class="col-md-9 px-0">
+        <div class="d-inline-flex align-items-center gap-2 mb-2">
+            <span class="badge bg-danger fs-6 px-3 py-2 animate-pulse"><i class="bi bi-exclamation-triangle-fill me-1"></i> HIGH RISK ZONE</span>
+            <span class="badge bg-light text-dark small"><i class="bi bi-shield-check me-1"></i>Model confidence: High — based on 342 reports</span>
+        </div>
+        <h1 class="display-5 fw-bold">Dhaka Metropolitan Area</h1>
+        <p class="lead my-3">
+            Active dengue surveillance indicates elevated mosquito breeding activity.
+            <strong>Advice today:</strong> Inspect rooftop pots and empty all stagnant water containers.
+        </p>
+        <div class="d-flex flex-wrap gap-2 pt-2">
+            <a asp-controller="Reports" asp-action="Create" class="btn btn-warning btn-lg fw-bold text-dark">
+                <i class="bi bi-geo-alt-fill me-1"></i> Report a Breeding Site
+            </a>
+            <a asp-controller="Reports" asp-action="Index" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-activity me-1"></i> View Live Reports
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Surveillance Quick Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm border-start border-danger border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted fw-semibold mb-1">Active Suspected Hotspots</h6>
+                        <h2 class="fw-bold mb-0 text-danger">1,280</h2>
+                        <small class="text-success fw-semibold"><i class="bi bi-arrow-down-right"></i> ↓ 8.4% from last week</small>
+                    </div>
+                    <div class="fs-1 text-danger opacity-50"><i class="bi bi-bug-fill"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm border-start border-success border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted fw-semibold mb-1">Larvicide Actions Completed</h6>
+                        <h2 class="fw-bold mb-0 text-success">845</h2>
+                        <small class="text-success fw-semibold"><i class="bi bi-arrow-up-right"></i> ↑ 14.2% verified</small>
+                    </div>
+                    <div class="fs-1 text-success opacity-50"><i class="bi bi-check-circle-fill"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm border-start border-primary border-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted fw-semibold mb-1">Emergency ICU Beds Available</h6>
+                        <h2 class="fw-bold mb-0 text-primary">48</h2>
+                        <small class="text-muted"><i class="bi bi-clock-history"></i> Last confirmed: 12m ago</small>
+                    </div>
+                    <div class="fs-1 text-primary opacity-50"><i class="bi bi-hospital-fill"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Navigation Portals -->
+<h4 class="fw-bold mb-3"><i class="bi bi-grid-fill text-primary me-2"></i>Community Health Services</h4>
+<div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm text-center p-3 hover-shadow">
+            <div class="card-body">
+                <div class="fs-1 text-primary mb-2"><i class="bi bi-chat-dots-fill"></i></div>
+                <h5 class="card-title fw-bold">DenAI Chatbot</h5>
+                <p class="card-text text-muted small">Bilingual AI assistant for dengue prevention, symptom queries, and triage support.</p>
+                <a asp-controller="Chatbot" asp-action="Index" class="btn btn-outline-primary btn-sm rounded-pill px-3">Ask DenAI</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm text-center p-3 hover-shadow">
+            <div class="card-body">
+                <div class="fs-1 text-danger mb-2"><i class="bi bi-heart-pulse-fill"></i></div>
+                <h5 class="card-title fw-bold">AI Symptom Checker</h5>
+                <p class="card-text text-muted small">Step-by-step risk questionnaire with immediate emergency triage routing.</p>
+                <a asp-controller="SymptomChecker" asp-action="Index" class="btn btn-outline-danger btn-sm rounded-pill px-3">Check Symptoms</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm text-center p-3 hover-shadow">
+            <div class="card-body">
+                <div class="fs-1 text-danger mb-2"><i class="bi bi-droplet-fill"></i></div>
+                <h5 class="card-title fw-bold">Blood & Platelet Donors</h5>
+                <p class="card-text text-muted small">Find verified blood donors sorted by freshness timestamp and distance.</p>
+                <a asp-controller="Donors" asp-action="Index" class="btn btn-outline-danger btn-sm rounded-pill px-3">Find Donors</a>
+            </div>
+        </div>
+    </div>
+</div>
