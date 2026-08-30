@@ -9,6 +9,7 @@ namespace LarvaX.Infrastructure.Data
         public DbSet<Report> Reports { get; set; } = null!;
         public DbSet<RiskZone> RiskZones { get; set; } = null!;
         public DbSet<Alert> Alerts { get; set; } = null!;
+        public DbSet<Appointment> Appointments { get; set; } = null!;
         public DbSet<Donor> Donors { get; set; } = null!;
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -53,6 +54,13 @@ namespace LarvaX.Infrastructure.Data
             builder.Entity<Donor>()
                 .Property(d => d.BloodGroup)
                 .HasConversion<string>();
+
+            // Appointment status conversion
+            builder.Entity<Appointment>()
+                .Property(a => a.Status)
+                .HasConversion<string>();
+            builder.Entity<Appointment>()
+                .HasIndex(a => a.ScheduledAt);
         }
     }
 }

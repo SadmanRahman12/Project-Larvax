@@ -75,6 +75,7 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.MapHub<AlertsHub>("/alertshub");
+app.MapHub<VideoConsultHub>("/videoconsulthub");
 
 app.MapRazorPages()
    .WithStaticAssets();

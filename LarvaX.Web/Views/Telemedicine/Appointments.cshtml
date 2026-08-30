@@ -1,0 +1,32 @@
+@model IEnumerable<LarvaX.Core.Entities.Appointment>
+@{
+    ViewData["Title"] = "My Appointments";
+}
+
+<div class="mb-4">
+    <h2 class="fw-bold"><i class="bi bi-calendar-check"></i> My Appointments</h2>
+    <p class="text-muted">Upcoming and past telemedicine appointments.</p>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">You have no appointments.</div>
+}
+else
+{
+    <div class="list-group">
+        @foreach(var a in Model)
+        {
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-semibold">@a.ScheduledAt.ToLocalTime().ToString("f")</div>
+                    <div class="small text-muted">With: @(a.PatientId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ? a.Doctor?.FullName ?? a.Doctor?.UserName : a.Patient?.FullName ?? a.Patient?.UserName)</div>
+                    <div class="small text-muted">Status: @a.Status</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Room" asp-route-id="@a.Id" class="btn btn-outline-primary btn-sm">Open Room</a>
+                </div>
+            </div>
+        }
+    </div>
+}

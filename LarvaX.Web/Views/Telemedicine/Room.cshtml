@@ -1,0 +1,115 @@
+@{
+    ViewData["Title"] = "Video Consultation Room";
+    var appt = ViewBag.Appointment as LarvaX.Core.Entities.Appointment;
+}
+
+<div class="mb-3">
+    <h4 class="fw-bold">Video Consultation — Appointment #@appt?.Id</h4>
+    <p class="text-muted">With: @((User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == appt?.PatientId) ? appt?.Doctor?.FullName ?? appt?.Doctor?.UserName : appt?.Patient?.FullName ?? appt?.Patient?.UserName)</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <video id="localVideo" autoplay muted playsinline style="width:100%; height:auto; background:#000"></video>
+                <div class="mt-2 text-muted small">Your camera</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <video id="remoteVideo" autoplay playsinline style="width:100%; height:auto; background:#000"></video>
+                <div class="mt-2 text-muted small">Remote participant</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-4">
+    <button id="startBtn" class="btn btn-success">Start Call</button>
+    <button id="hangupBtn" class="btn btn-danger" disabled>Hang Up</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+    // Minimal WebRTC + SignalR signaling implementation
+    const appointment = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(appt));
+    const roomId = appointment.videoRoomId || appointment.VideoRoomId || appointment.VideoRoomId;
+
+    let pc;
+    let localStream;
+    const startBtn = document.getElementById('startBtn');
+    const hangupBtn = document.getElementById('hangupBtn');
+
+    const hub = new signalR.HubConnectionBuilder()
+        .withUrl('/videoconsulthub')
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+    hub.on('ReceiveOffer', async (connectionId, sdp) => {
+        if (!pc) await preparePeer();
+        await pc.setRemoteDescription({ type: 'offer', sdp: sdp });
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await hub.invoke('SendAnswer', roomId, answer.sdp);
+    });
+
+    hub.on('ReceiveAnswer', async (connectionId, sdp) => {
+        if (!pc) return;
+        await pc.setRemoteDescription({ type: 'answer', sdp: sdp });
+    });
+
+    hub.on('ReceiveIceCandidate', async (connectionId, candidate) => {
+        if (!pc) return;
+        try {
+            await pc.addIceCandidate(JSON.parse(candidate));
+        } catch (e) { console.warn(e); }
+    });
+
+    async function preparePeer() {
+        pc = new RTCPeerConnection();
+        pc.onicecandidate = (e) => {
+            if (e.candidate) {
+                hub.invoke('SendIceCandidate', roomId, JSON.stringify(e.candidate));
+            }
+        };
+        pc.ontrack = (e) => {
+            document.getElementById('remoteVideo').srcObject = e.streams[0];
+        };
+        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+    }
+
+    startBtn.addEventListener('click', async () => {
+        startBtn.disabled = true;
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('localVideo').srcObject = localStream;
+
+            await hub.start();
+            await hub.invoke('JoinRoom', roomId);
+
+            await preparePeer();
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await hub.invoke('SendOffer', roomId, offer.sdp);
+
+            hangupBtn.disabled = false;
+        } catch (err) {
+            console.error(err);
+            startBtn.disabled = false;
+        }
+    });
+
+    hangupBtn.addEventListener('click', async () => {
+        if (pc) pc.close();
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        await hub.invoke('LeaveRoom', roomId);
+        await hub.stop();
+        hangupBtn.disabled = true;
+        startBtn.disabled = false;
+    });
+</script>
+
+<!-- Note: This is a minimal signaling example. In production, use TURN/STUN servers and robust participant management. -->
