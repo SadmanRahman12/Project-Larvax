@@ -1,0 +1,77 @@
+@model LarvaX.Web.Controllers.IcuBedsViewModel
+@{
+    ViewData["Title"] = "ICU Bed Finder";
+}
+
+<div class="container py-4">
+    <div class="rounded-3 bg-info-subtle p-4 p-md-5 mb-4 border-start border-info border-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <span class="badge text-bg-info mb-3"><i class="bi bi-hospital me-1"></i>Bangladesh emergency directory</span>
+                <h1 class="fw-bold mb-2">Find critical care near you</h1>
+                <p class="lead mb-0">Search a starting list of hospitals with ICU or critical-care services across Bangladesh.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="display-6 fw-bold text-info-emphasis">999</div>
+                <div class="text-muted">National emergency number</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-warning d-flex gap-2 align-items-start" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+        <div><strong>Call first.</strong> This directory is a reference, not live bed availability. Phone the hospital before travelling and ask about an ICU bed, dengue care, admission requirements, and referral rules. For a life-threatening emergency, call 999.</div>
+    </div>
+
+    <form method="get" class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <label for="city" class="form-label fw-semibold">Filter by city</label>
+            <div class="row g-2">
+                <div class="col-md-6 col-lg-4">
+                    <select id="city" name="city" class="form-select">
+                        <option value="">All listed cities</option>
+                        @foreach (var city in Model.Cities)
+                        {
+                            <option value="@city" selected="@(Model.SelectedCity == city ? "selected" : null)">@city</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto"><button class="btn btn-info text-white" type="submit"><i class="bi bi-search me-1"></i>Search</button></div>
+                @if (!string.IsNullOrEmpty(Model.SelectedCity))
+                {
+                    <div class="col-auto"><a asp-action="Index" class="btn btn-outline-secondary">Show all</a></div>
+                }
+            </div>
+        </div>
+    </form>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 fw-bold mb-0">Hospitals and contacts</h2>
+        <span class="text-muted small">@Model.Hospitals.Count result(s)</span>
+    </div>
+    <div class="row g-3">
+        @foreach (var hospital in Model.Hospitals)
+        {
+            <div class="col-md-6 col-xl-4">
+                <article class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between gap-2 mb-3">
+                            <span class="badge text-bg-light border">@hospital.City</span>
+                            <i class="bi bi-heart-pulse text-danger fs-5"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">@hospital.Name</h3>
+                        <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>@hospital.Address</p>
+                        <p class="small mb-3">@hospital.Type</p>
+                        <a class="btn btn-outline-success w-100" href="tel:@hospital.Phone.Replace("-", "")"><i class="bi bi-telephone me-1"></i>Call @hospital.Phone</a>
+                    </div>
+                </article>
+            </div>
+        }
+        @if (!Model.Hospitals.Any())
+        {
+            <div class="col-12"><div class="alert alert-info">No hospitals are listed for that city. Try another city or show all hospitals.</div></div>
+        }
+    </div>
+
+    <p class="small text-muted mt-4 mb-0"><i class="bi bi-info-circle me-1"></i>Contact details should be verified with the hospital. In an emergency, do not delay care while searching online.</p>
+</div>

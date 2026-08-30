@@ -118,3 +118,84 @@
         </div>
     </div>
 </div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="fs-2 text-success me-3"><i class="bi bi-book-half"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Awareness & Education</h5>
+                        <small class="text-muted">Bilingual myth-busting and health learning</small>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Browse dengue prevention guides, complete a short quiz, and download a certificate.</p>
+                <a asp-controller="Education" asp-action="Index" class="btn btn-success">Open learning portal</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="fs-2 text-info me-3"><i class="bi bi-hospital"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-0">ICU Bed Finder</h5>
+                        <small class="text-muted">Urgent care reference for Bangladesh</small>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Use the finder to locate major hospitals and emergency contacts, then verify live availability with the hospital before travel.</p>
+                <a asp-controller="IcuBeds" asp-action="Index" class="btn btn-info text-white">Open ICU finder</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="fs-2 text-primary me-3"><i class="bi bi-droplet-half"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Dengue Fluid Management</h5>
+                        <small class="text-muted">WHO-aligned fluid therapy support</small>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Calculate maintenance fluids, deficits, boluses, and monitor cumulative fluid intake safely in a bilingual healthcare workflow.</p>
+                <a asp-controller="FluidManagement" asp-action="Index" class="btn btn-primary">Open fluid assistant</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="fs-2 text-warning me-3"><i class="bi bi-calendar3"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Oral Rehydration Planner</h5>
+                        <small class="text-muted">Schedule-based patient guidance</small>
+                    </div>
+                </div>
+                <p class="text-muted mb-3">Generate an hourly schedule for severe, critical, or maintenance-phase dengue patients with monitoring points and warning signs.</p>
+                <a asp-controller="FluidManagement" asp-action="Planner" class="btn btn-warning text-dark">Open planner</a>
+            </div>
+        </div>
+    </div>
+    @if (User.IsInRole("GovernmentAuthority") || User.IsInRole("Administrator"))
+    {
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="fs-2 text-warning me-3"><i class="bi bi-shield-check"></i></div>
+                        <div>
+                            <h5 class="fw-bold mb-0">Government Surveillance</h5>
+                            <small class="text-muted">National dashboard and exports</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-3">Review regional risk zones, insufficient-data flags, and export surveillance records for public health agencies.</p>
+                    <a asp-controller="Government" asp-action="Dashboard" class="btn btn-warning text-dark">Open dashboard</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
