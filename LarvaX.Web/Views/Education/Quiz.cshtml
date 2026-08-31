@@ -1,0 +1,56 @@
+@using LarvaX.Core.Entities
+@model Quiz
+@{
+    ViewData["Title"] = Model.Title;
+    var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
+    var qNum = 0;
+}
+
+<div class="container py-4" style="max-width:750px">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Education" asp-action="Index" class="text-success">@(isBn ? "শিক্ষা" : "Education")</a></li>
+            <li class="breadcrumb-item active">@Model.Title</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <i class="bi bi-trophy-fill text-warning fs-1"></i>
+            <div>
+                <h1 class="h3 fw-bold mb-0">@Model.Title</h1>
+                <p class="text-muted mb-0">@Model.Questions.Count @(isBn ? "টি প্রশ্ন" : "questions")</p>
+            </div>
+        </div>
+
+        <form asp-action="SubmitQuiz" asp-controller="Education" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="quizId" value="@Model.Id" />
+
+            @foreach (var question in Model.Questions)
+            {
+                qNum++;
+                <fieldset class="mb-4 p-3 border rounded-3 bg-light">
+                    <legend class="h6 fw-bold float-none w-auto px-2">@qNum. @question.Text</legend>
+                    <div class="row g-2 mt-1">
+                        @foreach (var option in question.Options)
+                        {
+                            <div class="col-12">
+                                <input class="btn-check" type="radio"
+                                       name="answers[@question.Id]" value="@option.Id"
+                                       id="opt_@option.Id" required />
+                                <label class="btn btn-outline-secondary w-100 text-start rounded-3" for="opt_@option.Id">
+                                    @option.Text
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </fieldset>
+            }
+
+            <button type="submit" class="btn btn-warning fw-semibold rounded-pill px-4">
+                <i class="bi bi-check2-circle me-2"></i>@(isBn ? "উত্তর দেখুন" : "Check Answers")
+            </button>
+        </form>
+    </div>
+</div>

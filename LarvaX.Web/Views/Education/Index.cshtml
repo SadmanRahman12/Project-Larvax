@@ -1,68 +1,123 @@
-@model LarvaX.Web.Controllers.DengueQuizViewModel
+@using LarvaX.Core.Entities
+@model IEnumerable<Article>
 @{
-    ViewData["Title"] = "Dengue Education";
+    ViewData["Title"] = "Awareness & Education";
+    var quizzes = ViewBag.Quizzes as IEnumerable<Quiz> ?? Enumerable.Empty<Quiz>();
+    var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
 }
 
-<div class="container py-4">
-    <div class="rounded-3 bg-success-subtle p-4 p-md-5 mb-4 border-start border-success border-4">
-        <span class="badge text-bg-success mb-3"><i class="bi bi-book-half me-1"></i>Dengue learning portal</span>
-        <h1 class="fw-bold mb-2">Know dengue. Act early.</h1>
-        <p class="lead mb-0">Practical information for families in Bangladesh: prevention, symptoms, warning signs, and when to seek care.</p>
+<div class="container-fluid py-4" style="max-width:1140px">
+    <!-- Hero -->
+    <div class="rounded-4 p-4 p-md-5 mb-5 position-relative overflow-hidden"
+         style="background: linear-gradient(135deg,#0d6e3d 0%,#1a6b3c 60%,#2ecc71 100%); color:#fff;">
+        <div class="position-absolute top-0 end-0 opacity-10 d-none d-md-block" style="font-size:14rem; line-height:1;">🦟</div>
+        <span class="badge bg-warning text-dark mb-3 px-3 py-2 fw-semibold">
+            <i class="bi bi-book-half me-1"></i>@(isBn ? "শিক্ষা কেন্দ্র" : "Learning Center")
+        </span>
+        <h1 class="fw-bold display-6 mb-2">@(isBn ? "ডেঙ্গু জানুন। সময়মতো সুরক্ষিত হন।" : "Know Dengue. Act Early.")</h1>
+        <p class="lead mb-0 opacity-90">@(isBn ? "বাংলাদেশের পরিবারের জন্য ব্যবহারিক তথ্য: প্রতিরোধ, উপসর্গ, সতর্কতা চিহ্ন এবং কখন সেবা নেবেন।" : "Practical information for families in Bangladesh: prevention, symptoms, warning signs, and when to seek care.")</p>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-lg-7">
-            <section class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <h2 class="h4 fw-bold"><i class="bi bi-shield-check text-success me-2"></i>Protect your home</h2>
-                    <div class="row g-3 mt-1">
-                        <div class="col-sm-6"><h3 class="h6 fw-bold">Remove standing water</h3><p class="small text-muted mb-0">Empty buckets, flowerpots, tyres, roof gutters, and containers at least once a week.</p></div>
-                        <div class="col-sm-6"><h3 class="h6 fw-bold">Prevent mosquito bites</h3><p class="small text-muted mb-0">Use repellent, long sleeves, screens, and a mosquito net, especially during daylight hours.</p></div>
-                        <div class="col-sm-6"><h3 class="h6 fw-bold">Support the sick person</h3><p class="small text-muted mb-0">Encourage appropriate fluids and rest. Use paracetamol only as directed by a clinician.</p></div>
-                        <div class="col-sm-6"><h3 class="h6 fw-bold">Avoid unsafe medicines</h3><p class="small text-muted mb-0">Avoid aspirin and ibuprofen unless a qualified clinician specifically advises them.</p></div>
-                    </div>
-                </div>
-            </section>
+    <!-- Articles -->
+    <div class="mb-5">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h4 fw-bold mb-0"><i class="bi bi-newspaper me-2 text-success"></i>@(isBn ? "স্বাস্থ্য নিবন্ধ" : "Health Articles")</h2>
         </div>
-        <div class="col-lg-5">
-            <section class="card border-danger h-100 shadow-sm">
-                <div class="card-body p-4">
-                    <h2 class="h4 fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Warning signs</h2>
-                    <p class="small">Warning signs can appear as fever improves, often around days 3–7. Seek urgent medical care for:</p>
-                    <ul class="small mb-0">
-                        <li>Severe abdominal pain or repeated vomiting</li>
-                        <li>Bleeding from the nose, gums, vomit, or stool</li>
-                        <li>Extreme weakness, restlessness, or drowsiness</li>
-                        <li>Rapid breathing, pale/cold skin, or little urine</li>
-                    </ul>
-                    <div class="alert alert-danger mt-3 mb-0 small"><strong>Emergency:</strong> call 999 or go to the nearest hospital.</div>
-                </div>
-            </section>
-        </div>
-    </div>
-
-    <section class="card border-0 shadow-sm mb-4">
-        <div class="card-body p-4 p-md-5">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-                <div><h2 class="h3 fw-bold mb-1">Test your dengue knowledge</h2><p class="text-muted mb-0">Choose one answer for each question.</p></div>
-                @if (Model.Answered)
+        @if (Model.Any())
+        {
+            <div class="row g-4">
+                @foreach (var article in Model)
                 {
-                    <span class="badge @(Model.Score >= 3 ? "text-bg-success" : "text-bg-warning") fs-6">@Model.Score / 4 correct</span>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm rounded-4" style="transition: transform .2s;"
+                             onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+                            <div class="card-body p-4">
+                                <span class="badge text-bg-success-subtle text-success mb-2 px-3">
+                                    <i class="bi bi-calendar3 me-1"></i>@article.PublishedDate.ToString("dd MMM yyyy")
+                                </span>
+                                <h3 class="h5 fw-bold mb-2">@article.Title</h3>
+                                <p class="text-muted small mb-3">@(article.Content.Length > 120 ? article.Content[..120] + "…" : article.Content)</p>
+                                <a asp-action="Article" asp-route-id="@article.Id" class="btn btn-sm btn-outline-success rounded-pill">
+                                    @(isBn ? "বিস্তারিত পড়ুন" : "Read more") <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 }
             </div>
-            <form method="post">
-                @Html.AntiForgeryToken()
-                <fieldset class="mb-4"><legend class="h6 fw-bold">1. Which mosquito mainly spreads dengue?</legend><div class="row g-2"><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionOne" value="A" id="q1a"><label class="btn btn-outline-secondary w-100 text-start" for="q1a">A. Aedes mosquito</label></div><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionOne" value="B" id="q1b"><label class="btn btn-outline-secondary w-100 text-start" for="q1b">B. Housefly</label></div><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionOne" value="C" id="q1c"><label class="btn btn-outline-secondary w-100 text-start" for="q1c">C. Tick</label></div></div></fieldset>
-                <fieldset class="mb-4"><legend class="h6 fw-bold">2. When do Aedes mosquitoes commonly bite?</legend><div class="row g-2"><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionTwo" value="A" id="q2a"><label class="btn btn-outline-secondary w-100 text-start" for="q2a">A. Only at midnight</label></div><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionTwo" value="B" id="q2b"><label class="btn btn-outline-secondary w-100 text-start" for="q2b">B. Daylight hours</label></div><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionTwo" value="C" id="q2c"><label class="btn btn-outline-secondary w-100 text-start" for="q2c">C. Only in winter</label></div></div></fieldset>
-                <fieldset class="mb-4"><legend class="h6 fw-bold">3. Which medicine should generally be avoided in suspected dengue?</legend><div class="row g-2"><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionThree" value="A" id="q3a"><label class="btn btn-outline-secondary w-100 text-start" for="q3a">A. Oral rehydration solution</label></div><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionThree" value="B" id="q3b"><label class="btn btn-outline-secondary w-100 text-start" for="q3b">B. Paracetamol</label></div><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionThree" value="C" id="q3c"><label class="btn btn-outline-secondary w-100 text-start" for="q3c">C. Aspirin or ibuprofen</label></div></div></fieldset>
-                <fieldset class="mb-4"><legend class="h6 fw-bold">4. What should you do with standing water around your home?</legend><div class="row g-2"><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionFour" value="A" id="q4a"><label class="btn btn-outline-secondary w-100 text-start" for="q4a">A. Empty and scrub containers weekly</label></div><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionFour" value="B" id="q4b"><label class="btn btn-outline-secondary w-100 text-start" for="q4b">B. Leave it covered with cloth</label></div><div class="col-md-4"><input class="btn-check" type="radio" asp-for="QuestionFour" value="C" id="q4c"><label class="btn btn-outline-secondary w-100 text-start" for="q4c">C. Add more water</label></div></div></fieldset>
-                <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle me-1"></i>Check answers</button>
-            </form>
-            @if (Model.Answered)
-            {
-                <div class="alert alert-info mt-4 mb-0"><strong>Remember:</strong> a quiz cannot diagnose dengue. Fever or warning signs should be assessed by a healthcare professional.</div>
-            }
-        </div>
-    </section>
-    <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>This education page supports, but never replaces, advice from a qualified healthcare professional.</p>
+        }
+        else
+        {
+            <div class="alert alert-info border-0 rounded-4">
+                <i class="bi bi-info-circle me-2"></i>
+                @(isBn ? "এই মুহূর্তে কোনো নিবন্ধ নেই। প্রশাসক শীঘ্রই কন্টেন্ট যোগ করবেন।" : "No articles available yet. An administrator will add content soon.")
+            </div>
+
+            <!-- Static fallback education cards -->
+            <div class="row g-4 mt-1">
+                <div class="col-lg-7">
+                    <section class="card border-0 shadow-sm h-100 rounded-4">
+                        <div class="card-body p-4">
+                            <h2 class="h5 fw-bold"><i class="bi bi-shield-check text-success me-2"></i>@(isBn ? "আপনার বাড়ি সুরক্ষিত রাখুন" : "Protect Your Home")</h2>
+                            <div class="row g-3 mt-1">
+                                <div class="col-sm-6"><h3 class="h6 fw-bold">@(isBn ? "জমা পানি সরান" : "Remove standing water")</h3><p class="small text-muted mb-0">@(isBn ? "বালতি, ফুলের টব, টায়ার, ছাদের নালা সপ্তাহে একবার খালি করুন।" : "Empty buckets, flowerpots, tyres, roof gutters weekly.")</p></div>
+                                <div class="col-sm-6"><h3 class="h6 fw-bold">@(isBn ? "মশার কামড় প্রতিরোধ করুন" : "Prevent mosquito bites")</h3><p class="small text-muted mb-0">@(isBn ? "রিপেলেন্ট, লম্বা হাতার পোশাক এবং মশারি ব্যবহার করুন।" : "Use repellent, long sleeves, screens, and a mosquito net.")</p></div>
+                                <div class="col-sm-6"><h3 class="h6 fw-bold">@(isBn ? "রোগীর যত্ন নিন" : "Support the sick person")</h3><p class="small text-muted mb-0">@(isBn ? "তরল পানীয় ও বিশ্রামে সাহায্য করুন। চিকিৎসকের পরামর্শ অনুযায়ী প্যারাসিটামল দিন।" : "Encourage appropriate fluids and rest. Use paracetamol as directed.")</p></div>
+                                <div class="col-sm-6"><h3 class="h6 fw-bold">@(isBn ? "অনিরাপদ ওষুধ এড়িয়ে চলুন" : "Avoid unsafe medicines")</h3><p class="small text-muted mb-0">@(isBn ? "চিকিৎসকের পরামর্শ ছাড়া অ্যাসপিরিন বা আইবুপ্রোফেন ব্যবহার করবেন না।" : "Avoid aspirin and ibuprofen unless a clinician advises them.")</p></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                <div class="col-lg-5">
+                    <section class="card border-danger h-100 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h2 class="h5 fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>@(isBn ? "সতর্কতা চিহ্ন" : "Warning Signs")</h2>
+                            <p class="small">@(isBn ? "জ্বর কমার সময় (৩-৭ দিন) সতর্কতা চিহ্ন দেখা দিতে পারে। এই লক্ষণগুলোতে দ্রুত চিকিৎসা নিন:" : "Warning signs can appear around days 3–7. Seek urgent medical care for:")</p>
+                            <ul class="small mb-0">
+                                <li>@(isBn ? "তীব্র পেটব্যথা বা বারবার বমি" : "Severe abdominal pain or repeated vomiting")</li>
+                                <li>@(isBn ? "নাক, মাড়ি, বমি বা মলে রক্ত" : "Bleeding from the nose, gums, vomit, or stool")</li>
+                                <li>@(isBn ? "চরম দুর্বলতা, অস্থিরতা বা ঘুমঘুম ভাব" : "Extreme weakness, restlessness, or drowsiness")</li>
+                                <li>@(isBn ? "দ্রুত শ্বাস-প্রশ্বাস, ফ্যাকাশে বা ঠান্ডা ত্বক" : "Rapid breathing, pale/cold skin, or little urine")</li>
+                            </ul>
+                            <div class="alert alert-danger mt-3 mb-0 small rounded-3">
+                                <strong>@(isBn ? "জরুরি:" : "Emergency:")</strong> @(isBn ? "৯৯৯ নম্বরে ফোন করুন বা নিকটতম হাসপাতালে যান।" : "Call 999 or go to the nearest hospital.")
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Quizzes -->
+    <div class="mb-4">
+        <h2 class="h4 fw-bold mb-3"><i class="bi bi-patch-question me-2 text-warning"></i>@(isBn ? "আপনার জ্ঞান যাচাই করুন" : "Test Your Knowledge")</h2>
+        @if (quizzes.Any())
+        {
+            <div class="row g-3">
+                @foreach (var quiz in quizzes)
+                {
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm rounded-4 h-100" style="background:linear-gradient(135deg,#fffde7,#fff9c4)">
+                            <div class="card-body p-4">
+                                <i class="bi bi-trophy-fill text-warning fs-2 mb-2 d-block"></i>
+                                <h3 class="h5 fw-bold">@quiz.Title</h3>
+                                <p class="small text-muted">@quiz.Questions.Count @(isBn ? "টি প্রশ্ন" : "questions")</p>
+                                <a asp-action="Quiz" asp-route-id="@quiz.Id" class="btn btn-warning btn-sm rounded-pill fw-semibold">
+                                    @(isBn ? "কুইজ শুরু করুন" : "Start Quiz") <i class="bi bi-play-circle ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning border-0 rounded-4">
+                <i class="bi bi-info-circle me-2"></i>@(isBn ? "এই মুহূর্তে কোনো কুইজ পাওয়া যাচ্ছে না।" : "No quizzes available at the moment.")
+            </div>
+        }
+    </div>
+    <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>@(isBn ? "এই শিক্ষামূলক পাতা কোনো যোগ্য স্বাস্থ্যসেবা পেশাদারের পরামর্শের বিকল্প নয়।" : "This education page supports, but never replaces, advice from a qualified healthcare professional.")</p>
 </div>

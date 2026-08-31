@@ -1,0 +1,106 @@
+@using LarvaX.Core.Entities
+@model IEnumerable<InventoryTransaction>
+@{
+    var item = ViewBag.Item as InventoryItem;
+    ViewData["Title"] = $"Transactions: {item?.Name}";
+    var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
+}
+
+<div class="container py-4" style="max-width:900px">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-4 border-0" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex gap-3 align-items-start justify-content-between mb-4 flex-wrap">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-action="Index" class="text-primary">@(isBn ? "ইনভেন্টরি" : "Inventory")</a></li>
+                    <li class="breadcrumb-item active">@item?.Name</li>
+                </ol>
+            </nav>
+            <h1 class="h4 fw-bold mb-0">@item?.Name</h1>
+            <p class="text-muted small"><i class="bi bi-geo-alt me-1"></i>@item?.Location</p>
+        </div>
+        <div class="text-end">
+            <div class="display-6 fw-bold @(item?.Quantity <= item?.Threshold ? "text-danger" : "text-success")">@item?.Quantity</div>
+            <div class="text-muted small">@(isBn ? "বর্তমান স্টক" : "current stock") / @(isBn ? "সীমা" : "threshold") @item?.Threshold</div>
+        </div>
+    </div>
+
+    <!-- Record Transaction Form -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-3"><i class="bi bi-arrow-left-right me-2 text-primary"></i>@(isBn ? "নতুন লেনদেন রেকর্ড করুন" : "Record Transaction")</h2>
+            <form asp-action="RecordTransaction" asp-controller="Inventory" method="post" class="row g-3 align-items-end">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="itemId" value="@item?.Id" />
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">@(isBn ? "পরিবর্তন (+/-)" : "Quantity Change (+/-)")</label>
+                    <input type="number" name="quantityChange" class="form-control rounded-3" placeholder="-10 or +50" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">@(isBn ? "কারণ" : "Reason")</label>
+                    <input type="text" name="reason" class="form-control rounded-3" placeholder="@(isBn ? "যেমন: মাঠ বিতরণ, নতুন সরবরাহ" : "e.g., Field distribution, New supply received")" required />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3">
+                        <i class="bi bi-save me-1"></i>@(isBn ? "রেকর্ড করুন" : "Record")
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>@(isBn ? "লেনদেন ইতিহাস" : "Transaction History")</h2>
+            @if (!Model.Any())
+            {
+                <p class="text-muted">@(isBn ? "এখনো কোনো লেনদেন রেকর্ড করা হয়নি।" : "No transactions recorded yet.")</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>@(isBn ? "তারিখ" : "Date")</th>
+                                <th>@(isBn ? "পরিবর্তন" : "Change")</th>
+                                <th>@(isBn ? "কারণ" : "Reason")</th>
+                                <th>@(isBn ? "কর্মী" : "Staff")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in Model)
+                            {
+                                <tr>
+                                    <td class="small text-muted">@t.Date.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</td>
+                                    <td>
+                                        <span class="fw-bold @(t.QuantityChange > 0 ? "text-success" : "text-danger")">
+                                            @(t.QuantityChange > 0 ? "+" : "")@t.QuantityChange
+                                        </span>
+                                    </td>
+                                    <td>@t.Reason</td>
+                                    <td class="small">@(t.User?.UserName ?? "System")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

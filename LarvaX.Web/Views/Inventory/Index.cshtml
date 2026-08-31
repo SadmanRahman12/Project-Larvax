@@ -1,0 +1,83 @@
+@using LarvaX.Core.Entities
+@model IEnumerable<InventoryItem>
+@{
+    ViewData["Title"] = "Inventory Management";
+    var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
+}
+
+<div class="container py-4">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0"><i class="bi bi-boxes me-2 text-primary"></i>@(isBn ? "ইনভেন্টরি ম্যানেজমেন্ট" : "Inventory Management")</h1>
+            <p class="text-muted mb-0">@(isBn ? "সরবরাহ ও স্টক পরিচালনা করুন।" : "Manage health supply stock levels.")</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i>@(isBn ? "নতুন আইটেম" : "Add Item")
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info rounded-4 border-0">
+            <i class="bi bi-info-circle me-2"></i>@(isBn ? "এখন পর্যন্ত কোনো আইটেম যোগ করা হয়নি।" : "No inventory items added yet.")
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var item in Model)
+            {
+                var isLow = item.Quantity <= item.Threshold;
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 @(isLow ? "border-danger border" : "")">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h3 class="h5 fw-bold mb-0">@item.Name</h3>
+                                @if (isLow)
+                                {
+                                    <span class="badge text-bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>@(isBn ? "কম স্টক" : "Low Stock")</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>@(isBn ? "পর্যাপ্ত" : "OK")</span>
+                                }
+                            </div>
+                            <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>@item.Location</p>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="fs-3 fw-bold @(isLow ? "text-danger" : "text-success")">@item.Quantity</span>
+                                <span class="text-muted">@(isBn ? "/ সীমা:" : "/ threshold:") @item.Threshold</span>
+                            </div>
+                            <div class="progress mb-3" style="height:8px;border-radius:4px;">
+                                <div class="progress-bar @(isLow ? "bg-danger" : "bg-success")"
+                                     style="width:@(Math.Min(100, item.Threshold > 0 ? (int)((double)item.Quantity / item.Threshold * 100) : 100))%"></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Transactions" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary rounded-pill">
+                                    <i class="bi bi-clock-history me-1"></i>@(isBn ? "লেনদেন" : "Transactions")
+                                </a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <i class="bi bi-pencil me-1"></i>@(isBn ? "সম্পাদনা" : "Edit")
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

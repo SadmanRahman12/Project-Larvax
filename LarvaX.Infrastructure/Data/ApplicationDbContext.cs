@@ -14,7 +14,14 @@ namespace LarvaX.Infrastructure.Data
         public DbSet<LabTest> LabTests { get; set; } = null!;
         public DbSet<LabBooking> LabBookings { get; set; } = null!;
         public DbSet<PatientRecord> PatientRecords { get; set; } = null!;
-
+        public DbSet<Article> Articles { get; set; } = null!;
+        public DbSet<Quiz> Quizzes { get; set; } = null!;
+        public DbSet<QuizQuestion> QuizQuestions { get; set; } = null!;
+        public DbSet<QuizOption> QuizOptions { get; set; } = null!;
+        public DbSet<InventoryItem> InventoryItems { get; set; } = null!;
+        public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
+        public DbSet<FlowAnalytics> FlowAnalytics { get; set; } = null!;
+        public DbSet<SmsCommand> SmsCommands { get; set; } = null!;
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {

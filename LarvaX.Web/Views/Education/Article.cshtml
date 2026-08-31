@@ -1,0 +1,33 @@
+@using LarvaX.Core.Entities
+@model Article
+@{
+    ViewData["Title"] = Model.Title;
+    var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
+}
+
+<div class="container py-4" style="max-width:800px">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Education" asp-action="Index" class="text-success">@(isBn ? "শিক্ষা" : "Education")</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+        </ol>
+    </nav>
+
+    <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <span class="badge text-bg-success mb-3 px-3"><i class="bi bi-calendar3 me-1"></i>@Model.PublishedDate.ToString("dd MMMM yyyy")</span>
+        <h1 class="fw-bold mb-3">@Model.Title</h1>
+        @if (Model.Author != null)
+        {
+            <p class="text-muted small mb-4"><i class="bi bi-person-circle me-1"></i>@(isBn ? "লেখক:" : "Author:") @Model.Author.UserName</p>
+        }
+        <hr />
+        <div class="article-body mt-3" style="line-height:1.8">
+            @Html.Raw(Model.Content.Replace("\n", "<br/>"))
+        </div>
+        <div class="mt-4 pt-3 border-top">
+            <a asp-controller="Education" asp-action="Index" class="btn btn-outline-success rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i>@(isBn ? "সব নিবন্ধে ফিরুন" : "Back to all articles")
+            </a>
+        </div>
+    </article>
+</div>

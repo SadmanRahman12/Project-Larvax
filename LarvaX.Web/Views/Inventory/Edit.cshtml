@@ -1,0 +1,43 @@
+@using LarvaX.Core.Entities
+@model InventoryItem
+@{
+    ViewData["Title"] = "Edit Item";
+    var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
+}
+
+<div class="container py-4" style="max-width:600px">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-primary">@(isBn ? "ইনভেন্টরি" : "Inventory")</a></li>
+            <li class="breadcrumb-item active">@(isBn ? "সম্পাদনা" : "Edit")</li>
+        </ol>
+    </nav>
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h1 class="h4 fw-bold mb-4"><i class="bi bi-pencil me-2 text-secondary"></i>@(isBn ? "আইটেম সম্পাদনা করুন" : "Edit Inventory Item")</h1>
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fw-semibold">@(isBn ? "আইটেমের নাম" : "Item Name")</label>
+                <input asp-for="Name" class="form-control rounded-3" required />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Quantity" class="form-label fw-semibold">@(isBn ? "পরিমাণ" : "Quantity")</label>
+                <input asp-for="Quantity" type="number" class="form-control rounded-3" min="0" required />
+                <small class="text-muted">@(isBn ? "বিস্তারিত লেনদেন রেকর্ড করতে 'লেনদেন' ব্যবহার করুন।" : "Use the Transactions view to record detailed stock movements.")</small>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Threshold" class="form-label fw-semibold">@(isBn ? "সতর্কতা সীমা" : "Low Stock Threshold")</label>
+                <input asp-for="Threshold" type="number" class="form-control rounded-3" min="0" required />
+            </div>
+            <div class="mb-4">
+                <label asp-for="Location" class="form-label fw-semibold">@(isBn ? "সংরক্ষণ স্থান" : "Storage Location")</label>
+                <input asp-for="Location" class="form-control rounded-3" required />
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary rounded-pill px-4"><i class="bi bi-floppy me-1"></i>@(isBn ? "সংরক্ষণ করুন" : "Save Changes")</button>
+                <a asp-action="Index" class="btn btn-outline-secondary rounded-pill">@(isBn ? "বাতিল" : "Cancel")</a>
+            </div>
+        </form>
+    </div>
+</div>

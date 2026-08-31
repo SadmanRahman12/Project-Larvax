@@ -1,0 +1,43 @@
+@using LarvaX.Core.Entities
+@model Quiz
+@{
+    ViewData["Title"] = "Quiz Result";
+    var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
+    int score = ViewBag.Score;
+    int total = ViewBag.Total;
+    double pct = total > 0 ? (double)score / total * 100 : 0;
+    string badgeClass = pct >= 75 ? "text-bg-success" : pct >= 50 ? "text-bg-warning" : "text-bg-danger";
+    string message = pct >= 75
+        ? (isBn ? "অসাধারণ! আপনি ডেঙ্গু সম্পর্কে ভালো জ্ঞান রাখেন।" : "Excellent! You have great dengue awareness.")
+        : pct >= 50
+        ? (isBn ? "ভালো চেষ্টা! শিক্ষামূলক নিবন্ধগুলো পড়ুন।" : "Good try! Review the educational articles.")
+        : (isBn ? "আরও পড়াশোনা দরকার। আমাদের নিবন্ধগুলো পড়ুন।" : "More practice needed. Please read our articles.");
+}
+
+<div class="container py-5" style="max-width:600px">
+    <div class="card border-0 shadow rounded-4 text-center p-5">
+        <div class="mb-3" style="font-size:4rem">
+            @(pct >= 75 ? "🏆" : pct >= 50 ? "👍" : "📚")
+        </div>
+        <h1 class="h3 fw-bold mb-2">@(isBn ? "কুইজ সম্পন্ন!" : "Quiz Complete!")</h1>
+        <p class="text-muted mb-4">@Model.Title</p>
+        <div class="display-4 fw-bold mb-1">
+            <span class="badge @badgeClass px-4 py-3 fs-3">@score / @total</span>
+        </div>
+        <p class="mt-3 lead">@message</p>
+        <div class="progress my-3" style="height:12px; border-radius:8px;">
+            <div class="progress-bar @(pct >= 75 ? "bg-success" : pct >= 50 ? "bg-warning" : "bg-danger")"
+                 role="progressbar" style="width: @pct.ToString("F0")%"
+                 aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div class="d-flex gap-2 justify-content-center mt-4">
+            <a asp-action="Quiz" asp-route-id="@Model.Id" class="btn btn-outline-warning rounded-pill">
+                <i class="bi bi-arrow-clockwise me-1"></i>@(isBn ? "আবার চেষ্টা করুন" : "Try again")
+            </a>
+            <a asp-action="Index" asp-controller="Education" class="btn btn-success rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i>@(isBn ? "শিক্ষায় ফিরুন" : "Back to Education")
+            </a>
+        </div>
+        <p class="small text-muted mt-4"><i class="bi bi-info-circle me-1"></i>@(isBn ? "এই কুইজ ডেঙ্গু নির্ণয় করে না। জ্বর বা সতর্কতা চিহ্নের জন্য স্বাস্থ্যসেবা পেশাদারের পরামর্শ নিন।" : "This quiz cannot diagnose dengue. Seek professional care for fever or warning signs.")</p>
+    </div>
+</div>

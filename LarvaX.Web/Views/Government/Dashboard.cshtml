@@ -1,0 +1,102 @@
+@{
+    ViewData["Title"] = "Government Dashboard";
+    var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
+    var abandonmentStats = ViewBag.AbandonmentStats as Dictionary<string, double> ?? new();
+    var flowStats = ViewBag.FlowStats as Dictionary<string, Dictionary<string, int>> ?? new();
+    var defaultStart = ViewBag.DefaultStart as string ?? "";
+    var defaultEnd = ViewBag.DefaultEnd as string ?? "";
+}
+
+<div class="container-fluid py-4" style="max-width:1200px">
+    <!-- Header -->
+    <div class="rounded-4 p-4 p-md-5 mb-5 text-white"
+         style="background: linear-gradient(135deg, #1a237e 0%, #283593 60%, #3949ab 100%);">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <span class="badge bg-warning text-dark mb-3 px-3 py-2 fw-semibold">
+                    <i class="bi bi-shield-check me-1"></i>@(isBn ? "সরকারি ড্যাশবোর্ড" : "Government Authority Dashboard")
+                </span>
+                <h1 class="fw-bold display-6 mb-2">@(isBn ? "ডেঙ্গু নজরদারি পরিসংখ্যান" : "Dengue Surveillance Statistics")</h1>
+                <p class="lead mb-0 opacity-90">@(isBn ? "প্ল্যাটফর্ম অ্যানালিটিক্স, ডেটা পর্যাপ্ততা এবং PDF রিপোর্ট রপ্তানি করুন।" : "Platform analytics, data sufficiency overview, and PDF report export.")</p>
+            </div>
+            <div class="col-md-4 mt-3 mt-md-0 text-md-end">
+                <i class="bi bi-graph-up-arrow opacity-25 d-none d-md-block" style="font-size:7rem;line-height:1;margin-top:-2rem;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flow Abandonment Analytics -->
+    <div class="mb-5">
+        <h2 class="h4 fw-bold mb-3"><i class="bi bi-funnel me-2 text-warning"></i>@(isBn ? "ব্যবহারকারী প্রবাহ পরিত্যাগ বিশ্লেষণ" : "User Flow Abandonment Analytics")</h2>
+        <p class="text-muted mb-4">@(isBn ? "ব্যবহারকারীরা কোন ধাপে ফর্ম ছেড়ে যান তার পরিসংখ্যান।" : "Track where users drop off during key platform flows.")</p>
+        <div class="row g-3">
+            @foreach (var kv in abandonmentStats)
+            {
+                var pct = kv.Value;
+                var badgeClass = pct > 70 ? "danger" : pct > 40 ? "warning" : "success";
+                var barClass = pct > 70 ? "bg-danger" : pct > 40 ? "bg-warning" : "bg-success";
+                flowStats.TryGetValue(kv.Key, out var steps);
+                var started = steps?.GetValueOrDefault("Started", 0) ?? 0;
+                var completed = steps?.GetValueOrDefault("Completed", 0) ?? 0;
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                        <p class="text-muted small mb-1 text-uppercase fw-semibold letter-spacing-1">@kv.Key</p>
+                        <div class="display-6 fw-bold text-@badgeClass mb-1">@pct<small class="fs-6 fw-normal">%</small></div>
+                        <p class="small text-muted mb-2">@(isBn ? "পরিত্যাগের হার" : "abandonment rate")</p>
+                        <div class="progress mb-2" style="height:6px;border-radius:4px;">
+                            <div class="progress-bar @barClass" style="width:@pct.ToString("F0")%"></div>
+                        </div>
+                        <div class="row g-0 mt-2 text-center">
+                            <div class="col border-end">
+                                <div class="fw-bold">@started</div>
+                                <div class="text-muted" style="font-size:.7rem;">@(isBn ? "শুরু" : "STARTED")</div>
+                            </div>
+                            <div class="col">
+                                <div class="fw-bold text-success">@completed</div>
+                                <div class="text-muted" style="font-size:.7rem;">@(isBn ? "সম্পন্ন" : "COMPLETED")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (!abandonmentStats.Any())
+            {
+                <div class="col-12">
+                    <div class="alert alert-info border-0 rounded-4">
+                        <i class="bi bi-info-circle me-2"></i>@(isBn ? "এখনো কোনো অ্যানালিটিক্স ডেটা সংগ্রহ হয়নি।" : "No analytics data collected yet. Data will appear as users interact with the platform.")
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- PDF Export -->
+    <div class="mb-4">
+        <h2 class="h4 fw-bold mb-3"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i>@(isBn ? "অফিশিয়াল PDF রিপোর্ট রপ্তানি করুন" : "Export Official PDF Report")</h2>
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <p class="text-muted mb-4">@(isBn ? "তারিখ পরিসীমা নির্বাচন করুন এবং একটি পেশাদার PDF রিপোর্ট ডাউনলোড করুন।" : "Select a date range and download a professionally formatted PDF report.")</p>
+                <form asp-action="ExportPdf" method="get" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">@(isBn ? "শুরুর তারিখ" : "Start Date")</label>
+                        <input type="date" name="startDate" class="form-control rounded-3" value="@defaultStart" id="reportStartDate" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">@(isBn ? "শেষের তারিখ" : "End Date")</label>
+                        <input type="date" name="endDate" class="form-control rounded-3" value="@defaultEnd" id="reportEndDate" />
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" id="exportPdfBtn" class="btn btn-danger w-100 rounded-3 fw-semibold">
+                            <i class="bi bi-download me-2"></i>@(isBn ? "PDF ডাউনলোড করুন" : "Download PDF Report")
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-3 p-3 bg-light rounded-3">
+                    <p class="mb-0 small text-muted"><i class="bi bi-info-circle me-1"></i>
+                    @(isBn ? "রিপোর্টে রিপোর্ট সারাংশ, রোগ অনুযায়ী বিভাজন, এবং ঝুঁকি অঞ্চলের বিবরণ থাকবে।" : "The report includes executive summary, disease-type breakdown, and risk zone overview.")
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

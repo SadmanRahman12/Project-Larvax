@@ -8,6 +8,7 @@ using LarvaX.Infrastructure.Data;
 using LarvaX.Core.Entities;
 using LarvaX.Application.Services;
 using LarvaX.Infrastructure.Services;
+using LarvaX.Core.Interfaces;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 
@@ -37,6 +38,12 @@ builder.Services.AddScoped<IIcuBedService, IcuBedService>();
 builder.Services.AddScoped<IPatientRecordService, PatientRecordService>();
 builder.Services.AddScoped<IFluidManagementService, FluidManagementService>();
 builder.Services.AddScoped<RiskCalculationJob>();
+
+// Phase 4 Services
+builder.Services.AddScoped<IEducationService, EducationService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IPdfReportService, PdfReportService>();
 
 // Localization Support (English & Bangla)
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
