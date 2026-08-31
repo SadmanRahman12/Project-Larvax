@@ -68,6 +68,27 @@
                             </li>
                         }
                     </ul>
+                    <form asp-controller="Language" asp-action="SetLanguage" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString" method="post" class="d-flex align-items-center me-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light btn-sm dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-translate me-1"></i> @(System.Globalization.CultureInfo.CurrentUICulture.Name == "bn" ? "বাংলা" : "English")
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li>
+                                    <button type="submit" name="culture" value="en" class="dropdown-item d-flex align-items-center justify-content-between">
+                                        <span>🇬🇧 English</span>
+                                        @(System.Globalization.CultureInfo.CurrentUICulture.Name == "en" ? Html.Raw("<i class='bi bi-check text-success'></i>") : null)
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="submit" name="culture" value="bn" class="dropdown-item d-flex align-items-center justify-content-between">
+                                        <span>🇧🇩 বাংলা</span>
+                                        @(System.Globalization.CultureInfo.CurrentUICulture.Name == "bn" ? Html.Raw("<i class='bi bi-check text-success'></i>") : null)
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </form>
                     <partial name="_LoginPartial" />
                 </div>
             </div>
@@ -79,6 +100,20 @@
         </main>
     </div>
 
+    <!-- Live Real-Time SignalR Alert Notification Toast -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+        <div id="liveSignalRAlertToast" class="toast align-items-center text-bg-danger border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <div class="fw-bold mb-1"><i class="bi bi-broadcast-pin me-1"></i> <span id="toastAlertTitle">Dengue Sentinel Real-time Alert</span></div>
+                    <div id="toastAlertMessage">High risk activity detected.</div>
+                    <small class="text-white-50 mt-1 d-block" id="toastAlertTime"></small>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
     <footer class="border-top footer text-muted">
         <div class="container">
             &copy; 2026 - LarvaX.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
@@ -86,7 +121,32 @@
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof signalR !== "undefined") {
+                const alertConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/alertshub")
+                    .withAutomaticReconnect()
+                    .build();
+
+                alertConnection.on("ReceiveAlert", function (alert) {
+                    const isBn = "@(System.Globalization.CultureInfo.CurrentUICulture.Name)" === "bn";
+                    const msg = (isBn && alert.messageBn) ? alert.messageBn : alert.message;
+                    document.getElementById("toastAlertMessage").textContent = msg;
+                    document.getElementById("toastAlertTime").textContent = new Date(alert.sentAt).toLocaleTimeString();
+                    const toastEl = document.getElementById("liveSignalRAlertToast");
+                    const toast = new bootstrap.Toast(toastEl, { delay: 12000 });
+                    toast.show();
+                });
+
+                alertConnection.start().catch(function(err) {
+                    console.debug("AlertsHub signalr connection notice:", err);
+                });
+            }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

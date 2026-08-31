@@ -1,3 +1,4 @@
+using LarvaX.Application.Services;
 using LarvaX.Core.Entities;
 using LarvaX.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -12,11 +13,16 @@ namespace LarvaX.Web.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IReportService _reportService;
 
-        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public AdminController(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            IReportService reportService)
         {
             _context = context;
             _userManager = userManager;
+            _reportService = reportService;
         }
 
         public async Task<IActionResult> Index()
@@ -61,7 +67,6 @@ namespace LarvaX.Web.Controllers
             {
                 user.RejectionReason = reason;
                 await _userManager.UpdateAsync(user);
-                // In a real scenario, you might delete the user or keep them permanently rejected.
                 TempData["SuccessMessage"] = $"User {user.FullName} rejected.";
             }
             return RedirectToAction(nameof(Approvals));
@@ -85,9 +90,10 @@ namespace LarvaX.Web.Controllers
             if (report != null)
             {
                 report.Verification = ReportVerification.Verified;
-                report.Status = ReportStatus.UnderReview; // Move status forward
+                report.Status = _reportService.DetermineNextStatus(report.Status, ReportVerification.Verified);
+                report.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = $"Report #{id} verified.";
+                TempData["SuccessMessage"] = $"Report #{id} verified. Status updated to {report.Status}.";
             }
             return RedirectToAction(nameof(Reports));
         }
@@ -101,7 +107,8 @@ namespace LarvaX.Web.Controllers
             {
                 report.Verification = ReportVerification.Invalid;
                 report.RejectionReason = reason;
-                report.Status = ReportStatus.Resolved; // Invalid reports are closed out
+                report.Status = _reportService.DetermineNextStatus(report.Status, ReportVerification.Invalid);
+                report.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = $"Report #{id} marked as invalid.";
             }

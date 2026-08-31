@@ -3,8 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Hangfire;
 using LarvaX.Web.Hubs;
 using LarvaX.Web.Filters;
+using LarvaX.Web.Jobs;
 using LarvaX.Infrastructure.Data;
 using LarvaX.Core.Entities;
+using LarvaX.Application.Services;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +22,17 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// Application Services (Clean Architecture)
+builder.Services.AddScoped<ISymptomCheckerService, SymptomCheckerService>();
+builder.Services.AddScoped<IChatbotService, ChatbotService>();
+builder.Services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
+builder.Services.AddScoped<IDonorService, DonorService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<RiskCalculationJob>();
+
+// Localization Support (English & Bangla)
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
 // Add SignalR
 builder.Services.AddSignalR();
 
@@ -29,7 +44,9 @@ builder.Services.AddHangfire(configuration => configuration
     .UseSqlServerStorage(connectionString));
 builder.Services.AddHangfireServer();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization();
 
 var app = builder.Build();
 
@@ -38,6 +55,16 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     await RoleSeeder.SeedRolesAsync(services);
 }
+
+// Request Localization Middleware
+var supportedCultures = new[] { new CultureInfo("en"), new CultureInfo("bn") };
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+};
+app.UseRequestLocalization(localizationOptions);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -59,8 +86,14 @@ app.UseAuthorization();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[] { new HangfireAuthorizationFilter() } // We will create this simple filter or use default local auth
+    Authorization = new[] { new HangfireAuthorizationFilter() }
 });
+
+// Register Recurring Risk Zone Recalculation & Alert Dispatch Job
+RecurringJob.AddOrUpdate<RiskCalculationJob>(
+    "refresh-risk-zones-and-alerts",
+    job => job.ExecuteAsync(),
+    Cron.Hourly);
 
 app.MapStaticAssets();
 
@@ -81,3 +114,4 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
+
