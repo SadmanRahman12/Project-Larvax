@@ -1,0 +1,51 @@
+@model IEnumerable<LarvaX.Core.Entities.PatientRecord>
+
+@{
+    ViewData["Title"] = "My Medical Records";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Medical Records</h2>
+        <a asp-action="Create" class="btn btn-primary">Add New Record</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">You have no medical records yet.</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var record in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm border-0 bg-light">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="card-title">@record.Title</h5>
+                                <span class="badge bg-secondary">@record.RecordType</span>
+                            </div>
+                            <h6 class="card-subtitle mb-2 text-muted">@record.Date.ToLocalTime().ToString("MMM dd, yyyy")</h6>
+                            <p class="card-text small mt-3">@record.Description</p>
+                        </div>
+                        <div class="card-footer bg-white border-0 text-end">
+                            @if (!string.IsNullOrEmpty(record.FileUrl))
+                            {
+                                <a href="@record.FileUrl" target="_blank" class="btn btn-sm btn-outline-primary">View Document</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

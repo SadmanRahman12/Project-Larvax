@@ -7,6 +7,7 @@ using LarvaX.Web.Jobs;
 using LarvaX.Infrastructure.Data;
 using LarvaX.Core.Entities;
 using LarvaX.Application.Services;
+using LarvaX.Infrastructure.Services;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 
@@ -28,6 +29,13 @@ builder.Services.AddScoped<IChatbotService, ChatbotService>();
 builder.Services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
 builder.Services.AddScoped<IDonorService, DonorService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+
+// Phase 3 Services
+builder.Services.AddScoped<ITelemedicineService, TelemedicineService>();
+builder.Services.AddScoped<ILabService, LabService>();
+builder.Services.AddScoped<IIcuBedService, IcuBedService>();
+builder.Services.AddScoped<IPatientRecordService, PatientRecordService>();
+builder.Services.AddScoped<IFluidManagementService, FluidManagementService>();
 builder.Services.AddScoped<RiskCalculationJob>();
 
 // Localization Support (English & Bangla)

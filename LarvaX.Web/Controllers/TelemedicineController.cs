@@ -1,28 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
-using LarvaX.Infrastructure.Data;
-using LarvaX.Core.Entities;
-using Microsoft.AspNetCore.Identity;
+using LarvaX.Application.Services;
 using LarvaX.Web.Models;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace LarvaX.Web.Controllers
 {
     public class TelemedicineController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ITelemedicineService _telemedicineService;
 
-        public TelemedicineController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public TelemedicineController(ITelemedicineService telemedicineService)
         {
-            _context = context;
-            _userManager = userManager;
+            _telemedicineService = telemedicineService;
         }
 
         // Browse doctors
         public async Task<IActionResult> Index(string? specialty = null)
         {
-            // Assumption: doctors are users in role "Doctor". Specialty is not modeled yet; show all doctors.
-            var doctors = await _userManager.GetUsersInRoleAsync("Doctor");
+            var doctors = await _telemedicineService.GetAvailableDoctorsAsync(specialty);
             return View(doctors);
         }
 
@@ -30,7 +26,7 @@ namespace LarvaX.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Book(string doctorId)
         {
-            var doctor = await _userManager.FindByIdAsync(doctorId);
+            var doctor = await _telemedicineService.GetDoctorByIdAsync(doctorId);
             if (doctor == null) return NotFound();
 
             var model = new AppointmentViewModel
@@ -48,7 +44,7 @@ namespace LarvaX.Web.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return RedirectToAction("Login", "Account");
 
             if (!DateTime.TryParse(model.ScheduledAt, out var dt))
@@ -57,72 +53,36 @@ namespace LarvaX.Web.Controllers
                 return View(model);
             }
 
-            var appointment = new Appointment
-            {
-                PatientId = userId,
-                DoctorId = model.DoctorId!,
-                ScheduledAt = dt.ToUniversalTime(),
-                Status = AppointmentStatus.Booked,
-                Notes = model.Notes,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            _context.Appointments.Add(appointment);
-            await _context.SaveChangesAsync();
+            await _telemedicineService.BookAppointmentAsync(userId, model.DoctorId!, dt, model.Notes);
 
             TempData["SuccessMessage"] = "Appointment booked successfully.";
             return RedirectToAction(nameof(Appointments));
         }
 
-        // List appointments for current user (patient or doctor)
+        // List appointments for current user
         public async Task<IActionResult> Appointments()
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return RedirectToAction("Login", "Account");
 
-            // EF Core requires both sides of a set operation to have the same Include calls.
-            // Include both navigations on both queries so Union can be translated to SQL.
-            var asPatient = _context.Appointments
-                .Include(a => a.Doctor)
-                .Include(a => a.Patient)
-                .Where(a => a.PatientId == userId);
-
-            var asDoctor = _context.Appointments
-                .Include(a => a.Doctor)
-                .Include(a => a.Patient)
-                .Where(a => a.DoctorId == userId);
-
-            var appointments = await asPatient.Union(asDoctor)
-                .OrderByDescending(a => a.ScheduledAt)
-                .ToListAsync();
+            var appointments = await _telemedicineService.GetUserAppointmentsAsync(userId);
             return View(appointments);
         }
 
         // Video consultation room
         public async Task<IActionResult> Room(int id)
         {
-            var appt = await _context.Appointments
-                .Include(a => a.Patient)
-                .Include(a => a.Doctor)
-                .FirstOrDefaultAsync(a => a.Id == id);
-
+            var appt = await _telemedicineService.GetAppointmentByIdAsync(id);
             if (appt == null) return NotFound();
 
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return RedirectToAction("Login", "Account");
 
             // Only participants may open the room
             if (appt.PatientId != userId && appt.DoctorId != userId && !User.IsInRole("Administrator"))
                 return Forbid();
 
-            // Ensure VideoRoomId exists
-            if (string.IsNullOrEmpty(appt.VideoRoomId))
-            {
-                appt.VideoRoomId = Guid.NewGuid().ToString();
-                appt.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
+            await _telemedicineService.EnsureVideoRoomExistsAsync(appt);
 
             ViewBag.Appointment = appt;
             return View();

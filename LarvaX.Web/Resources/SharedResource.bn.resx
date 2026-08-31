@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Navigation -->
+  <data name="Nav_Home" xml:space="preserve"><value>হোম</value></data>
+  <data name="Nav_ReportHazard" xml:space="preserve"><value>বিপদ রিপোর্ট করুন</value></data>
+  <data name="Nav_CommunityReports" xml:space="preserve"><value>সম্প্রদায়ের রিপোর্ট</value></data>
+  <data name="Nav_HealthTools" xml:space="preserve"><value>স্বাস্থ্য সরঞ্জাম</value></data>
+  <data name="Nav_SymptomChecker" xml:space="preserve"><value>AI লক্ষণ পরীক্ষক</value></data>
+  <data name="Nav_FirstAid" xml:space="preserve"><value>প্রাথমিক চিকিৎসা গাইড</value></data>
+  <data name="Nav_Chatbot" xml:space="preserve"><value>DenAI চ্যাটবট</value></data>
+  <data name="Nav_Education" xml:space="preserve"><value>সচেতনতা ও শিক্ষা</value></data>
+  <data name="Nav_FluidManagement" xml:space="preserve"><value>তরল ব্যবস্থাপনা</value></data>
+  <data name="Nav_BloodDonorNetwork" xml:space="preserve"><value>রক্তদাতা নেটওয়ার্ক</value></data>
+  <data name="Nav_IcuBedFinder" xml:space="preserve"><value>আইসিইউ বেড খোঁজুন</value></data>
+  <data name="Nav_AdminConsole" xml:space="preserve"><value>অ্যাডমিন কনসোল</value></data>
+  <data name="Nav_GovernmentDashboard" xml:space="preserve"><value>সরকারি ড্যাশবোর্ড</value></data>
+
+  <!-- Telemedicine -->
+  <data name="Tele_FindDoctor" xml:space="preserve"><value>ডাক্তার খুঁজুন</value></data>
+  <data name="Tele_BookConsultation" xml:space="preserve"><value>পরামর্শ বুক করুন</value></data>
+  <data name="Tele_MyAppointments" xml:space="preserve"><value>আমার অ্যাপয়েন্টমেন্ট</value></data>
+  <data name="Tele_VideoRoom" xml:space="preserve"><value>ভিডিও পরামর্শ কক্ষ</value></data>
+  <data name="Tele_Specialty" xml:space="preserve"><value>বিশেষত্ব</value></data>
+  <data name="Tele_AllSpecialties" xml:space="preserve"><value>সব বিশেষত্ব</value></data>
+
+  <!-- Lab -->
+  <data name="Lab_AvailableTests" xml:space="preserve"><value>উপলব্ধ ল্যাব পরীক্ষা</value></data>
+  <data name="Lab_BookTest" xml:space="preserve"><value>পরীক্ষা বুক করুন</value></data>
+  <data name="Lab_MyBookings" xml:space="preserve"><value>আমার ল্যাব বুকিং</value></data>
+  <data name="Lab_ManageBookings" xml:space="preserve"><value>বুকিং পরিচালনা করুন</value></data>
+  <data name="Lab_UploadResult" xml:space="preserve"><value>ফলাফল আপলোড করুন</value></data>
+  <data name="Lab_Status_Pending" xml:space="preserve"><value>অপেক্ষমাণ</value></data>
+  <data name="Lab_Status_SampleCollected" xml:space="preserve"><value>নমুনা সংগৃহীত</value></data>
+  <data name="Lab_Status_Completed" xml:space="preserve"><value>সম্পন্ন</value></data>
+  <data name="Lab_ViewResult" xml:space="preserve"><value>ফলাফল দেখুন</value></data>
+  <data name="Lab_NotAvailable" xml:space="preserve"><value>এখনও পাওয়া যায়নি</value></data>
+
+  <!-- Reports / Risk -->
+  <data name="Risk_HighAlert" xml:space="preserve"><value>উচ্চ সতর্কতা</value></data>
+  <data name="Risk_MediumAlert" xml:space="preserve"><value>মাঝারি ঝুঁকি</value></data>
+  <data name="Risk_LowAlert" xml:space="preserve"><value>কম ঝুঁকি</value></data>
+  <data name="Risk_Confidence_High" xml:space="preserve"><value>মডেল আস্থা: উচ্চ</value></data>
+  <data name="Risk_Confidence_Medium" xml:space="preserve"><value>মডেল আস্থা: মাঝারি</value></data>
+  <data name="Risk_Confidence_Low" xml:space="preserve"><value>মডেল আস্থা: কম</value></data>
+
+  <!-- Donors -->
+  <data name="Donor_Search" xml:space="preserve"><value>রক্তদাতা খুঁজুন</value></data>
+  <data name="Donor_Register" xml:space="preserve"><value>রক্তদাতা হিসেবে নিবন্ধন করুন</value></data>
+  <data name="Donor_BloodGroup" xml:space="preserve"><value>রক্তের গ্রুপ</value></data>
+  <data name="Donor_Location" xml:space="preserve"><value>অবস্থান</value></data>
+  <data name="Donor_LastActive" xml:space="preserve"><value>সর্বশেষ সক্রিয়</value></data>
+
+  <!-- Symptom Checker -->
+  <data name="Symptom_Title" xml:space="preserve"><value>AI লক্ষণ পরীক্ষক</value></data>
+  <data name="Symptom_Assess" xml:space="preserve"><value>লক্ষণ মূল্যায়ন করুন</value></data>
+  <data name="Symptom_Emergency" xml:space="preserve"><value>জরুরি — তাৎক্ষণিক চিকিৎসা নিন</value></data>
+  <data name="Symptom_High" xml:space="preserve"><value>উচ্চ ঝুঁকি</value></data>
+  <data name="Symptom_Medium" xml:space="preserve"><value>মাঝারি ঝুঁকি</value></data>
+  <data name="Symptom_Low" xml:space="preserve"><value>কম ঝুঁকি</value></data>
+
+  <!-- Auth -->
+  <data name="Auth_Login" xml:space="preserve"><value>লগইন</value></data>
+  <data name="Auth_Register" xml:space="preserve"><value>নিবন্ধন</value></data>
+  <data name="Auth_Logout" xml:space="preserve"><value>লগআউট</value></data>
+  <data name="Auth_PendingApproval" xml:space="preserve"><value>অনুমোদনের অপেক্ষায়</value></data>
+  <data name="Auth_FullName" xml:space="preserve"><value>পূর্ণ নাম</value></data>
+  <data name="Auth_Email" xml:space="preserve"><value>ইমেইল</value></data>
+  <data name="Auth_Password" xml:space="preserve"><value>পাসওয়ার্ড</value></data>
+  <data name="Auth_Role" xml:space="preserve"><value>ভূমিকা</value></data>
+  <data name="Auth_PreferredLanguage" xml:space="preserve"><value>পছন্দের ভাষা</value></data>
+
+  <!-- Common -->
+  <data name="Common_Submit" xml:space="preserve"><value>জমা দিন</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>বাতিল করুন</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>সংরক্ষণ করুন</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>ফিরে যান</value></data>
+  <data name="Common_Loading" xml:space="preserve"><value>লোড হচ্ছে...</value></data>
+  <data name="Common_NoRecords" xml:space="preserve"><value>কোনো রেকর্ড পাওয়া যায়নি।</value></data>
+  <data name="Common_Success" xml:space="preserve"><value>সফল</value></data>
+  <data name="Common_Error" xml:space="preserve"><value>একটি ত্রুটি ঘটেছে। আবার চেষ্টা করুন।</value></data>
+
+  <!-- ICU -->
+  <data name="Icu_Title" xml:space="preserve"><value>আইসিইউ বেড খোঁজুন</value></data>
+  <data name="Icu_City" xml:space="preserve"><value>শহর</value></data>
+  <data name="Icu_Hospital" xml:space="preserve"><value>হাসপাতাল</value></data>
+  <data name="Icu_DailyCost" xml:space="preserve"><value>আনু. দৈনিক খরচ (BDT)</value></data>
+  <data name="Icu_LastUpdated" xml:space="preserve"><value>সর্বশেষ আপডেট</value></data>
+  <data name="Icu_Contact" xml:space="preserve"><value>যোগাযোগ</value></data>
+</root>

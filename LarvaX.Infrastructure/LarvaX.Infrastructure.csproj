@@ -1,7 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\LarvaX.Core\LarvaX.Core.csproj" />
+    <ProjectReference Include="..\LarvaX.Application\LarvaX.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

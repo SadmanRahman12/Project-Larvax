@@ -12,5 +12,7 @@ namespace LarvaX.Core.Entities
         public bool IsApproved { get; set; } = false;
         
         public string? RejectionReason { get; set; }
+
+        public string? Specialty { get; set; }
     }
 }

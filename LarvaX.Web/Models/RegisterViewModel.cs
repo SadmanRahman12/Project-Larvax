@@ -21,5 +21,7 @@ namespace LarvaX.Web.Models
 
         [Required]
         public string PreferredLanguage { get; set; } = "en";
+
+        public string? Specialty { get; set; }
     }
 }

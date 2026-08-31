@@ -1,0 +1,27 @@
+@model IEnumerable<LarvaX.Core.Entities.LabTest>
+
+@{
+    ViewData["Title"] = "Lab Tests";
+}
+
+<div class="container mt-4">
+    <h2>Available Lab Tests</h2>
+    
+    <div class="row mt-4">
+        @foreach (var test in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">@test.Name</h5>
+                        <p class="card-text">@test.Description</p>
+                        <h6 class="text-success fw-bold">৳@test.Cost.ToString("N2")</h6>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a asp-action="Book" asp-route-id="@test.Id" class="btn btn-outline-primary w-100">Book Now</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -2,28 +2,66 @@
     ViewData["Title"] = "Dengue Surveillance & Health Intelligence";
 }
 
-<!-- Hero Risk Status Section -->
-<div class="p-4 p-md-5 mb-4 rounded-3 text-white bg-dark shadow position-relative overflow-hidden" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-    <div class="col-md-9 px-0">
-        <div class="d-inline-flex align-items-center gap-2 mb-2">
-            <span class="badge bg-danger fs-6 px-3 py-2 animate-pulse"><i class="bi bi-exclamation-triangle-fill me-1"></i> HIGH RISK ZONE</span>
-            <span class="badge bg-light text-dark small"><i class="bi bi-shield-check me-1"></i>Model confidence: High — based on 342 reports</span>
+<!-- Interactive Live Map Section -->
+<div class="card border-0 shadow-sm mb-4 overflow-hidden rounded-3">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-map-fill me-2 text-warning"></i>Live Risk Map</h5>
+        <div class="d-flex gap-2">
+            <span class="badge bg-danger"><i class="bi bi-circle-fill me-1"></i>High Risk</span>
+            <span class="badge bg-warning text-dark"><i class="bi bi-circle-fill me-1"></i>Medium Risk</span>
+            <span class="badge bg-success"><i class="bi bi-circle-fill me-1"></i>Low Risk</span>
         </div>
-        <h1 class="display-5 fw-bold">Dhaka Metropolitan Area</h1>
-        <p class="lead my-3">
-            Active dengue surveillance indicates elevated mosquito breeding activity.
-            <strong>Advice today:</strong> Inspect rooftop pots and empty all stagnant water containers.
-        </p>
-        <div class="d-flex flex-wrap gap-2 pt-2">
-            <a asp-controller="Reports" asp-action="Create" class="btn btn-warning btn-lg fw-bold text-dark">
-                <i class="bi bi-geo-alt-fill me-1"></i> Report a Breeding Site
-            </a>
-            <a asp-controller="Reports" asp-action="Index" class="btn btn-outline-light btn-lg">
-                <i class="bi bi-activity me-1"></i> View Live Reports
+    </div>
+    <div class="card-body p-0 position-relative">
+        <div id="riskMap" style="height: 400px; width: 100%; z-index: 1;"></div>
+        <div class="position-absolute bottom-0 start-0 m-3 z-3">
+            <a asp-controller="Reports" asp-action="Create" class="btn btn-warning shadow-sm fw-bold">
+                <i class="bi bi-geo-alt-fill me-1"></i> Report Hazard
             </a>
         </div>
     </div>
 </div>
+
+<!-- Map Dependencies -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Initialize map centered on Bangladesh
+        var map = L.map('riskMap').setView([23.6850, 90.3563], 7);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Fetch live data
+        fetch('/Home/MapData')
+            .then(response => response.json())
+            .then(data => {
+                let bounds = [];
+                data.forEach(zone => {
+                    let color = zone.riskLevel === 'High' ? '#dc3545' : (zone.riskLevel === 'Medium' ? '#ffc107' : '#198754');
+                    
+                    let circle = L.circle([zone.lat, zone.lng], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.4,
+                        radius: zone.radius
+                    }).addTo(map);
+
+                    circle.bindPopup(`<b>${zone.region}</b><br>Risk: <span class="badge" style="background-color:${color}">${zone.riskLevel}</span><br>Confidence: ${(zone.confidence * 100).toFixed(0)}%`);
+                    bounds.push([zone.lat, zone.lng]);
+                });
+
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            })
+            .catch(err => console.error("Error loading map data:", err));
+    });
+</script>
 
 <!-- Surveillance Quick Stats -->
 <div class="row g-4 mb-4">

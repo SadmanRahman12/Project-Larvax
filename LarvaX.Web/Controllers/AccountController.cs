@@ -45,6 +45,7 @@ namespace LarvaX.Web.Controllers
                 FullName = model.FullName,
                 PreferredLanguage = model.PreferredLanguage ?? "en",
                 ModePreference = isCitizen ? "Citizen" : "Professional",
+                Specialty = model.Specialty,
                 IsApproved = isCitizen, // Instant activation for Citizen, false for professional roles
                 EmailConfirmed = true
             };

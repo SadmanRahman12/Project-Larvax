@@ -11,6 +11,9 @@ namespace LarvaX.Infrastructure.Data
         public DbSet<Alert> Alerts { get; set; } = null!;
         public DbSet<Appointment> Appointments { get; set; } = null!;
         public DbSet<Donor> Donors { get; set; } = null!;
+        public DbSet<LabTest> LabTests { get; set; } = null!;
+        public DbSet<LabBooking> LabBookings { get; set; } = null!;
+        public DbSet<PatientRecord> PatientRecords { get; set; } = null!;
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

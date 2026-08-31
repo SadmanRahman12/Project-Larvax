@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Navigation -->
+  <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
+  <data name="Nav_ReportHazard" xml:space="preserve"><value>Report Hazard</value></data>
+  <data name="Nav_CommunityReports" xml:space="preserve"><value>Community Reports</value></data>
+  <data name="Nav_HealthTools" xml:space="preserve"><value>Health Tools</value></data>
+  <data name="Nav_SymptomChecker" xml:space="preserve"><value>AI Symptom Checker</value></data>
+  <data name="Nav_FirstAid" xml:space="preserve"><value>First Aid Guide</value></data>
+  <data name="Nav_Chatbot" xml:space="preserve"><value>DenAI Chatbot</value></data>
+  <data name="Nav_Education" xml:space="preserve"><value>Awareness &amp; Education</value></data>
+  <data name="Nav_FluidManagement" xml:space="preserve"><value>Fluid Management</value></data>
+  <data name="Nav_BloodDonorNetwork" xml:space="preserve"><value>Blood Donor Network</value></data>
+  <data name="Nav_IcuBedFinder" xml:space="preserve"><value>ICU Bed Finder</value></data>
+  <data name="Nav_AdminConsole" xml:space="preserve"><value>Admin Console</value></data>
+  <data name="Nav_GovernmentDashboard" xml:space="preserve"><value>Government Dashboard</value></data>
+
+  <!-- Telemedicine -->
+  <data name="Tele_FindDoctor" xml:space="preserve"><value>Find a Doctor</value></data>
+  <data name="Tele_BookConsultation" xml:space="preserve"><value>Book Consultation</value></data>
+  <data name="Tele_MyAppointments" xml:space="preserve"><value>My Appointments</value></data>
+  <data name="Tele_VideoRoom" xml:space="preserve"><value>Video Consultation Room</value></data>
+  <data name="Tele_Specialty" xml:space="preserve"><value>Specialty</value></data>
+  <data name="Tele_AllSpecialties" xml:space="preserve"><value>All Specialties</value></data>
+
+  <!-- Lab -->
+  <data name="Lab_AvailableTests" xml:space="preserve"><value>Available Lab Tests</value></data>
+  <data name="Lab_BookTest" xml:space="preserve"><value>Book Test</value></data>
+  <data name="Lab_MyBookings" xml:space="preserve"><value>My Lab Bookings</value></data>
+  <data name="Lab_ManageBookings" xml:space="preserve"><value>Manage Bookings</value></data>
+  <data name="Lab_UploadResult" xml:space="preserve"><value>Upload Result</value></data>
+  <data name="Lab_Status_Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Lab_Status_SampleCollected" xml:space="preserve"><value>Sample Collected</value></data>
+  <data name="Lab_Status_Completed" xml:space="preserve"><value>Completed</value></data>
+  <data name="Lab_ViewResult" xml:space="preserve"><value>View Result</value></data>
+  <data name="Lab_NotAvailable" xml:space="preserve"><value>Not available yet</value></data>
+
+  <!-- Reports / Risk -->
+  <data name="Risk_HighAlert" xml:space="preserve"><value>HIGH ALERT</value></data>
+  <data name="Risk_MediumAlert" xml:space="preserve"><value>MODERATE RISK</value></data>
+  <data name="Risk_LowAlert" xml:space="preserve"><value>LOW RISK</value></data>
+  <data name="Risk_Confidence_High" xml:space="preserve"><value>Model confidence: High</value></data>
+  <data name="Risk_Confidence_Medium" xml:space="preserve"><value>Model confidence: Medium</value></data>
+  <data name="Risk_Confidence_Low" xml:space="preserve"><value>Model confidence: Low</value></data>
+
+  <!-- Donors -->
+  <data name="Donor_Search" xml:space="preserve"><value>Find Blood Donors</value></data>
+  <data name="Donor_Register" xml:space="preserve"><value>Register as Donor</value></data>
+  <data name="Donor_BloodGroup" xml:space="preserve"><value>Blood Group</value></data>
+  <data name="Donor_Location" xml:space="preserve"><value>Location</value></data>
+  <data name="Donor_LastActive" xml:space="preserve"><value>Last Active</value></data>
+
+  <!-- Symptom Checker -->
+  <data name="Symptom_Title" xml:space="preserve"><value>AI Symptom Checker</value></data>
+  <data name="Symptom_Assess" xml:space="preserve"><value>Assess Symptoms</value></data>
+  <data name="Symptom_Emergency" xml:space="preserve"><value>Emergency — Seek Immediate Care</value></data>
+  <data name="Symptom_High" xml:space="preserve"><value>High Risk</value></data>
+  <data name="Symptom_Medium" xml:space="preserve"><value>Moderate Risk</value></data>
+  <data name="Symptom_Low" xml:space="preserve"><value>Low Risk</value></data>
+
+  <!-- Auth -->
+  <data name="Auth_Login" xml:space="preserve"><value>Login</value></data>
+  <data name="Auth_Register" xml:space="preserve"><value>Register</value></data>
+  <data name="Auth_Logout" xml:space="preserve"><value>Logout</value></data>
+  <data name="Auth_PendingApproval" xml:space="preserve"><value>Pending Approval</value></data>
+  <data name="Auth_FullName" xml:space="preserve"><value>Full Name</value></data>
+  <data name="Auth_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Auth_Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Auth_Role" xml:space="preserve"><value>Role</value></data>
+  <data name="Auth_PreferredLanguage" xml:space="preserve"><value>Preferred Language</value></data>
+
+  <!-- Common -->
+  <data name="Common_Submit" xml:space="preserve"><value>Submit</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Common_Loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="Common_NoRecords" xml:space="preserve"><value>No records found.</value></data>
+  <data name="Common_Success" xml:space="preserve"><value>Success</value></data>
+  <data name="Common_Error" xml:space="preserve"><value>An error occurred. Please try again.</value></data>
+
+  <!-- ICU -->
+  <data name="Icu_Title" xml:space="preserve"><value>ICU Bed Finder</value></data>
+  <data name="Icu_City" xml:space="preserve"><value>City</value></data>
+  <data name="Icu_Hospital" xml:space="preserve"><value>Hospital</value></data>
+  <data name="Icu_DailyCost" xml:space="preserve"><value>Est. Daily Cost (BDT)</value></data>
+  <data name="Icu_LastUpdated" xml:space="preserve"><value>Last Updated</value></data>
+  <data name="Icu_Contact" xml:space="preserve"><value>Contact</value></data>
+</root>

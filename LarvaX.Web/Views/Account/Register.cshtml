@@ -56,6 +56,12 @@
                         </select>
                     </div>
 
+                    <div class="mb-3" id="specialtyContainer" style="display: none;">
+                        <label asp-for="Specialty" class="form-label fw-semibold">Specialty (For Doctors)</label>
+                        <input asp-for="Specialty" class="form-control" placeholder="e.g. Cardiologist, General Physician" />
+                        <span asp-validation-for="Specialty" class="text-danger small"></span>
+                    </div>
+
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Complete Registration</button>
                 </form>
 
@@ -66,3 +72,23 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var roleSelect = document.getElementById("Role");
+            var specialtyContainer = document.getElementById("specialtyContainer");
+
+            function toggleSpecialty() {
+                if (roleSelect.value === "Doctor") {
+                    specialtyContainer.style.display = "block";
+                } else {
+                    specialtyContainer.style.display = "none";
+                }
+            }
+
+            roleSelect.addEventListener("change", toggleSpecialty);
+            toggleSpecialty(); // initial check
+        });
+    </script>
+}
