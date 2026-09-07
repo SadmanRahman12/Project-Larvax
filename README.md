@@ -14,7 +14,7 @@ The project is built on **.NET 10** following **Clean / Onion Architecture** pri
 Project-Larvax/
 ├── LarvaX.Core/           # Domain Entities, Enums, and Core Abstractions
 ├── LarvaX.Application/    # Business Logic, Decision Support, Services & Interfaces
-├── LarvaX.Infrastructure/ # EF Core DbContext, Migrations, QuestPDF, External Services
+├── LarvaX.Infrastructure/ # EF Core DbContext, PostgreSQL Migrations, QuestPDF, External Services
 ├── LarvaX.Web/            # ASP.NET Core MVC Presentation, SignalR Hubs, Hangfire Jobs
 └── LarvaX.Tests/          # xUnit Test Suite (Unit tests with In-Memory EF Core)
 ```
@@ -24,11 +24,12 @@ Project-Larvax/
 ## 💻 Tech Stack
 
 * **Framework & Runtime**: .NET 10 (`net10.0`), C# 13, ASP.NET Core MVC
-* **Database & ORM**: Microsoft SQL Server LocalDB (`(localdb)\MSSQLLocalDB`), Entity Framework Core 10.0
+* **Database & ORM**: PostgreSQL 15+ / Supabase PostgreSQL, Npgsql Entity Framework Core Provider 10.0
 * **Authentication & Authorization**: ASP.NET Core Identity with Role-Based Access Control
 * **Real-time Communication**: ASP.NET Core SignalR + WebRTC signaling
-* **Scheduled Jobs**: Hangfire (hourly risk recalculation and alert dispatching)
+* **Scheduled Jobs**: Hangfire (with PostgreSQL storage via `Hangfire.PostgreSql`)
 * **Document Generation**: QuestPDF
+* **Containerization**: Multi-stage Dockerfile (targets `mcr.microsoft.com/dotnet/aspnet:10.0`)
 * **Frontend**: Bootstrap 5, Bootstrap Icons, Leaflet.js
 * **Testing**: xUnit, EF Core In-Memory Database
 
@@ -41,10 +42,10 @@ Before setting up the project locally, ensure the following software is installe
 | Software / Tool | Required Version | Purpose / Notes |
 |---|---|---|
 | **[.NET SDK](https://dotnet.microsoft.com/download)** | **.NET 10.0 SDK** | Builds and runs all projects (`net10.0`). |
-| **Microsoft SQL Server LocalDB** | 2019 or later | Required database engine (`(localdb)\MSSQLLocalDB`). Included with Visual Studio (*.NET desktop development* or *ASP.NET and web development* workload) or available as a standalone component via the SQL Server Express installer (choose LocalDB). |
+| **PostgreSQL** *(or [Supabase](https://supabase.com))* | v15 or later | Relational database. You can use a free cloud PostgreSQL instance on Supabase or run a local PostgreSQL service. |
 | **[Git](https://git-scm.com/)** | Latest | Version control. |
-| **IDE / Code Editor** *(Any)* | | **Visual Studio 2026 / 2022** (recommended on Windows), **Visual Studio Code** (with C# Dev Kit extension), or **JetBrains Rider**. |
-| **[SSMS](https://learn.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms)** *(Optional)* | v19 / v20 | Optional GUI tool for viewing and querying data. Connect to Server name `(localdb)\MSSQLLocalDB` with Windows Authentication. |
+| **IDE / Code Editor** *(Any)* | | **Visual Studio 2026 / 2022**, **Visual Studio Code** (with C# Dev Kit), or **JetBrains Rider**. |
+| **Database GUI** *(Optional)* | | **Supabase Table Editor** (web), **[pgAdmin 4](https://www.pgadmin.org/)**, or **[DBeaver](https://dbeaver.io/)**. |
 
 ---
 
@@ -64,15 +65,34 @@ dotnet restore
 dotnet build
 ```
 
-### 3. Apply Database Migrations
-Create and configure the local database (`LarvaXDb`) in SQL Server LocalDB by applying existing migrations:
+### 3. Configure Database Connection
+Configure your PostgreSQL connection string for local development without committing sensitive passwords to Git.
+
+**Option A (Recommended): Use .NET User Secrets**
+```powershell
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=<YOUR_HOST>;Port=5432;Database=postgres;Username=postgres;Password=<YOUR_PASSWORD>" --project LarvaX.Web
+```
+
+**Option B: Local PostgreSQL in `appsettings.Development.json`**
+Edit `LarvaX.Web/appsettings.Development.json` (or use local PostgreSQL defaults):
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=larvax;Username=postgres;Password=postgres"
+  }
+}
+```
+
+### 4. Apply Database Migrations
+Create and configure the database schema by applying the clean PostgreSQL migration:
 ```powershell
 dotnet ef database update --project LarvaX.Infrastructure --startup-project LarvaX.Web
 ```
+*(Note: The application is also configured to automatically apply pending migrations on startup).*
 
 ---
 
-## 🏃 Running the Application
+## 🏃 Running the Application Locally
 
 ### Start the Web Server
 ```powershell
