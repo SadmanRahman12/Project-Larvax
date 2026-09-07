@@ -81,21 +81,15 @@ namespace LarvaX.Web.Controllers
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return RedirectToAction("Login", "Account");
 
-            // EF Core requires both sides of a set operation to have the same Include calls.
-            // Include both navigations on both queries so Union can be translated to SQL.
             var asPatient = _context.Appointments
                 .Include(a => a.Doctor)
-                .Include(a => a.Patient)
                 .Where(a => a.PatientId == userId);
 
             var asDoctor = _context.Appointments
-                .Include(a => a.Doctor)
                 .Include(a => a.Patient)
                 .Where(a => a.DoctorId == userId);
 
-            var appointments = await asPatient.Union(asDoctor)
-                .OrderByDescending(a => a.ScheduledAt)
-                .ToListAsync();
+            var appointments = await asPatient.Union(asDoctor).OrderByDescending(a => a.ScheduledAt).ToListAsync();
             return View(appointments);
         }
 
