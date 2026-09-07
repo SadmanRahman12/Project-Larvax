@@ -24,7 +24,7 @@ Project-Larvax/
 ## 💻 Tech Stack
 
 * **Framework & Runtime**: .NET 10 (`net10.0`), C# 13, ASP.NET Core MVC
-* **Database & ORM**: Microsoft SQL Server (LocalDB / Express), Entity Framework Core 10.0
+* **Database & ORM**: Microsoft SQL Server LocalDB (`(localdb)\MSSQLLocalDB`), Entity Framework Core 10.0
 * **Authentication & Authorization**: ASP.NET Core Identity with Role-Based Access Control
 * **Real-time Communication**: ASP.NET Core SignalR + WebRTC signaling
 * **Scheduled Jobs**: Hangfire (hourly risk recalculation and alert dispatching)
@@ -41,10 +41,10 @@ Before setting up the project locally, ensure the following software is installe
 | Software / Tool | Required Version | Purpose / Notes |
 |---|---|---|
 | **[.NET SDK](https://dotnet.microsoft.com/download)** | **.NET 10.0 SDK** | Builds and runs all projects (`net10.0`). |
-| **Microsoft SQL Server LocalDB** | 2019 or later | Included automatically with Visual Studio (under *.NET desktop development* or *ASP.NET and web development* workload), or via [SQL Server Express](https://www.microsoft.com/sql-server/sql-server-downloads). |
+| **Microsoft SQL Server LocalDB** | 2019 or later | Required database engine (`(localdb)\MSSQLLocalDB`). Included with Visual Studio (*.NET desktop development* or *ASP.NET and web development* workload) or available as a standalone component via the SQL Server Express installer (choose LocalDB). |
 | **[Git](https://git-scm.com/)** | Latest | Version control. |
 | **IDE / Code Editor** *(Any)* | | **Visual Studio 2026 / 2022** (recommended on Windows), **Visual Studio Code** (with C# Dev Kit extension), or **JetBrains Rider**. |
-| **[SSMS](https://learn.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms)** *(Optional)* | v19 / v20 | Optional GUI tool for directly viewing and querying SQL Server tables. |
+| **[SSMS](https://learn.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms)** *(Optional)* | v19 / v20 | Optional GUI tool for viewing and querying data. Connect to Server name `(localdb)\MSSQLLocalDB` with Windows Authentication. |
 
 ---
 
@@ -65,7 +65,7 @@ dotnet build
 ```
 
 ### 3. Apply Database Migrations
-Create and configure the local SQL Server database (`LarvaXDb`) by applying existing migrations:
+Create and configure the local database (`LarvaXDb`) in SQL Server LocalDB by applying existing migrations:
 ```powershell
 dotnet ef database update --project LarvaX.Infrastructure --startup-project LarvaX.Web
 ```
