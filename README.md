@@ -66,22 +66,36 @@ dotnet build
 ```
 
 ### 3. Configure Database Connection
-Configure your PostgreSQL connection string for local development without committing sensitive passwords to Git.
 
-**Option A (Recommended): Use .NET User Secrets**
+The project uses a two-tier database strategy driven by ASP.NET Core's configuration priority:
+
+| Priority | Config Source                                                 | Used When                                        |
+| -------- | ------------------------------------------------------------- | ------------------------------------------------ |
+| Highest  | Environment Variable (`ConnectionStrings__DefaultConnection`) | Render (production) — Supabase                   |
+| Middle   | .NET User Secrets                                             | Developer explicitly opts in to Supabase locally |
+| Lowest   | `appsettings.json`                                            | Default — local PostgreSQL server                |
+
+#### Default: Local PostgreSQL (no setup required)
+
+`appsettings.json` is pre-configured with a local PostgreSQL connection string:
+```
+Host=localhost;Port=5432;Database=larvax;Username=postgres;Password=postgres
+```
+As long as no User Secrets override is active, the app connects to your **local PostgreSQL** server automatically.
+
+#### Switching to Supabase (for local testing / remote data management)
+
+To connect to the Supabase managed database during local development, set the connection string via .NET User Secrets:
 ```powershell
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=<YOUR_HOST>;Port=5432;Database=postgres;Username=postgres;Password=<YOUR_PASSWORD>" --project LarvaX.Web
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=<SUPABASE_HOST>.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.<PROJECT_REF>;Password=<PASSWORD>;SSL Mode=Require;Trust Server Certificate=true" --project LarvaX.Web
 ```
 
-**Option B: Local PostgreSQL in `appsettings.Development.json`**
-Edit `LarvaX.Web/appsettings.Development.json` (or use local PostgreSQL defaults):
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=larvax;Username=postgres;Password=postgres"
-  }
-}
+To switch back to local PostgreSQL, remove the User Secret:
+```powershell
+dotnet user-secrets remove "ConnectionStrings:DefaultConnection" --project LarvaX.Web
 ```
+
+> **Note:** User Secrets are stored outside the repository and are never committed to Git.
 
 ### 4. Apply Database Migrations
 Create and configure the database schema by applying the clean PostgreSQL migration:
