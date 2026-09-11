@@ -22,7 +22,7 @@ Project-Larvax/
 ## 💻 Tech Stack
 
 - **Framework & Runtime:** .NET 10 (`net10.0`), C# 13, ASP.NET Core MVC
-- **Database:** PostgreSQL 15+ / Supabase PostgreSQL via EF Core (`Npgsql.EntityFrameworkCore.PostgreSQL`)
+- **Database:** PostgreSQL 18+ / Supabase PostgreSQL via EF Core (`Npgsql.EntityFrameworkCore.PostgreSQL`)
 - **Authentication:** ASP.NET Core Identity (Role-Based Access Control)
 - **Real-time Communication:** SignalR, WebRTC signaling
 - **Scheduled Jobs:** Hangfire with PostgreSQL storage
@@ -36,7 +36,7 @@ Project-Larvax/
 ## 📋 Prerequisites
 
 - **[.NET 10.0 SDK](https://dotnet.microsoft.com/download)**
-- **[PostgreSQL 15+](https://www.postgresql.org/)** or **[Supabase](https://supabase.com/)**
+- **[PostgreSQL 18+](https://www.postgresql.org/)** or **[Supabase](https://supabase.com/)**
 
 ---
 
