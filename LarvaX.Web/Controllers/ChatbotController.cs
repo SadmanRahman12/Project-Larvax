@@ -1,4 +1,4 @@
-using LarvaX.Application.Services;
+using LarvaX.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LarvaX.Web.Controllers

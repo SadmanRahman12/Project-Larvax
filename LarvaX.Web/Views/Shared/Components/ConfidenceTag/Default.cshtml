@@ -1,0 +1,4 @@
+@model LarvaX.Web.ViewComponents.ConfidenceTagViewModel
+<small class="text-muted fst-italic @(Model.IsEmergency ? "text-danger fw-semibold" : "")">
+    <i class="bi bi-info-circle me-1"></i>@Model.Note
+</small>

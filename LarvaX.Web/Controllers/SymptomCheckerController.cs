@@ -1,6 +1,7 @@
 using LarvaX.Application.Models;
 using LarvaX.Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace LarvaX.Web.Controllers
 {
@@ -34,7 +35,8 @@ namespace LarvaX.Web.Controllers
                 AbdominalPain = answers.AbdominalPain
             };
 
-            var assessment = _symptomCheckerService.Assess(input);
+            string lang = CultureInfo.CurrentUICulture.Name == "bn" ? "bn" : "en";
+            var assessment = _symptomCheckerService.Assess(input, lang);
 
             ViewBag.RiskLevel = assessment.RiskLevel;
             ViewBag.Advice = assessment.Advice;

@@ -26,16 +26,18 @@ public class HomeController : Controller
     public async Task<IActionResult> MapData()
     {
         var zones = await _context.RiskZones.ToListAsync();
-        
+
         var mapData = zones.Select(z => new
         {
             region = z.Region,
             riskLevel = z.RiskLevel.ToString(),
             confidence = z.ConfidenceScore,
-            // Assign dummy coordinates for known regions (in real app this would be in DB)
-            lat = z.Region == "Dhaka Metropolitan Area" ? 23.8103 : 23.6850,
-            lng = z.Region == "Dhaka Metropolitan Area" ? 90.4125 : 90.3563,
-            radius = z.RiskLevel == Core.Entities.RiskLevel.High ? 5000 : 3000
+            dataSufficiency = z.DataSufficiency.ToString(),
+            lastModelRun = z.LastModelRun.ToString("o"),
+            // Use real stored coordinates — populated by RiskCalculationJob (Gap 6 fix)
+            lat = z.Latitude,
+            lng = z.Longitude,
+            radius = z.RadiusMetres
         });
 
         return Json(mapData);

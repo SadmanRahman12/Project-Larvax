@@ -1,13 +1,10 @@
 using LarvaX.Core.Entities;
+using LarvaX.Core.Interfaces;
 
 namespace LarvaX.Application.Services
 {
-    public interface IReportService
-    {
-        ReportStatus DetermineNextStatus(ReportStatus currentStatus, ReportVerification verification);
-        bool CanTransition(ReportStatus currentStatus, ReportStatus targetStatus);
-    }
-
+    // IReportService is defined in LarvaX.Core.Interfaces — the correct Clean Architecture location.
+    // This class is the Application-layer implementation of that contract.
     public class ReportService : IReportService
     {
         public ReportStatus DetermineNextStatus(ReportStatus currentStatus, ReportVerification verification)

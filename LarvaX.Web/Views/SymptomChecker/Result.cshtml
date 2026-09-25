@@ -40,7 +40,9 @@
                     else { <text>🟢</text> }
                     Risk Level: @risk
                 </h2>
-                <small class="opacity-75">@ViewBag.ConfidenceNote</small>
+                <div class="mt-2">
+                    @await Component.InvokeAsync("ConfidenceTag", new { note = (string)(ViewBag.ConfidenceNote ?? ""), isEmergency = isEmergency })
+                </div>
             </div>
             <div class="card-body p-4">
                 <h5 class="fw-semibold"><i class="bi bi-clipboard2-pulse me-2 text-primary"></i>What This Means</h5>

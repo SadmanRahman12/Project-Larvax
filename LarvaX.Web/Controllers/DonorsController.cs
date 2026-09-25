@@ -1,18 +1,26 @@
 using LarvaX.Core.Entities;
+using LarvaX.Core.Interfaces;
 using LarvaX.Infrastructure.Data;
 using LarvaX.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace LarvaX.Web.Controllers
 {
+    /// <summary>
+    /// Blood Donor Network controller.
+    /// Uses IDonorService (Gap 3 fix) for freshness/availability logic instead of inline DbContext queries.
+    /// </summary>
     public class DonorsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDonorService _donorService;
 
-        public DonorsController(ApplicationDbContext context)
+        public DonorsController(ApplicationDbContext context, IDonorService donorService)
         {
             _context = context;
+            _donorService = donorService;
         }
 
         [HttpGet]
@@ -35,6 +43,18 @@ namespace LarvaX.Web.Controllers
                 .Where(d => d.IsAvailable)
                 .OrderByDescending(d => d.LastConfirmedAvailable)
                 .ToListAsync();
+
+            // Determine current UI language for freshness labels
+            string lang = CultureInfo.CurrentUICulture.Name == "bn" ? "bn" : "en";
+
+            // Annotate each donor with freshness label and staleness flag via IDonorService
+            ViewBag.FreshnessLabels = donors.ToDictionary(
+                d => d.Id,
+                d => _donorService.GetFreshnessLabel(d.LastConfirmedAvailable, language: lang));
+
+            ViewBag.FreshnessFlags = donors.ToDictionary(
+                d => d.Id,
+                d => _donorService.IsConsideredFresh(d.LastConfirmedAvailable));
 
             ViewBag.SelectedBloodGroup = bloodGroup;
             ViewBag.SelectedLocation = location;

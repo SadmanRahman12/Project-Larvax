@@ -11,6 +11,9 @@ namespace LarvaX.Core.Entities
         // Professional roles require admin approval
         public bool IsApproved { get; set; } = false;
         
+        // Set to true when admin explicitly rejects the account — blocks login permanently
+        public bool IsRejected { get; set; } = false;
+        
         public string? RejectionReason { get; set; }
 
         public string? Specialty { get; set; }

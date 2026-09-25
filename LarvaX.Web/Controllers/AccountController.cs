@@ -105,7 +105,14 @@ namespace LarvaX.Web.Controllers
                 return View(model);
             }
 
-            // Check if professional account is approved
+            // Permanently rejected accounts cannot log in
+            if (user.IsRejected)
+            {
+                TempData["RejectedEmail"] = model.Email;
+                return RedirectToAction("AccountRejected");
+            }
+
+            // Check if professional account is pending approval
             if (!user.IsApproved)
             {
                 return RedirectToAction("PendingApproval");
@@ -142,6 +149,25 @@ namespace LarvaX.Web.Controllers
         [HttpGet]
         public IActionResult AccessDenied()
         {
+            return View();
+        }
+
+        /// <summary>
+        /// Shown when a rejected professional account attempts to log in.
+        /// The rejection reason stored by the admin is displayed.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> AccountRejected()
+        {
+            // Try to surface the rejection reason from the current attempted username cookie / temp data.
+            // Because the user is not signed in we look up by email stored in TempData if available.
+            string? reason = null;
+            if (TempData.TryGetValue("RejectedEmail", out var emailObj) && emailObj is string email)
+            {
+                var u = await _userManager.FindByEmailAsync(email);
+                reason = u?.RejectionReason;
+            }
+            ViewBag.RejectionReason = reason;
             return View();
         }
     }

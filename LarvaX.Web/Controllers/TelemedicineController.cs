@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LarvaX.Application.Services;
 using LarvaX.Web.Models;
@@ -6,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace LarvaX.Web.Controllers
 {
+    /// <summary>
+    /// Telemedicine portal — doctor browse is public; booking, appointments, and video room
+    /// require an authenticated user.
+    /// </summary>
+    [Authorize]
     public class TelemedicineController : Controller
     {
         private readonly ITelemedicineService _telemedicineService;
@@ -15,7 +21,9 @@ namespace LarvaX.Web.Controllers
             _telemedicineService = telemedicineService;
         }
 
-        // Browse doctors
+        // Browse doctors — intentionally public so anyone can see available doctors
+        // before deciding to register/log in.
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string? specialty = null)
         {
             var doctors = await _telemedicineService.GetAvailableDoctorsAsync(specialty);

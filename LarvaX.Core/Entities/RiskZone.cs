@@ -22,5 +22,13 @@ namespace LarvaX.Core.Entities
         public double ConfidenceScore { get; set; } // e.g. 0.0 to 1.0
         public DateTime LastModelRun { get; set; } = DateTime.UtcNow;
         public DataSufficiency DataSufficiency { get; set; } = DataSufficiency.Insufficient;
+        
+        // Geographic centre of this risk zone — used by the map API
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        
+        // Approximate radius in metres for the map circle overlay
+        public double RadiusMetres { get; set; } = 3000;
     }
 }
+

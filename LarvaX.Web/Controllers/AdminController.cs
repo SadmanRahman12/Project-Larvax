@@ -1,5 +1,6 @@
 using LarvaX.Application.Services;
 using LarvaX.Core.Entities;
+using LarvaX.Core.Interfaces;
 using LarvaX.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -66,19 +67,34 @@ namespace LarvaX.Web.Controllers
             if (user != null)
             {
                 user.RejectionReason = reason;
+                user.IsRejected = true;   // permanently blocks login — Gap 4 fix
+                user.IsApproved = false;
                 await _userManager.UpdateAsync(user);
-                TempData["SuccessMessage"] = $"User {user.FullName} rejected.";
+                TempData["SuccessMessage"] = $"User {user.FullName} rejected and blocked.";
             }
             return RedirectToAction(nameof(Approvals));
         }
 
-        public async Task<IActionResult> Reports()
+        public async Task<IActionResult> Reports(string? tab = "pending")
         {
-            var reports = await _context.Reports
-                .Include(r => r.User)
-                .Where(r => r.Verification == ReportVerification.Pending)
-                .OrderBy(r => r.CreatedAt)
-                .ToListAsync();
+            var query = _context.Reports.Include(r => r.User).AsQueryable();
+
+            if (tab == "under_review")
+            {
+                query = query.Where(r => r.Status == ReportStatus.UnderReview);
+            }
+            else if (tab == "resolved")
+            {
+                query = query.Where(r => r.Status == ReportStatus.Resolved);
+            }
+            else
+            {
+                tab = "pending";
+                query = query.Where(r => r.Verification == ReportVerification.Pending);
+            }
+
+            ViewBag.ActiveTab = tab;
+            var reports = await query.OrderByDescending(r => r.CreatedAt).ToListAsync();
             return View(reports);
         }
 
@@ -113,6 +129,25 @@ namespace LarvaX.Web.Controllers
                 TempData["SuccessMessage"] = $"Report #{id} marked as invalid.";
             }
             return RedirectToAction(nameof(Reports));
+        }
+
+        /// <summary>
+        /// Moves a verified (UnderReview) report to Resolved — completing the status lifecycle.
+        /// Fixes Gap 12: ReportStatus.UnderReview was never transitioned to Resolved.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResolveReport(int id)
+        {
+            var report = await _context.Reports.FindAsync(id);
+            if (report != null && _reportService.CanTransition(report.Status, ReportStatus.Resolved))
+            {
+                report.Status = ReportStatus.Resolved;
+                report.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Report #{id} marked as Resolved.";
+            }
+            return RedirectToAction(nameof(Reports), new { tab = "under_review" });
         }
     }
 }

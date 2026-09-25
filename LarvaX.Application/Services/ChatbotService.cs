@@ -1,17 +1,8 @@
+using LarvaX.Core.Interfaces;
+
 namespace LarvaX.Application.Services
 {
-    public class ChatbotResponse
-    {
-        public string Reply { get; set; } = string.Empty;
-        public bool IsEmergency { get; set; }
-        public string? EmergencyMessage { get; set; }
-    }
-
-    public interface IChatbotService
-    {
-        ChatbotResponse GetResponse(string message, string? language);
-    }
-
+    // IChatbotService and ChatbotResponse are defined in LarvaX.Core.Interfaces.
     public class ChatbotService : IChatbotService
     {
         private static readonly string[] EmergencyKeywords = {

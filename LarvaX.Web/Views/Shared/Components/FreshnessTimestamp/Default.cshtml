@@ -1,0 +1,4 @@
+@model LarvaX.Web.ViewComponents.FreshnessTimestampViewModel
+<span class="badge @(Model.IsFresh ? "bg-success" : "bg-secondary") bg-opacity-75 small">
+    <i class="bi bi-clock me-1"></i>@Model.Label
+</span>

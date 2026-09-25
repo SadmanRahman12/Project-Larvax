@@ -17,7 +17,7 @@ namespace LarvaX.Web.Controllers
             if (!validTypes.Contains(type?.ToLower()))
                 return RedirectToAction(nameof(Index));
 
-            return View(type?.ToLower());
+            return View("Guide", (object)(type?.ToLower() ?? "dengue"));
         }
     }
 }

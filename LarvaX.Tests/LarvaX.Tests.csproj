@@ -18,8 +18,8 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
-
   <ItemGroup>
+    <ProjectReference Include="..\LarvaX.Core\LarvaX.Core.csproj" />
     <ProjectReference Include="..\LarvaX.Application\LarvaX.Application.csproj" />
     <ProjectReference Include="..\LarvaX.Infrastructure\LarvaX.Infrastructure.csproj" />
     <ProjectReference Include="..\LarvaX.Web\LarvaX.Web.csproj" />

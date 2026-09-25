@@ -1,4 +1,5 @@
 using LarvaX.Application.Services;
+using LarvaX.Core.Interfaces;
 using Xunit;
 
 namespace LarvaX.Tests

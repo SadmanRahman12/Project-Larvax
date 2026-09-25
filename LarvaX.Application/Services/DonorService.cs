@@ -1,11 +1,8 @@
+using LarvaX.Core.Interfaces;
+
 namespace LarvaX.Application.Services
 {
-    public interface IDonorService
-    {
-        string GetFreshnessLabel(DateTime lastConfirmedUtc, DateTime? currentUtc = null, string language = "en");
-        bool IsConsideredFresh(DateTime lastConfirmedUtc, int maxDays = 30);
-    }
-
+    // IDonorService is defined in LarvaX.Core.Interfaces.
     public class DonorService : IDonorService
     {
         public string GetFreshnessLabel(DateTime lastConfirmedUtc, DateTime? currentUtc = null, string language = "en")

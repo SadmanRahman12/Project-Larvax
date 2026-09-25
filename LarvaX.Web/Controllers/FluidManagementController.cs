@@ -73,17 +73,11 @@ public class FluidManagementController : Controller
             };
 
             model.Schedule = _fluidService.GenerateOralPlan(parameters);
-            
-            // Re-calculate maintenance for the view
-            decimal maintenanceDaily = 0;
-            if (model.Weight <= 10m)
-                maintenanceDaily = model.Weight * 100m;
-            else if (model.Weight <= 20m)
-                maintenanceDaily = 1000m + 50m * (model.Weight - 10m);
-            else
-                maintenanceDaily = 1500m + 20m * (model.Weight - 20m);
-                
-            model.Total24HourVolume = maintenanceDaily + (model.ShockStatus ? 0 : 0) + (model.DeficitPercent * model.Weight * 10m);
+
+            // Derive the displayed 24-hour total directly from the plan the service produced.
+            // This correctly includes the shock bolus phase (when ShockStatus is true) and
+            // all subsequent maintenance-hour items, rather than re-computing inline.
+            model.Total24HourVolume = model.Schedule.Sum(item => item.VolumeMl);
         }
 
         return View(model);

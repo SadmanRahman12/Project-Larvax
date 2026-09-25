@@ -1,11 +1,12 @@
 @model IEnumerable<LarvaX.Core.Entities.Report>
 @{
-    ViewData["Title"] = "Report Verification - LarvaX Admin";
+    ViewData["Title"] = "Report Management - LarvaX Admin";
+    string activeTab = ViewBag.ActiveTab as string ?? "pending";
 }
 
 <div class="mb-4">
-    <h2 class="fw-bold"><i class="bi bi-shield-check text-primary me-2"></i>Report Verification Queue</h2>
-    <p class="text-muted">Review citizen-submitted breeding sites. Verify to escalate, or mark invalid.</p>
+    <h2 class="fw-bold"><i class="bi bi-shield-check text-primary me-2"></i>Report Lifecycle Management</h2>
+    <p class="text-muted">Review citizen-submitted breeding sites, verify reports, and track them through resolution.</p>
 </div>
 
 @if (TempData["SuccessMessage"] != null)
@@ -16,11 +17,32 @@
     </div>
 }
 
+<ul class="nav nav-pills mb-4 gap-2">
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "pending" ? "active" : "")" asp-action="Reports" asp-route-tab="pending">
+            <i class="bi bi-hourglass-split me-1"></i>Pending Verification
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "under_review" ? "active" : "")" asp-action="Reports" asp-route-tab="under_review">
+            <i class="bi bi-tools me-1"></i>Under Review / Active
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "resolved" ? "active" : "")" asp-action="Reports" asp-route-tab="resolved">
+            <i class="bi bi-check2-all me-1"></i>Resolved
+        </a>
+    </li>
+</ul>
+
 <div class="row row-cols-1 row-cols-md-2 g-4">
     @if (!Model.Any())
     {
         <div class="col-12 text-center py-5">
-            <h5 class="text-muted">No pending reports to verify.</h5>
+            <div class="card p-5 border-0 shadow-sm bg-light">
+                <i class="bi bi-inbox fs-1 text-muted mb-2"></i>
+                <h5 class="text-muted mb-0">No reports found in this queue.</h5>
+            </div>
         </div>
     }
     else
@@ -43,7 +65,12 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title fw-bold mb-0">@report.DiseaseType</h5>
-                            <span class="badge bg-secondary">Report #@report.Id</span>
+                            <div class="d-flex gap-1">
+                                <span class="badge bg-secondary">#@report.Id</span>
+                                <span class="badge @(report.Status == LarvaX.Core.Entities.ReportStatus.Resolved ? "bg-success" : report.Status == LarvaX.Core.Entities.ReportStatus.UnderReview ? "bg-primary" : "bg-warning text-dark")">
+                                    @report.Status
+                                </span>
+                            </div>
                         </div>
                         <p class="card-text text-muted small mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i>@report.Latitude.ToString("F6"), @report.Longitude.ToString("F6")</p>
                         <p class="card-text">@(report.Description ?? "No description provided.")</p>
@@ -54,39 +81,60 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white border-top-0 d-flex gap-2 pb-3">
-                        <form asp-action="VerifyReport" method="post" class="flex-grow-1">
-                            <input type="hidden" name="id" value="@report.Id" />
-                            <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-circle me-1"></i>Verify</button>
-                        </form>
-                        <button type="button" class="btn btn-outline-danger flex-grow-1" data-bs-toggle="modal" data-bs-target="#rejectReportModal-@report.Id">
-                            <i class="bi bi-x-circle me-1"></i>Invalid
-                        </button>
+                        @if (activeTab == "pending")
+                        {
+                            <form asp-action="VerifyReport" method="post" class="flex-grow-1">
+                                <input type="hidden" name="id" value="@report.Id" />
+                                <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-circle me-1"></i>Verify</button>
+                            </form>
+                            <button type="button" class="btn btn-outline-danger flex-grow-1" data-bs-toggle="modal" data-bs-target="#rejectReportModal-@report.Id">
+                                <i class="bi bi-x-circle me-1"></i>Invalid
+                            </button>
+                        }
+                        else if (activeTab == "under_review")
+                        {
+                            <form asp-action="ResolveReport" method="post" class="w-100">
+                                <input type="hidden" name="id" value="@report.Id" />
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-check2-circle me-1"></i>Mark as Resolved
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="w-100 text-center text-success py-1 fw-semibold">
+                                <i class="bi bi-check-circle-fill me-1"></i>Hazard Cleared & Resolved
+                            </div>
+                        }
                     </div>
 
-                    <!-- Reject Modal -->
-                    <div class="modal fade" id="rejectReportModal-@report.Id" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <form asp-action="RejectReport" method="post">
-                                    <input type="hidden" name="id" value="@report.Id" />
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Mark Report #@report.Id as Invalid</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label class="form-label">Reason for invalidation:</label>
-                                            <textarea name="reason" class="form-control" required rows="3" placeholder="e.g. Photo unclear, location inaccurate, spam"></textarea>
+                    @if (activeTab == "pending")
+                    {
+                        <!-- Reject Modal -->
+                        <div class="modal fade" id="rejectReportModal-@report.Id" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form asp-action="RejectReport" method="post">
+                                        <input type="hidden" name="id" value="@report.Id" />
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Mark Report #@report.Id as Invalid</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-danger">Confirm Invalid</button>
-                                    </div>
-                                </form>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Reason for invalidation:</label>
+                                                <textarea name="reason" class="form-control" required rows="3" placeholder="e.g. Photo unclear, location inaccurate, spam"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger">Confirm Invalid</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    }
                 </div>
             </div>
         }

@@ -1,16 +1,9 @@
 using LarvaX.Core.Entities;
+using LarvaX.Core.Interfaces;
 
 namespace LarvaX.Application.Services
 {
-    public interface IRiskAssessmentService
-    {
-        RiskLevel CalculateRiskLevel(int verifiedCaseCount, int activeHazardCount);
-        double CalculateConfidenceScore(int sampleCount);
-        DataSufficiency DetermineDataSufficiency(int sampleCount);
-        string GeneratePublicAdvice(RiskLevel level, string language = "en");
-        string GenerateAlertMessage(string region, RiskLevel level, string disease, string language = "en");
-    }
-
+    // IRiskAssessmentService is defined in LarvaX.Core.Interfaces.
     public class RiskAssessmentService : IRiskAssessmentService
     {
         public RiskLevel CalculateRiskLevel(int verifiedCaseCount, int activeHazardCount)

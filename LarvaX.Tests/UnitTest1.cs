@@ -36,4 +36,33 @@ namespace LarvaX.Tests
             Assert.Equal("Professional", doctor.ModePreference);
         }
     }
+
+    public class FirstAidControllerTests
+    {
+        [Theory]
+        [InlineData("dengue")]
+        [InlineData("choking")]
+        [InlineData("snakebite")]
+        [InlineData("heartattack")]
+        [InlineData("fainting")]
+        public void Guide_ValidType_ReturnsGuideViewWithCorrectModel(string type)
+        {
+            var controller = new LarvaX.Web.Controllers.FirstAidController();
+            var result = controller.Guide(type) as Microsoft.AspNetCore.Mvc.ViewResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Guide", result.ViewName);
+            Assert.Equal(type, result.Model);
+        }
+
+        [Fact]
+        public void Guide_InvalidType_RedirectsToIndex()
+        {
+            var controller = new LarvaX.Web.Controllers.FirstAidController();
+            var result = controller.Guide("unknown_type") as Microsoft.AspNetCore.Mvc.RedirectToActionResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Index", result.ActionName);
+        }
+    }
 }

@@ -7,9 +7,9 @@ using LarvaX.Web.Filters;
 using LarvaX.Web.Jobs;
 using LarvaX.Infrastructure.Data;
 using LarvaX.Core.Entities;
+using LarvaX.Core.Interfaces;
 using LarvaX.Application.Services;
 using LarvaX.Infrastructure.Services;
-using LarvaX.Core.Interfaces;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 
@@ -21,11 +21,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// NOTE (Gap 11): RequireConfirmedAccount = true is intentional but EmailConfirmed is set
+// to true at registration time (AccountController) to skip email verification in development.
+// For production: set EmailConfirmed = false and configure an email sender (IEmailSender).
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Application Services (Clean Architecture)
+// Application Services — bound to Core.Interfaces contracts (Clean Architecture)
 builder.Services.AddScoped<ISymptomCheckerService, SymptomCheckerService>();
 builder.Services.AddScoped<IChatbotService, ChatbotService>();
 builder.Services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
