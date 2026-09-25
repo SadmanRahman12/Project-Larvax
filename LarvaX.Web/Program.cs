@@ -18,15 +18,32 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString)
+           .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // NOTE (Gap 11): RequireConfirmedAccount = true is intentional but EmailConfirmed is set
 // to true at registration time (AccountController) to skip email verification in development.
 // For production: set EmailConfirmed = false and configure an email sender (IEmailSender).
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+//
+// IMPORTANT: Use AddIdentity (not AddDefaultIdentity) so that the authentication cookie
+// login/logout paths can be overridden to the custom MVC AccountController.
+// AddDefaultIdentity hard-codes /Identity/Account/Login (Razor Pages) which causes an
+// infinite redirect loop when using custom controller-based auth.
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+// Override cookie paths to point to the custom MVC AccountController instead of Razor Pages.
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 
 // Application Services — bound to Core.Interfaces contracts (Clean Architecture)
 builder.Services.AddScoped<ISymptomCheckerService, SymptomCheckerService>();
@@ -112,6 +129,7 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
@@ -143,8 +161,7 @@ app.MapControllerRoute(
 app.MapHub<AlertsHub>("/alertshub");
 app.MapHub<VideoConsultHub>("/videoconsulthub");
 
-app.MapRazorPages()
-   .WithStaticAssets();
+// Note: MapRazorPages() removed — project uses MVC controllers, not Razor Pages.
 
 app.Run();
 

@@ -125,7 +125,7 @@ namespace LarvaX.Web.Controllers
                 {
                     return Redirect(returnUrl);
                 }
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");

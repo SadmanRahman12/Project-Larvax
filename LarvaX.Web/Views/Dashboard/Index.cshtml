@@ -1,0 +1,616 @@
+@model LarvaX.Web.Models.UserDashboardViewModel
+@using LarvaX.Core.Entities
+@{
+    ViewData["Title"] = "User Dashboard - LarvaX";
+    var primaryRole = Model.Roles.FirstOrDefault() ?? "Citizen";
+}
+
+<div class="container-fluid px-0">
+    <!-- Header Banner -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-gradient text-white p-4" style="background: linear-gradient(135deg, #198754 0%, #0d5f39 100%);">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
+                        <i class="bi bi-shield-check me-1"></i>@primaryRole
+                    </span>
+                    @if (Model.User.IsApproved)
+                    {
+                        <span class="badge bg-light text-success px-2 py-1 rounded-pill">
+                            <i class="bi bi-check-circle-fill me-1"></i>Verified & Active
+                        </span>
+                    }
+                    <span class="badge bg-white text-dark opacity-75 px-2 py-1 rounded-pill">
+                        @Model.User.ModePreference Mode
+                    </span>
+                </div>
+                <h2 class="fw-bold mb-1">
+                    Welcome back, @(string.IsNullOrWhiteSpace(Model.User.FullName) ? Model.User.UserName : Model.User.FullName)!
+                </h2>
+                <p class="mb-0 text-white-50">
+                    <i class="bi bi-envelope me-1"></i>@Model.User.Email
+                    @if (!string.IsNullOrEmpty(Model.User.Specialty))
+                    {
+                        <span class="ms-3"><i class="bi bi-award me-1"></i>Specialty: @Model.User.Specialty</span>
+                    }
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="Reports" asp-action="Create" class="btn btn-warning text-dark fw-bold rounded-pill px-3 shadow-sm">
+                    <i class="bi bi-geo-alt-fill me-1"></i>Report Hazard
+                </a>
+                <a asp-controller="SymptomChecker" asp-action="Index" class="btn btn-outline-light rounded-pill px-3">
+                    <i class="bi bi-clipboard2-pulse me-1"></i>Check Symptoms
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Administrative Quick Alerts -->
+    @if (User.IsInRole("Administrator"))
+    {
+        <div class="alert alert-warning border-0 shadow-sm rounded-4 d-flex align-items-center justify-content-between p-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="fs-2 text-warning"><i class="bi bi-shield-lock-fill"></i></div>
+                <div>
+                    <h6 class="fw-bold mb-0">Administrator Access Available</h6>
+                    <small class="text-muted">Manage system approvals, report verifications, and public health data exports.</small>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-controller="Admin" asp-action="Index" class="btn btn-sm btn-dark rounded-pill px-3">Admin Console</a>
+                <a asp-controller="Government" asp-action="Dashboard" class="btn btn-sm btn-outline-dark rounded-pill px-3">Gov Dashboard</a>
+            </div>
+        </div>
+    }
+    else if (User.IsInRole("GovernmentAuthority"))
+    {
+        <div class="alert alert-info border-0 shadow-sm rounded-4 d-flex align-items-center justify-content-between p-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="fs-2 text-info"><i class="bi bi-shield-check"></i></div>
+                <div>
+                    <h6 class="fw-bold mb-0">Government Surveillance Authority</h6>
+                    <small class="text-muted">Access national dengue risk zones, regional telemetry, and official reports.</small>
+                </div>
+            </div>
+            <a asp-controller="Government" asp-action="Dashboard" class="btn btn-sm btn-primary rounded-pill px-3">Open Gov Dashboard</a>
+        </div>
+    }
+
+    <!-- Key Statistics Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-3 border-start border-4 border-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold">My Reports</div>
+                        <h3 class="fw-bold mb-0 text-dark">@Model.TotalReportsCount</h3>
+                    </div>
+                    <div class="fs-2 text-warning opacity-75">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a asp-controller="Reports" asp-action="Index" class="text-decoration-none small text-warning fw-semibold">
+                        View Community Reports <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-3 border-start border-4 border-primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold">Appointments</div>
+                        <h3 class="fw-bold mb-0 text-dark">@Model.TotalAppointmentsCount</h3>
+                    </div>
+                    <div class="fs-2 text-primary opacity-75">
+                        <i class="bi bi-camera-video-fill"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a asp-controller="Telemedicine" asp-action="Appointments" class="text-decoration-none small text-primary fw-semibold">
+                        My Appointments <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-3 border-start border-4 border-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold">Lab Bookings</div>
+                        <h3 class="fw-bold mb-0 text-dark">@Model.TotalLabBookingsCount</h3>
+                    </div>
+                    <div class="fs-2 text-danger opacity-75">
+                        <i class="bi bi-eyedropper"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a asp-controller="Lab" asp-action="Bookings" class="text-decoration-none small text-danger fw-semibold">
+                        View Lab Bookings <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-3 border-start border-4 border-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold">Medical Records</div>
+                        <h3 class="fw-bold mb-0 text-dark">@Model.TotalRecordsCount</h3>
+                    </div>
+                    <div class="fs-2 text-success opacity-75">
+                        <i class="bi bi-folder2-open"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a asp-controller="PatientRecords" asp-action="Index" class="text-decoration-none small text-success fw-semibold">
+                        View Health Records <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white border-bottom-0 pt-3 px-4">
+            <ul class="nav nav-pills card-header-pills gap-2" id="dashboardTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-pill px-4" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview" type="button" role="tab">
+                        <i class="bi bi-grid-fill me-1"></i>Overview & Services
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4" id="appointments-tab" data-bs-toggle="pill" data-bs-target="#appointments" type="button" role="tab">
+                        <i class="bi bi-camera-video me-1"></i>Appointments (@Model.UpcomingAppointments.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4" id="reports-tab" data-bs-toggle="pill" data-bs-target="#reports" type="button" role="tab">
+                        <i class="bi bi-geo-alt me-1"></i>My Reports (@Model.RecentReports.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4" id="labs-tab" data-bs-toggle="pill" data-bs-target="#labs" type="button" role="tab">
+                        <i class="bi bi-eyedropper me-1"></i>Lab Bookings (@Model.RecentLabBookings.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4" id="records-tab" data-bs-toggle="pill" data-bs-target="#records" type="button" role="tab">
+                        <i class="bi bi-file-earmark-medical me-1"></i>Medical Records (@Model.RecentRecords.Count)
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="tab-content" id="dashboardTabContent">
+                <!-- TAB 1: OVERVIEW -->
+                <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                    <div class="row g-4">
+                        <!-- Quick Services Column -->
+                        <div class="col-lg-8">
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Quick Actions & Services</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card h-100 border shadow-sm rounded-3 p-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-3 fs-3">
+                                                <i class="bi bi-geo-alt-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Report Mosquito Hazard</h6>
+                                                <small class="text-muted d-block mb-2">Submit stagnant water, larva spots with geolocation.</small>
+                                                <a asp-controller="Reports" asp-action="Create" class="btn btn-sm btn-outline-danger rounded-pill">Submit Report</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card h-100 border shadow-sm rounded-3 p-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-3 fs-3">
+                                                <i class="bi bi-camera-video-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Book Telemedicine</h6>
+                                                <small class="text-muted d-block mb-2">Connect with verified doctors via video consultation.</small>
+                                                <a asp-controller="Telemedicine" asp-action="Index" class="btn btn-sm btn-outline-primary rounded-pill">Find Doctor</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card h-100 border shadow-sm rounded-3 p-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-3 fs-3">
+                                                <i class="bi bi-eyedropper"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Schedule Lab Test</h6>
+                                                <small class="text-muted d-block mb-2">NS1 antigen, CBC, platelet counts, home collection.</small>
+                                                <a asp-controller="Lab" asp-action="Index" class="btn btn-sm btn-outline-warning text-dark rounded-pill">Book Lab Test</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card h-100 border shadow-sm rounded-3 p-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="p-3 bg-success bg-opacity-10 text-success rounded-3 fs-3">
+                                                <i class="bi bi-heart-pulse-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-1">AI Symptom Checker</h6>
+                                                <small class="text-muted d-block mb-2">Step-by-step triage evaluating fever, platelets, warnings.</small>
+                                                <a asp-controller="SymptomChecker" asp-action="Index" class="btn btn-sm btn-outline-success rounded-pill">Start Assessment</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card h-100 border shadow-sm rounded-3 p-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="p-3 bg-info bg-opacity-10 text-info rounded-3 fs-3">
+                                                <i class="bi bi-hospital-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-1">ICU Bed Finder</h6>
+                                                <small class="text-muted d-block mb-2">Search emergency hospital beds across Bangladesh.</small>
+                                                <a asp-controller="IcuBeds" asp-action="Index" class="btn btn-sm btn-outline-info rounded-pill">Locate ICU Beds</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card h-100 border shadow-sm rounded-3 p-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-3 fs-3">
+                                                <i class="bi bi-droplet-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Blood Donor Network</h6>
+                                                <small class="text-muted d-block mb-2">Find available donors by blood group and location.</small>
+                                                <a asp-controller="Donors" asp-action="Index" class="btn btn-sm btn-outline-danger rounded-pill">Search Donors</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Side Column: Blood Donor Status & Health Records -->
+                        <div class="col-lg-4">
+                            <!-- Donor Status Card -->
+                            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-light">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center gap-2 mb-3">
+                                        <div class="p-2 bg-danger text-white rounded-circle">
+                                            <i class="bi bi-droplet-fill"></i>
+                                        </div>
+                                        <h5 class="fw-bold mb-0">Blood Donor Status</h5>
+                                    </div>
+
+                                    @if (Model.DonorProfile != null)
+                                    {
+                                        <div class="p-3 bg-white rounded-3 shadow-sm mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="badge bg-danger fs-6 px-3 py-1">@Model.DonorProfile.BloodGroup.ToString().Replace('_', ' ')</span>
+                                                <span class="badge @(Model.DonorProfile.IsAvailable ? "bg-success" : "bg-secondary")">
+                                                    @(Model.DonorProfile.IsAvailable ? "Available" : "Not Available")
+                                                </span>
+                                            </div>
+                                            <div class="small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i>Location: @(Model.DonorProfile.Location ?? "Not specified")</div>
+                                            <div class="small text-muted"><i class="bi bi-telephone me-1"></i>Contact: @(Model.DonorProfile.ContactNumber ?? "Hidden")</div>
+                                        </div>
+                                        <a asp-controller="Donors" asp-action="Index" class="btn btn-sm btn-outline-danger w-100 rounded-pill">View Donor Directory</a>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted small mb-3">
+                                            You are not registered as a blood donor yet. Registering helps dengue patients in critical need of platelets and blood.
+                                        </p>
+                                        <a asp-controller="Donors" asp-action="Register" class="btn btn-danger w-100 rounded-pill fw-semibold">
+                                            <i class="bi bi-plus-circle me-1"></i>Register as Blood Donor
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Patient Records Summary Card -->
+                            <div class="card border-0 shadow-sm rounded-4 bg-light">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="p-2 bg-success text-white rounded-circle">
+                                                <i class="bi bi-folder2-open"></i>
+                                            </div>
+                                            <h5 class="fw-bold mb-0">Health Records</h5>
+                                        </div>
+                                        <a asp-controller="PatientRecords" asp-action="Create" class="btn btn-sm btn-success rounded-pill">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </a>
+                                    </div>
+
+                                    @if (Model.RecentRecords.Any())
+                                    {
+                                        <ul class="list-group list-group-flush rounded-3 bg-white shadow-sm">
+                                            @foreach (var rec in Model.RecentRecords.Take(3))
+                                            {
+                                                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                                    <div>
+                                                        <div class="fw-semibold small text-dark">@rec.Title</div>
+                                                        <small class="text-muted">@rec.RecordType &bull; @rec.Date.ToString("dd MMM yyyy")</small>
+                                                    </div>
+                                                    <span class="badge bg-light text-dark border">@rec.RecordType</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                        <div class="text-center mt-3">
+                                            <a asp-controller="PatientRecords" asp-action="Index" class="small text-success fw-semibold text-decoration-none">
+                                                View all records (@Model.TotalRecordsCount) <i class="bi bi-arrow-right"></i>
+                                            </a>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted small mb-3">Keep your prescriptions and diagnostic lab results securely stored in your personal vault.</p>
+                                        <a asp-controller="PatientRecords" asp-action="Create" class="btn btn-sm btn-outline-success w-100 rounded-pill">Upload First Record</a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: APPOINTMENTS -->
+                <div class="tab-pane fade" id="appointments" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Telemedicine Video Consultations</h5>
+                        <a asp-controller="Telemedicine" asp-action="Index" class="btn btn-primary rounded-pill btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Book New Doctor
+                        </a>
+                    </div>
+
+                    @if (Model.UpcomingAppointments.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Doctor / Patient</th>
+                                        <th>Notes</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var appt in Model.UpcomingAppointments)
+                                    {
+                                        var isPatient = (appt.PatientId == Model.User.Id);
+                                        var otherPerson = isPatient ? (appt.Doctor?.FullName ?? appt.Doctor?.UserName) : (appt.Patient?.FullName ?? appt.Patient?.UserName);
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@appt.ScheduledAt.ToString("f")</div>
+                                                <small class="text-muted">ID: #@appt.Id</small>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold">@otherPerson</div>
+                                                <small class="text-muted">@(isPatient ? "Doctor" : "Patient")</small>
+                                            </td>
+                                            <td>@(string.IsNullOrEmpty(appt.Notes) ? "—" : appt.Notes)</td>
+                                            <td>
+                                                <span class="badge @(appt.Status == AppointmentStatus.Confirmed ? "bg-success" : (appt.Status == AppointmentStatus.Booked ? "bg-primary" : "bg-secondary"))">
+                                                    @appt.Status
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <a asp-controller="Telemedicine" asp-action="Room" asp-route-id="@appt.Id" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm">
+                                                    <i class="bi bi-camera-video-fill me-1"></i>Enter Room
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <div class="fs-1 text-muted mb-2"><i class="bi bi-calendar-x"></i></div>
+                            <h6>No appointments scheduled</h6>
+                            <p class="text-muted small">You don't have any upcoming consultations booked.</p>
+                            <a asp-controller="Telemedicine" asp-action="Index" class="btn btn-primary rounded-pill px-4">Find a Doctor</a>
+                        </div>
+                    }
+                </div>
+
+                <!-- TAB 3: REPORTS -->
+                <div class="tab-pane fade" id="reports" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">My Submitted Hazard Reports</h5>
+                        <a asp-controller="Reports" asp-action="Create" class="btn btn-warning text-dark rounded-pill btn-sm fw-semibold">
+                            <i class="bi bi-plus-circle me-1"></i>New Hazard Report
+                        </a>
+                    </div>
+
+                    @if (Model.RecentReports.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Disease</th>
+                                        <th>Location Coordinates</th>
+                                        <th>Description</th>
+                                        <th>Verification</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var rep in Model.RecentReports)
+                                    {
+                                        <tr>
+                                            <td>@rep.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</td>
+                                            <td>
+                                                <span class="badge bg-danger bg-opacity-75">@rep.DiseaseType</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted"><i class="bi bi-geo-alt me-1"></i>@rep.Latitude.ToString("F4"), @rep.Longitude.ToString("F4")</small>
+                                            </td>
+                                            <td>@(string.IsNullOrEmpty(rep.Description) ? "—" : rep.Description)</td>
+                                            <td>
+                                                <span class="badge @(rep.Verification == ReportVerification.Verified ? "bg-success" : (rep.Verification == ReportVerification.Invalid ? "bg-danger" : "bg-warning text-dark"))">
+                                                    @rep.Verification
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @(rep.Status == ReportStatus.Resolved ? "bg-success" : (rep.Status == ReportStatus.UnderReview ? "bg-info text-dark" : "bg-secondary"))">
+                                                    @rep.Status
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <div class="fs-1 text-muted mb-2"><i class="bi bi-geo-alt"></i></div>
+                            <h6>No hazard reports filed yet</h6>
+                            <p class="text-muted small">Spot mosquito breeding zones or stagnant water? Help your community by reporting it.</p>
+                            <a asp-controller="Reports" asp-action="Create" class="btn btn-warning text-dark rounded-pill px-4 fw-semibold">Report First Hazard</a>
+                        </div>
+                    }
+                </div>
+
+                <!-- TAB 4: LABS -->
+                <div class="tab-pane fade" id="labs" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">My Diagnostic Lab Bookings</h5>
+                        <a asp-controller="Lab" asp-action="Index" class="btn btn-warning text-dark rounded-pill btn-sm fw-semibold">
+                            <i class="bi bi-plus-circle me-1"></i>Book Lab Test
+                        </a>
+                    </div>
+
+                    @if (Model.RecentLabBookings.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Scheduled Date</th>
+                                        <th>Test Name</th>
+                                        <th>Cost</th>
+                                        <th>Status</th>
+                                        <th>Report Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lab in Model.RecentLabBookings)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@lab.ScheduledAt.ToString("f")</div>
+                                                <small class="text-muted">Booking #@lab.Id</small>
+                                            </td>
+                                            <td class="fw-bold text-dark">@(lab.LabTest?.Name ?? "Diagnostic Test")</td>
+                                            <td>৳@(lab.LabTest?.Cost.ToString("N0") ?? "0")</td>
+                                            <td>
+                                                <span class="badge @(lab.Status == "Completed" ? "bg-success" : (lab.Status == "SampleCollected" ? "bg-info text-dark" : "bg-warning text-dark"))">
+                                                    @lab.Status
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(lab.ResultLink))
+                                                {
+                                                    <a href="@lab.ResultLink" target="_blank" class="btn btn-sm btn-outline-success rounded-pill">
+                                                        <i class="bi bi-download me-1"></i>Download
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">Awaiting sample</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <div class="fs-1 text-muted mb-2"><i class="bi bi-eyedropper"></i></div>
+                            <h6>No lab bookings found</h6>
+                            <p class="text-muted small">Need an NS1 antigen or complete blood count test?</p>
+                            <a asp-controller="Lab" asp-action="Index" class="btn btn-warning text-dark rounded-pill px-4 fw-semibold">Browse Available Tests</a>
+                        </div>
+                    }
+                </div>
+
+                <!-- TAB 5: RECORDS -->
+                <div class="tab-pane fade" id="records" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Personal Medical Vault</h5>
+                        <a asp-controller="PatientRecords" asp-action="Create" class="btn btn-success rounded-pill btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Add Health Record
+                        </a>
+                    </div>
+
+                    @if (Model.RecentRecords.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var rec in Model.RecentRecords)
+                            {
+                                <div class="col-md-6">
+                                    <div class="card h-100 border shadow-sm rounded-3 p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold text-dark mb-0">@rec.Title</h6>
+                                            <span class="badge bg-light text-dark border">@rec.RecordType</span>
+                                        </div>
+                                        <p class="text-muted small mb-2">@(string.IsNullOrEmpty(rec.Description) ? "No notes recorded." : rec.Description)</p>
+                                        <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i>@rec.Date.ToString("dd MMM yyyy")</small>
+                                            @if (!string.IsNullOrEmpty(rec.FileUrl))
+                                            {
+                                                <a href="@rec.FileUrl" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
+                                                    <i class="bi bi-eye me-1"></i>View
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <div class="fs-1 text-muted mb-2"><i class="bi bi-folder2-open"></i></div>
+                            <h6>No medical records stored</h6>
+                            <p class="text-muted small">Upload your dengue lab test reports, prescriptions, or doctor discharge summaries.</p>
+                            <a asp-controller="PatientRecords" asp-action="Create" class="btn btn-success rounded-pill px-4">Upload New Record</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
