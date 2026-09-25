@@ -1,0 +1,294 @@
+@model LarvaX.Web.Models.AdminUserManagementViewModel
+@{
+    ViewData["Title"] = "User Management - LarvaX Admin";
+}
+
+<partial name="_AdminNav" />
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- HEADER & FILTERS -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+                <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-people-fill text-danger me-2"></i>Platform User Directory</h4>
+                <p class="text-muted small mb-0">Manage registered citizens, verified healthcare personnel, and system administrative roles.</p>
+            </div>
+            <a asp-action="Approvals" class="btn btn-outline-warning text-dark fw-semibold shadow-sm">
+                <i class="bi bi-person-check-fill me-1"></i>Pending Approvals Queue
+            </a>
+        </div>
+
+        <!-- Role Badges Summary -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a asp-action="Users" asp-route-role="All" asp-route-status="@Model.SelectedStatus" class="badge @(Model.SelectedRole == "All" ? "bg-dark" : "bg-light text-dark border") text-decoration-none px-3 py-2 rounded-pill">
+                All Roles (@Model.Users.Count)
+            </a>
+            @foreach (var r in Model.AvailableRoles)
+            {
+                var count = Model.RoleCounts.ContainsKey(r) ? Model.RoleCounts[r] : 0;
+                <a asp-action="Users" asp-route-role="@r" asp-route-status="@Model.SelectedStatus" class="badge @(Model.SelectedRole == r ? "bg-danger" : "bg-light text-dark border") text-decoration-none px-3 py-2 rounded-pill">
+                    @r (@count)
+                </a>
+            }
+        </div>
+
+        <!-- Search & Filter Form -->
+        <form method="get" asp-action="Users" class="row g-2 align-items-center">
+            <input type="hidden" name="role" value="@Model.SelectedRole" />
+            <div class="col-md-6 col-lg-7">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by name, email, phone, or medical specialty..." value="@Model.SearchTerm" />
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="All" selected="@(Model.SelectedStatus == "All")">All Account Statuses</option>
+                    <option value="Approved" selected="@(Model.SelectedStatus == "Approved")">Approved / Active Only</option>
+                    <option value="Pending" selected="@(Model.SelectedStatus == "Pending")">Pending Approval</option>
+                    <option value="Rejected" selected="@(Model.SelectedStatus == "Rejected")">Rejected / Blocked</option>
+                    <option value="Locked" selected="@(Model.SelectedStatus == "Locked")">Suspended / Locked</option>
+                </select>
+            </div>
+            <div class="col-md-2 col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-filter me-1"></i>Filter</button>
+                <a asp-action="Users" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- USERS LIST TABLE -->
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-uppercase">
+                <tr>
+                    <th>User</th>
+                    <th>Role(s)</th>
+                    <th>Mode Preference</th>
+                    <th>Account Status</th>
+                    <th>Lockout / Access</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Users.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-person-x fs-1 mb-2 d-block"></i>
+                            <p class="mb-0">No users found matching the given filters.</p>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-danger bg-opacity-10 text-danger fw-bold d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
+                                        @(string.IsNullOrWhiteSpace(user.FullName) ? "U" : user.FullName.Substring(0, 1).ToUpper())
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">@(user.FullName ?? "Unnamed User")</div>
+                                        <small class="text-muted d-block">@user.Email</small>
+                                        @if (!string.IsNullOrEmpty(user.PhoneNumber))
+                                        {
+                                            <small class="text-muted"><i class="bi bi-telephone me-1"></i>@user.PhoneNumber</small>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @foreach (var r in user.Roles)
+                                {
+                                    <span class="badge @(r == "Administrator" ? "bg-dark" : r == "Doctor" ? "bg-info text-dark" : r == "HealthWorker" ? "bg-success" : r == "LabStaff" ? "bg-primary" : r == "GovernmentAuthority" ? "bg-warning text-dark" : "bg-secondary") rounded-pill px-2 py-1">
+                                        @r
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@user.ModePreference</span>
+                                @if (!string.IsNullOrEmpty(user.Specialty))
+                                {
+                                    <small class="text-muted d-block mt-1">@user.Specialty</small>
+                                }
+                            </td>
+                            <td>
+                                @if (user.IsRejected)
+                                {
+                                    <span class="badge bg-danger rounded-pill"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                                }
+                                else if (user.IsApproved)
+                                {
+                                    <span class="badge bg-success rounded-pill"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark rounded-pill"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                                }
+                            </td>
+                            <td>
+                                @if (user.IsLockedOut)
+                                {
+                                    <span class="badge bg-danger rounded-pill"><i class="bi bi-lock-fill me-1"></i>Suspended</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success bg-opacity-25 text-success rounded-pill"><i class="bi bi-unlock-fill me-1"></i>Active</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <!-- User Details Modal Trigger -->
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#userDetailsModal-@user.Id" title="View user details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+
+                                    <!-- Change Role Modal Trigger -->
+                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeRoleModal-@user.Id" title="Change role">
+                                        <i class="bi bi-shield-shaded"></i>
+                                    </button>
+
+                                    <!-- Toggle Lockout -->
+                                    <form asp-action="ToggleUserLockout" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button type="submit" class="btn @(user.IsLockedOut ? "btn-outline-success" : "btn-outline-danger")" title="@(user.IsLockedOut ? "Unlock Account" : "Suspend Account")">
+                                            <i class="bi @(user.IsLockedOut ? "bi-unlock" : "bi-lock")"></i>
+                                        </button>
+                                    </form>
+
+                                    @if (!user.IsApproved && !user.IsRejected)
+                                    {
+                                        <form asp-action="ApproveUser" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@user.Id" />
+                                            <button type="submit" class="btn btn-success" title="Approve account">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+
+                                <!-- USER DETAILS MODAL -->
+                                <div class="modal fade text-start" id="userDetailsModal-@user.Id" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold"><i class="bi bi-person-badge text-danger me-2"></i>User Profile: @user.FullName</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <ul class="list-group list-group-flush small">
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">User ID:</span>
+                                                        <span class="fw-semibold text-break">@user.Id</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Full Name:</span>
+                                                        <span class="fw-semibold">@user.FullName</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Email:</span>
+                                                        <span class="fw-semibold">@user.Email</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Phone Number:</span>
+                                                        <span class="fw-semibold">@(user.PhoneNumber ?? "Not provided")</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Current Role(s):</span>
+                                                        <span class="fw-semibold">@string.Join(", ", user.Roles)</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Mode Preference:</span>
+                                                        <span class="fw-semibold">@user.ModePreference</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Specialty / Unit:</span>
+                                                        <span class="fw-semibold">@(user.Specialty ?? "None")</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Address:</span>
+                                                        <span class="fw-semibold">@(user.Address ?? "Not specified")</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Approval Status:</span>
+                                                        <span class="fw-semibold">@(user.IsRejected ? "Rejected" : user.IsApproved ? "Approved" : "Pending")</span>
+                                                    </li>
+                                                    @if (user.IsRejected && !string.IsNullOrEmpty(user.RejectionReason))
+                                                    {
+                                                        <li class="list-group-item text-danger">
+                                                            <span class="fw-bold">Rejection Reason:</span> @user.RejectionReason
+                                                        </li>
+                                                    }
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span class="text-muted">Lockout / Suspended:</span>
+                                                        <span class="fw-semibold">@(user.IsLockedOut ? "Yes" : "No")</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CHANGE ROLE MODAL -->
+                                <div class="modal fade text-start" id="changeRoleModal-@user.Id" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form asp-action="ChangeUserRole" method="post">
+                                                <input type="hidden" name="id" value="@user.Id" />
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold">Manage Role: @user.FullName</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-semibold">Select New Role:</label>
+                                                        <select name="newRole" class="form-select">
+                                                            @foreach (var r in Model.AvailableRoles)
+                                                            {
+                                                                <option value="@r" selected="@(user.Roles.Contains(r))">@r</option>
+                                                            }
+                                                        </select>
+                                                        <div class="form-text small">
+                                                            Assigning a professional role (Doctor, Health Worker, Lab Staff) automatically sets user mode to Professional.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary btn-sm">Update Role</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

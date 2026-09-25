@@ -12,7 +12,10 @@ namespace LarvaX.Core.Entities
     {
         Received,
         UnderReview,
-        Resolved
+        Assigned,
+        Investigating,
+        Resolved,
+        Escalated
     }
 
     public enum ReportVerification
@@ -31,6 +34,7 @@ namespace LarvaX.Core.Entities
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public string? Description { get; set; }
+        public string? FieldNotes { get; set; }
         public DiseaseType DiseaseType { get; set; } = DiseaseType.Dengue;
         public ReportStatus Status { get; set; } = ReportStatus.Received;
         public ReportVerification Verification { get; set; } = ReportVerification.Pending;

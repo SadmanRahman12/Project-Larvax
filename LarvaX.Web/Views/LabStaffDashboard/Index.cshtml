@@ -1,0 +1,2007 @@
+@model LarvaX.Web.Models.LabStaffDashboardViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Lab Staff Dashboard - LarvaX";
+    var isBn = CultureInfo.CurrentUICulture.Name == "bn";
+    var staffName = string.IsNullOrWhiteSpace(Model.LabStaff.FullName) ? Model.LabStaff.UserName : Model.LabStaff.FullName;
+    var activeTab = Model.ActiveTab?.ToLowerInvariant() ?? "overview";
+}
+
+<style>
+    :root {
+        --lab-primary: #4f46e5;
+        --lab-primary-dark: #3730a3;
+        --lab-primary-light: #eef2ff;
+        --lab-teal: #0d9488;
+        --lab-teal-light: #f0fdfa;
+        --lab-danger: #dc2626;
+        --lab-warning: #d97706;
+        --lab-success: #16a34a;
+        --lab-card-bg: #ffffff;
+        --lab-border: #e2e8f0;
+        --lab-text-dark: #0f172a;
+        --lab-text-muted: #64748b;
+    }
+
+    body {
+        background-color: #f8fafc;
+        color: var(--lab-text-dark);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* ── Laboratory Hero Header ── */
+    .lab-hero {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 75%, #0f766e 100%);
+        border-radius: 1.25rem;
+        padding: 2.2rem 2.5rem;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 12px 30px rgba(49, 46, 129, 0.22);
+        margin-bottom: 1.75rem;
+    }
+    .lab-hero::before {
+        content: '';
+        position: absolute;
+        right: -50px;
+        top: -50px;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+        pointer-events: none;
+    }
+    .lab-hero::after {
+        content: '';
+        position: absolute;
+        left: 35%;
+        bottom: -90px;
+        width: 250px;
+        height: 250px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(13, 148, 136, 0.3) 0%, rgba(13, 148, 136, 0) 70%);
+        pointer-events: none;
+    }
+
+    /* ── KPI Stat Cards ── */
+    .lab-stat-card {
+        background: #ffffff;
+        border: 1px solid var(--lab-border);
+        border-radius: 1.1rem;
+        padding: 1.35rem 1.4rem;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .lab-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+    .lab-stat-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+    }
+    .lab-stat-value {
+        font-size: 2.1rem;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+    }
+
+    /* ── Main Navigation Tabs ── */
+    .lab-nav-pill-wrapper {
+        background: #ffffff;
+        border: 1px solid var(--lab-border);
+        border-radius: 1rem;
+        padding: 0.45rem;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+        margin-bottom: 1.75rem;
+    }
+    .lab-nav .nav-link {
+        color: var(--lab-text-muted);
+        font-weight: 600;
+        font-size: 0.92rem;
+        border-radius: 0.75rem;
+        padding: 0.65rem 1.15rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .lab-nav .nav-link:hover {
+        color: var(--lab-primary);
+        background: rgba(79, 70, 229, 0.06);
+    }
+    .lab-nav .nav-link.active {
+        background: var(--lab-primary);
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    .lab-nav .nav-link.active .badge {
+        background: #ffffff !important;
+        color: var(--lab-primary) !important;
+    }
+
+    /* ── Workflow Stepper ── */
+    .lab-workflow-stepper {
+        background: #ffffff;
+        border: 1px solid var(--lab-border);
+        border-radius: 1rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.75rem;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    }
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        flex: 1;
+        min-width: 90px;
+    }
+    .step-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 0.45rem;
+        background: #f1f5f9;
+        color: #475569;
+        border: 2px solid #cbd5e1;
+        z-index: 2;
+    }
+    .step-item.active .step-circle {
+        background: var(--lab-primary);
+        color: #ffffff;
+        border-color: var(--lab-primary);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+    }
+    .step-item.done .step-circle {
+        background: var(--lab-success);
+        color: #ffffff;
+        border-color: var(--lab-success);
+    }
+    .step-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 18px;
+        left: 50%;
+        width: 100%;
+        height: 2px;
+        background: #e2e8f0;
+        z-index: 1;
+    }
+    .step-item.done:not(:last-child)::after {
+        background: var(--lab-success);
+    }
+
+    /* ── Content Section Cards ── */
+    .lab-section-card {
+        background: #ffffff;
+        border: 1px solid var(--lab-border);
+        border-radius: 1.1rem;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+        margin-bottom: 1.75rem;
+        overflow: hidden;
+    }
+    .lab-section-header {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid var(--lab-border);
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .lab-table {
+        margin-bottom: 0;
+    }
+    .lab-table th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid var(--lab-border);
+        padding: 0.9rem 1.1rem;
+    }
+    .lab-table td {
+        padding: 0.95rem 1.1rem;
+        vertical-align: middle;
+        font-size: 0.91rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .lab-table tbody tr:hover {
+        background-color: #fbfcfe;
+    }
+
+    /* ── Status Badges ── */
+    .badge-status {
+        padding: 0.38rem 0.75rem;
+        border-radius: 2rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        letter-spacing: 0.01em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .badge-status-pending { background: #fef3c7; color: #92400e; }
+    .badge-status-confirmed { background: #e0f2fe; color: #0369a1; }
+    .badge-status-collected { background: #dbeafe; color: #1e40af; }
+    .badge-status-received { background: #e0e7ff; color: #4338ca; }
+    .badge-status-processing { background: #fef08a; color: #854d0e; }
+    .badge-status-completed { background: #dcfce7; color: #166534; }
+    .badge-status-rejected { background: #fee2e2; color: #991b1b; }
+    .badge-status-cancelled { background: #f1f5f9; color: #475569; }
+
+    /* ── Activity Item ── */
+    .activity-feed-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.25rem;
+    }
+    .activity-feed-item:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 0.65rem;
+        top: 1.5rem;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    .activity-dot {
+        position: absolute;
+        left: 0.2rem;
+        top: 0.25rem;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.4);
+    }
+
+    /* ── Flashing Critical Alert ── */
+    @@keyframes pulse-red {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.85; transform: scale(1.03); }
+    }
+    .pulse-danger {
+        animation: pulse-red 2s infinite ease-in-out;
+    }
+</style>
+
+<div class="container-fluid px-3 px-md-4 py-3">
+
+    <!-- ── Flash Notifications ── -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 d-flex align-items-center mb-3" role="alert">
+            <i class="bi bi-check-circle-fill fs-5 me-2"></i>
+            <div>@TempData["SuccessMessage"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0 d-flex align-items-center mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+            <div>@TempData["WarningMessage"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 d-flex align-items-center mb-3" role="alert">
+            <i class="bi bi-x-circle-fill fs-5 me-2"></i>
+            <div>@TempData["ErrorMessage"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- ── Hero Banner ── -->
+    <div class="lab-hero">
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+            <div class="col-lg-7 mb-3 mb-lg-0">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-white text-primary px-3 py-1 rounded-pill fw-bold">
+                        <i class="bi bi-shield-check me-1"></i>@(isBn ? "ল্যাব স্টাফ ড্যাশবোর্ড" : "Lab Staff Dashboard")
+                    </span>
+                    <span class="badge bg-warning text-dark px-2 py-1 rounded-pill fw-semibold">
+                        <i class="bi bi-hospital me-1"></i>@Model.LabProfile.FacilityCode
+                    </span>
+                </div>
+                <h2 class="fw-bold mb-1">
+                    @(isBn ? "স্বাগতম, " : "Welcome, ") <span class="text-warning">@staffName</span>
+                </h2>
+                <p class="text-white-50 mb-0 fs-6">
+                    <i class="bi bi-geo-alt-fill me-1"></i>@Model.LabProfile.Name — @Model.LabProfile.Address
+                </p>
+                <small class="text-white-50 d-block mt-1">
+                    <i class="bi bi-award-fill text-warning me-1"></i>@Model.LabProfile.Accreditation
+                </small>
+            </div>
+            <div class="col-lg-5 text-lg-end">
+                <div class="d-inline-flex flex-column align-items-lg-end bg-black bg-opacity-25 rounded-4 p-3 backdrop-blur border border-white border-opacity-10">
+                    <div class="d-flex align-items-center gap-2 text-warning fw-semibold mb-1">
+                        <i class="bi bi-clock-history"></i>
+                        <span id="liveClockDisplay">@DateTime.Now.ToString("dd MMM yyyy, hh:mm:ss tt")</span>
+                    </div>
+                    <div class="text-white-50 small mb-2">
+                        <i class="bi bi-person-badge me-1"></i>@(isBn ? "অনুমোদিত মেডিকেল টেকনোলজিস্ট" : "Certified Medical Technologist")
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="#quickSearchInput" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="document.getElementById('quickSearchInput').focus();">
+                            <i class="bi bi-search me-1"></i>@(isBn ? "খুঁজুন" : "Search")
+                        </a>
+                        <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#newTestModal">
+                            <i class="bi bi-plus-circle-fill me-1"></i>@(isBn ? "নতুন টেস্ট ক্যাটালগ" : "Add Catalog Test")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── KPI Counter Cards ── -->
+    <div class="row g-3 mb-4">
+        <!-- Today's Tests -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="lab-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="lab-stat-icon" style="background: rgba(79, 70, 229, 0.1); color: var(--lab-primary);">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill small">@(isBn ? "আজকের" : "Today")</span>
+                </div>
+                <div class="lab-stat-value text-dark">@Model.TodayTestsCount</div>
+                <div class="text-muted small fw-medium mt-1">@(isBn ? "আজকের টেস্ট বুকিং" : "Today's Tests")</div>
+            </div>
+        </div>
+
+        <!-- Pending Tests -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="lab-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="lab-stat-icon" style="background: rgba(217, 119, 6, 0.1); color: var(--lab-warning);">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning rounded-pill small">@(isBn ? "অপেক্ষমাণ" : "Pending")</span>
+                </div>
+                <div class="lab-stat-value text-dark">@Model.PendingTestsCount</div>
+                <div class="text-muted small fw-medium mt-1">@(isBn ? "নমুনা সংগ্রহের অপেক্ষায়" : "Pending Tests")</div>
+            </div>
+        </div>
+
+        <!-- Results Waiting Upload -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="lab-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="lab-stat-icon" style="background: rgba(13, 148, 136, 0.1); color: var(--lab-teal);">
+                        <i class="bi bi-cloud-arrow-up-fill"></i>
+                    </div>
+                    <span class="badge bg-info-subtle text-info rounded-pill small">@(isBn ? "আপলোড" : "Upload")</span>
+                </div>
+                <div class="lab-stat-value text-dark">@Model.ResultsWaitingUploadCount</div>
+                <div class="text-muted small fw-medium mt-1">@(isBn ? "ফলাফল আপলোড অপেক্ষমাণ" : "Results Waiting Upload")</div>
+            </div>
+        </div>
+
+        <!-- Completed Tests -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="lab-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="lab-stat-icon" style="background: rgba(22, 163, 74, 0.1); color: var(--lab-success);">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                    <span class="badge bg-success-subtle text-success rounded-pill small">@(isBn ? "সম্পন্ন" : "Done")</span>
+                </div>
+                <div class="lab-stat-value text-dark">@Model.CompletedTestsCount</div>
+                <div class="text-muted small fw-medium mt-1">@(isBn ? "সম্পন্ন টেস্ট রিপোর্ট" : "Completed Tests")</div>
+            </div>
+        </div>
+
+        <!-- Total Patients -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="lab-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="lab-stat-icon" style="background: rgba(14, 165, 233, 0.1); color: #0284c7;">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill small">@(isBn ? "রোগী" : "Patients")</span>
+                </div>
+                <div class="lab-stat-value text-dark">@Model.Patients.Count</div>
+                <div class="text-muted small fw-medium mt-1">@(isBn ? "ল্যাব সেবাগ্রহীতা" : "Tested Patients")</div>
+            </div>
+        </div>
+
+        <!-- Critical Alerts -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="lab-stat-card @(Model.CriticalPlateletAlertsCount > 0 ? "border-danger pulse-danger" : "")">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="lab-stat-icon" style="background: rgba(220, 38, 38, 0.1); color: var(--lab-danger);">
+                        <i class="bi bi-exclamation-octagon-fill"></i>
+                    </div>
+                    <span class="badge bg-danger text-white rounded-pill small">@(isBn ? "জরুরী" : "Critical")</span>
+                </div>
+                <div class="lab-stat-value text-danger">@Model.CriticalPlateletAlertsCount</div>
+                <div class="text-muted small fw-medium mt-1">@(isBn ? "প্লাটিলেট সংকট (<৫০k)" : "Critical Alerts (<50k)")</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Search & Filter Bar ── -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-3">
+            <form method="get" asp-controller="LabStaffDashboard" asp-action="Index" class="row g-2 align-items-center">
+                <input type="hidden" name="tab" value="@activeTab" />
+                <div class="col-md-8 col-lg-9">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" id="quickSearchInput" name="q" value="@Model.SearchTerm" class="form-control bg-light border-start-0" 
+                               placeholder="@(isBn ? "রোগীর নাম, বুকিং আইডি (#), টেস্টের নাম, বারকোড নম্বর দিয়ে অনুসন্ধান করুন..." : "Search patients by name, patient ID, booking ID (#), test name, or barcode...")" />
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-pill w-100 fw-semibold">
+                        <i class="bi bi-funnel-fill me-1"></i>@(isBn ? "ফিল্টার করুন" : "Filter")
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                    {
+                        <a asp-action="Index" asp-route-tab="@activeTab" class="btn btn-outline-secondary rounded-pill px-3" title="Clear Search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Interactive Lab Test Workflow Stepper ── -->
+    <div class="lab-workflow-stepper">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-diagram-3-fill text-primary fs-5"></i>
+                <h6 class="fw-bold mb-0">@(isBn ? "ল্যাব টেস্ট স্ট্যান্ডার্ড কর্মপ্রবাহ (Standard Operating Procedure)" : "LarvaX Diagnostic Lifecycle Workflow")</h6>
+            </div>
+            <span class="badge bg-light text-muted border px-2 py-1 rounded-pill small">SOP: LX-LAB-01</span>
+        </div>
+        <div class="d-flex justify-content-between overflow-x-auto py-2">
+            <div class="step-item done">
+                <div class="step-circle"><i class="bi bi-check-lg"></i></div>
+                <span class="small fw-semibold">@(isBn ? "১. নতুন বুকিং" : "1. New Booking")</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@(isBn ? "অনলাইন রেজিস্ট্রেশন" : "Patient Request")</span>
+            </div>
+            <div class="step-item done">
+                <div class="step-circle"><i class="bi bi-check-lg"></i></div>
+                <span class="small fw-semibold">@(isBn ? "২. বুকিং নিশ্চিত" : "2. Confirmed")</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@(isBn ? "সময়সূচী নির্ধারিত" : "Slot Reserved")</span>
+            </div>
+            <div class="step-item active">
+                <div class="step-circle">৩</div>
+                <span class="small fw-semibold text-primary">@(isBn ? "৩. নমুনা সংগ্রহ" : "3. Sample Collected")</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@(isBn ? "রক্ত/EDTA টিউব" : "Phlebotomy / Tube")</span>
+            </div>
+            <div class="step-item">
+                <div class="step-circle">৪</div>
+                <span class="small fw-semibold">@(isBn ? "৪. ল্যাবে গ্রহণ" : "4. Sample Received")</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@(isBn ? "বারকোড ভেরিফিকেশন" : "Barcode Logged")</span>
+            </div>
+            <div class="step-item">
+                <div class="step-circle">৫</div>
+                <span class="small fw-semibold">@(isBn ? "৫. প্রসেসিং" : "5. Processing")</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@(isBn ? "অ্যানালাইজার রান" : "Analyzer Run")</span>
+            </div>
+            <div class="step-item">
+                <div class="step-circle">৬</div>
+                <span class="small fw-semibold">@(isBn ? "৬. ফলাফল এন্ট্রি/আপলোড" : "6. Result Upload")</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@(isBn ? "NS1/CBC/PDF" : "Values & File")</span>
+            </div>
+            <div class="step-item">
+                <div class="step-circle">৭</div>
+                <span class="small fw-semibold">@(isBn ? "৭. ফলাফল যাচাই" : "7. Verified")</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@(isBn ? "প্যাথলজিস্ট অনুমোদন" : "Approved")</span>
+            </div>
+            <div class="step-item">
+                <div class="step-circle">৮</div>
+                <span class="small fw-semibold">@(isBn ? "৮. রোগী অবহিত" : "8. Notified")</span>
+                <span class="text-muted" style="font-size: 0.72rem;">@(isBn ? "SMS / সিগন্যালআর" : "SMS / Record Sync")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Core Navigation Tabs ── -->
+    <div class="lab-nav-pill-wrapper">
+        <ul class="nav lab-nav nav-pills flex-nowrap overflow-x-auto" id="labStaffTabs" role="tablist">
+            <!-- 1. Dashboard Overview -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(activeTab == "overview" ? "active" : "")" id="tab-overview-btn" data-bs-toggle="pill" data-bs-target="#tab-overview" type="button" role="tab">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>@(isBn ? "ড্যাশবোর্ড ওভারভিউ" : "Dashboard Overview")</span>
+                </button>
+            </li>
+
+            <!-- 2. Test Bookings -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(activeTab == "bookings" ? "active" : "")" id="tab-bookings-btn" data-bs-toggle="pill" data-bs-target="#tab-bookings" type="button" role="tab">
+                    <i class="bi bi-calendar-event"></i>
+                    <span>@(isBn ? "টেস্ট বুকিংস" : "Test Bookings")</span>
+                    <span class="badge bg-secondary rounded-pill ms-1">@Model.TotalBookingsCount</span>
+                </button>
+            </li>
+
+            <!-- 3. Tests & Samples -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(activeTab == "samples" ? "active" : "")" id="tab-samples-btn" data-bs-toggle="pill" data-bs-target="#tab-samples" type="button" role="tab">
+                    <i class="bi bi-eyedropper"></i>
+                    <span>@(isBn ? "নমুনা ব্যবস্থাপনা" : "Tests & Samples")</span>
+                    <span class="badge bg-warning text-dark rounded-pill ms-1">@Model.PendingTestsCount</span>
+                </button>
+            </li>
+
+            <!-- 4. Results -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(activeTab == "results" ? "active" : "")" id="tab-results-btn" data-bs-toggle="pill" data-bs-target="#tab-results" type="button" role="tab">
+                    <i class="bi bi-file-earmark-medical"></i>
+                    <span>@(isBn ? "টেস্ট ফলাফল ও আপলোড" : "Results & Upload")</span>
+                    <span class="badge bg-info text-dark rounded-pill ms-1">@Model.ResultsWaitingUploadCount</span>
+                </button>
+            </li>
+
+            <!-- 5. Patients -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(activeTab == "patients" ? "active" : "")" id="tab-patients-btn" data-bs-toggle="pill" data-bs-target="#tab-patients" type="button" role="tab">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <span>@(isBn ? "রোগীর রেকর্ডস" : "Patients & Records")</span>
+                    <span class="badge bg-light text-dark rounded-pill ms-1">@Model.Patients.Count</span>
+                </button>
+            </li>
+
+            <!-- 6. Available Tests -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(activeTab == "tests" ? "active" : "")" id="tab-tests-btn" data-bs-toggle="pill" data-bs-target="#tab-tests" type="button" role="tab">
+                    <i class="bi bi-card-checklist"></i>
+                    <span>@(isBn ? "ল্যাব ক্যাটালগ" : "Available Tests")</span>
+                    <span class="badge bg-light text-dark rounded-pill ms-1">@Model.AvailableTests.Count</span>
+                </button>
+            </li>
+
+            <!-- 7. Profile / Settings -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(activeTab == "profile" ? "active" : "")" id="tab-profile-btn" data-bs-toggle="pill" data-bs-target="#tab-profile" type="button" role="tab">
+                    <i class="bi bi-gear-fill"></i>
+                    <span>@(isBn ? "ল্যাব প্রোফাইল ও সেটিংস" : "Lab Profile")</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- ── Tab Contents Container ── -->
+    <div class="tab-content" id="labStaffTabContent">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: DASHBOARD OVERVIEW                 -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade @(activeTab == "overview" ? "show active" : "")" id="tab-overview" role="tabpanel">
+            <div class="row g-4">
+                <!-- Left 8 Cols: Today's Bookings & Action Queue -->
+                <div class="col-lg-8">
+                    <div class="lab-section-card">
+                        <div class="lab-section-header">
+                            <div>
+                                <h5 class="fw-bold mb-0">
+                                    <i class="bi bi-calendar2-day text-primary me-2"></i>@(isBn ? "আজকের টেস্ট বুকিং তালিকা" : "Today's Scheduled Bookings")
+                                </h5>
+                                <small class="text-muted">@(isBn ? "আজকের জন্য নির্ধারিত সমস্ত রোগী ও নমুনা" : "Patients scheduled for sample collection and testing today")</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill px-3 py-2">@Model.TodayBookings.Count @(isBn ? "টি বুকিং" : "Bookings")</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table lab-table">
+                                <thead>
+                                    <tr>
+                                        <th>@(isBn ? "বুকিং আইডি" : "Booking")</th>
+                                        <th>@(isBn ? "রোগী" : "Patient")</th>
+                                        <th>@(isBn ? "টেস্টের নাম" : "Diagnostic Test")</th>
+                                        <th>@(isBn ? "নির্ধারিত সময়" : "Scheduled Time")</th>
+                                        <th>@(isBn ? "স্ট্যাটাস" : "Status")</th>
+                                        <th class="text-end">@(isBn ? "পদক্ষেপ" : "Actions")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (!Model.TodayBookings.Any())
+                                    {
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5 text-muted">
+                                                <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                                <p class="mb-0 fw-medium">@(isBn ? "আজকের জন্য কোনো নতুন টেস্ট বুকিং নেই।" : "No appointments scheduled for today.")</p>
+                                                <small class="text-muted">@(isBn ? "অন্যান্য দিনের বুকিং দেখতে 'টেস্ট বুকিংস' ট্যাবে যান।" : "Check the Test Bookings tab for upcoming dates.")</small>
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var b in Model.TodayBookings)
+                                        {
+                                            var patName = b.Patient?.FullName ?? b.Patient?.UserName ?? "Anonymous Patient";
+                                            var testName = b.LabTest?.Name ?? "Laboratory Test";
+                                            <tr>
+                                                <td>
+                                                    <span class="fw-bold text-primary">#@b.Id</span>
+                                                    @if (!string.IsNullOrEmpty(b.BarcodeNumber))
+                                                    {
+                                                        <div class="badge bg-light text-dark border font-monospace mt-1" style="font-size:0.7rem;">
+                                                            <i class="bi bi-upc me-1"></i>@b.BarcodeNumber
+                                                        </div>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="fw-semibold">@patName</div>
+                                                    <div class="text-muted small">
+                                                        <i class="bi bi-telephone me-1"></i>@(b.Patient?.PhoneNumber ?? "N/A")
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-medium text-dark">@testName</div>
+                                                    <span class="badge bg-light text-secondary border small">৳ @b.LabTest?.Cost.ToString("N0")</span>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-semibold"><i class="bi bi-clock me-1 text-primary"></i>@b.ScheduledAt.ToLocalTime().ToString("hh:mm tt")</div>
+                                                    <small class="text-muted">@b.ScheduledAt.ToLocalTime().ToString("dd MMM yyyy")</small>
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        var badgeClass = b.Status switch
+                                                        {
+                                                            "Pending" => "badge-status-pending",
+                                                            "Confirmed" => "badge-status-confirmed",
+                                                            "SampleCollected" => "badge-status-collected",
+                                                            "SampleReceived" => "badge-status-received",
+                                                            "Processing" => "badge-status-processing",
+                                                            "Completed" => "badge-status-completed",
+                                                            "Rejected" => "badge-status-rejected",
+                                                            _ => "badge-status-cancelled"
+                                                        };
+                                                    }
+                                                    <span class="badge-status @badgeClass">
+                                                        <i class="bi bi-dot fs-5 p-0 m-0"></i>@b.Status
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="btn-group btn-group-sm">
+                                                        <!-- Sample status trigger -->
+                                                        <button type="button" class="btn btn-outline-primary" 
+                                                                title="@(isBn ? "নমুনার স্ট্যাটাস পরিবর্তন" : "Update Sample Status")"
+                                                                onclick="openSampleModal(@b.Id, '@b.SampleStatus', '@(b.BarcodeNumber ?? $"LX-{b.Id:D5}")')">
+                                                            <i class="bi bi-eyedropper"></i>
+                                                        </button>
+                                                        <!-- Upload Result trigger -->
+                                                        <button type="button" class="btn btn-outline-success" 
+                                                                title="@(isBn ? "ফলাফল লিখুন / আপলোড করুন" : "Enter Results / Upload")"
+                                                                onclick="openResultModal(@b.Id, '@patName', '@testName', '@(b.PlateletCount?.ToString() ?? "")', '@(b.WbcCount?.ToString() ?? "")', '@(b.Hematocrit?.ToString() ?? "")', '@(b.DengueNs1 ?? "")', '@(b.DengueIgm ?? "")', '@(b.DengueIgg ?? "")')">
+                                                            <i class="bi bi-cloud-arrow-up"></i>
+                                                        </button>
+                                                        <!-- Barcode Slip -->
+                                                        <button type="button" class="btn btn-outline-secondary" 
+                                                                title="@(isBn ? "বারকোড স্লিপ দেখুন" : "View Barcode Slip")"
+                                                                onclick="openBarcodeSlip(@b.Id, '@patName', '@testName', '@(b.BarcodeNumber ?? $"LX-{b.Id:D5}")')">
+                                                            <i class="bi bi-upc-scan"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Critical Alert Banner if thrombocytopenia detected -->
+                    @if (Model.CriticalPlateletAlertsCount > 0)
+                    {
+                        <div class="card border-danger bg-danger-subtle rounded-4 mb-4 shadow-sm">
+                            <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="lab-stat-icon bg-danger text-white rounded-circle pulse-danger">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-danger mb-1">
+                                            @(isBn ? "জরুরী ক্লিনিক্যাল সতর্কতা: রোগীর রক্তে আশঙ্কাজনক প্লাটিলেট কাউন্ট (< ৫০,০০০/mcL)!" : "Critical Clinical Alert: Severe Thrombocytopenia (< 50,000/mcL) Detected!")
+                                        </h6>
+                                        <p class="small text-danger-emphasis mb-0">
+                                            @(isBn ? "সংশ্লিষ্ট চিকিৎসকদের সাথে দ্রুত যোগাযোগ করা হয়েছে এবং স্বয়ংক্রিয় জরুরি অ্যালার্ট সক্রিয় রয়েছে।" : "High priority clinical alert generated. Immediate patient hydration & platelet monitoring required.")
+                                        </p>
+                                    </div>
+                                </div>
+                                <button class="btn btn-danger btn-sm rounded-pill px-3 fw-bold" onclick="document.getElementById('tab-results-btn').click();">
+                                    @(isBn ? "রিপোর্ট দেখুন" : "View Results")
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Right 4 Cols: Live Activity Feed & Urgent Alerts -->
+                <div class="col-lg-4">
+                    <!-- Live Activities Feed -->
+                    <div class="lab-section-card">
+                        <div class="lab-section-header">
+                            <h6 class="fw-bold mb-0">
+                                <i class="bi bi-activity text-primary me-2"></i>@(isBn ? "সাম্প্রতিক ল্যাব কার্যক্রম" : "Recent Laboratory Activity")
+                            </h6>
+                            <span class="badge bg-light text-muted border small">Live</span>
+                        </div>
+                        <div class="p-3">
+                            @if (!Model.RecentActivities.Any())
+                            {
+                                <p class="text-muted small text-center my-4">@(isBn ? "কোন সাম্প্রতিক কার্যক্রম নেই।" : "No recent activity recorded.")</p>
+                            }
+                            else
+                            {
+                                @foreach (var act in Model.RecentActivities)
+                                {
+                                    <div class="activity-feed-item">
+                                        <div class="activity-dot bg-primary"></div>
+                                        <div class="fw-semibold text-dark small">@act.Title</div>
+                                        <div class="text-muted small mb-1">@act.Description</div>
+                                        <span class="badge bg-light text-secondary border" style="font-size:0.72rem;">
+                                            <i class="bi bi-clock me-1"></i>@act.Timestamp.ToLocalTime().ToString("hh:mm tt, dd MMM")
+                                        </span>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Urgent Real-time Broadcast Alerts -->
+                    <div class="lab-section-card">
+                        <div class="lab-section-header">
+                            <h6 class="fw-bold mb-0">
+                                <i class="bi bi-broadcast text-danger me-2"></i>@(isBn ? "জরুরী সম্প্রচার বার্তা" : "Urgent Clinical Broadcasts")
+                            </h6>
+                            <span class="badge bg-danger rounded-pill px-2">SignalR</span>
+                        </div>
+                        <div class="p-3">
+                            <div id="urgentAlertsContainer">
+                                @if (!Model.UrgentAlerts.Any())
+                                {
+                                    <div class="text-center py-3 text-muted small">
+                                        <i class="bi bi-shield-check text-success fs-3 d-block mb-1"></i>
+                                        @(isBn ? "বর্তমানে কোনো জরুরী সতর্কতা নেই।" : "No active urgent alerts.")
+                                    </div>
+                                }
+                                else
+                                {
+                                    @foreach (var alert in Model.UrgentAlerts)
+                                    {
+                                        <div class="p-2 mb-2 rounded bg-light border-start border-4 border-danger">
+                                            <div class="small fw-bold text-dark">@alert.Message</div>
+                                            <div class="text-muted" style="font-size:0.72rem;">
+                                                <i class="bi bi-clock me-1"></i>@alert.SentAt.ToLocalTime().ToString("hh:mm tt, dd MMM")
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: TEST BOOKINGS                      -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade @(activeTab == "bookings" ? "show active" : "")" id="tab-bookings" role="tabpanel">
+            <div class="lab-section-card">
+                <div class="lab-section-header">
+                    <div>
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-calendar3 text-primary me-2"></i>@(isBn ? "সমস্ত ল্যাব টেস্ট বুকিং ব্যবস্থাপনা" : "Diagnostic Test Bookings")
+                        </h5>
+                        <small class="text-muted">@(isBn ? "রোগীদের সকল টেস্ট অ্যাপয়েন্টমেন্ট ও তাদের বর্তমান অবস্থা" : "Complete list of patient appointments, test selections, and booking statuses")</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill">
+                            @(isBn ? "মোট বুকিং:" : "Total:") @Model.AllBookings.Count
+                        </span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table lab-table">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>@(isBn ? "রোগী ও যোগাযোগ" : "Patient & Contact")</th>
+                                <th>@(isBn ? "টেস্টের নাম" : "Diagnostic Test")</th>
+                                <th>@(isBn ? "নির্ধারিত তারিখ" : "Scheduled For")</th>
+                                <th>@(isBn ? "বারকোড" : "Barcode")</th>
+                                <th>@(isBn ? "স্ট্যাটাস" : "Status")</th>
+                                <th class="text-end">@(isBn ? "ব্যবস্থাপনা" : "Manage")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.AllBookings.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                        @(isBn ? "কোন টেস্ট বুকিং পাওয়া যায়নি।" : "No bookings matched your search.")
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var b in Model.AllBookings)
+                                {
+                                    var patName = b.Patient?.FullName ?? b.Patient?.UserName ?? "Patient";
+                                    var testName = b.LabTest?.Name ?? "Laboratory Test";
+                                    <tr>
+                                        <td class="fw-bold text-primary">#@b.Id</td>
+                                        <td>
+                                            <div class="fw-semibold">@patName</div>
+                                            <div class="text-muted small"><i class="bi bi-telephone me-1"></i>@(b.Patient?.PhoneNumber ?? "N/A")</div>
+                                            <div class="text-muted small" style="font-size:0.75rem;"><i class="bi bi-geo-alt me-1"></i>@(b.Patient?.Address ?? "Dhaka")</div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark">@testName</div>
+                                            <span class="badge bg-light text-primary border small">৳ @b.LabTest?.Cost.ToString("N0")</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">@b.ScheduledAt.ToLocalTime().ToString("dd MMM yyyy")</div>
+                                            <small class="text-muted">@b.ScheduledAt.ToLocalTime().ToString("hh:mm tt")</small>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(b.BarcodeNumber))
+                                            {
+                                                <span class="badge bg-light text-dark border font-monospace">
+                                                    <i class="bi bi-upc me-1"></i>@b.BarcodeNumber
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary">@(isBn ? "নির্ধারিত নয়" : "Unassigned")</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @{
+                                                var bClass = b.Status switch
+                                                {
+                                                    "Pending" => "badge-status-pending",
+                                                    "Confirmed" => "badge-status-confirmed",
+                                                    "SampleCollected" => "badge-status-collected",
+                                                    "SampleReceived" => "badge-status-received",
+                                                    "Processing" => "badge-status-processing",
+                                                    "Completed" => "badge-status-completed",
+                                                    "Rejected" => "badge-status-rejected",
+                                                    _ => "badge-status-cancelled"
+                                                };
+                                            }
+                                            <span class="badge-status @bClass">
+                                                <i class="bi bi-dot fs-5 p-0 m-0"></i>@b.Status
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-inline-flex gap-1">
+                                                @if (b.Status == "Pending")
+                                                {
+                                                    <form method="post" asp-controller="LabStaffDashboard" asp-action="ConfirmBooking" asp-route-id="@b.Id" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-2" title="@(isBn ? "বুকিং নিশ্চিত করুন" : "Confirm Booking")">
+                                                            <i class="bi bi-check-lg me-1"></i>@(isBn ? "নিশ্চিত" : "Confirm")
+                                                        </button>
+                                                    </form>
+                                                }
+                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2" 
+                                                        onclick="openSampleModal(@b.Id, '@b.SampleStatus', '@(b.BarcodeNumber ?? $"LX-{b.Id:D5}")')">
+                                                    <i class="bi bi-eyedropper me-1"></i>@(isBn ? "নমুনা" : "Sample")
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2" 
+                                                        onclick="openBarcodeSlip(@b.Id, '@patName', '@testName', '@(b.BarcodeNumber ?? $"LX-{b.Id:D5}")')">
+                                                    <i class="bi bi-receipt"></i>
+                                                </button>
+                                                @if (b.Status == "Pending" || b.Status == "Confirmed")
+                                                {
+                                                    <form method="post" asp-controller="LabStaffDashboard" asp-action="CancelBooking" asp-route-id="@b.Id" class="d-inline" onsubmit="return confirm('Cancel this lab booking?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Cancel Booking">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: TESTS & SAMPLES (Sample Management) -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade @(activeTab == "samples" ? "show active" : "")" id="tab-samples" role="tabpanel">
+            <div class="lab-section-card">
+                <div class="lab-section-header">
+                    <div>
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-eyedropper text-primary me-2"></i>@(isBn ? "নমুনা সংগ্রহ ও প্রসেসিং ব্যবস্থাপনা" : "Sample Management & Specimen Tracking")
+                        </h5>
+                        <small class="text-muted">@(isBn ? "নমুনা সংগ্রহ (Collected), ল্যাবে গ্রহণ (Received), প্রসেসিং (Processing) বা বাতিল (Rejected) করুন" : "Track specimen chain of custody, verify tube barcodes, and advance testing status")</small>
+                    </div>
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                        @Model.PendingTests.Count @(isBn ? "টি প্রক্রিয়াধীন নমুনা" : "Active In-Queue")
+                    </span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table lab-table">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>@(isBn ? "রোগী" : "Patient")</th>
+                                <th>@(isBn ? "নমুনার ধরন ও বারকোড" : "Specimen & Barcode")</th>
+                                <th>@(isBn ? "বর্তমান অবস্থা" : "Current Sample Status")</th>
+                                <th>@(isBn ? "টাইমস্ট্যাম্প লগ" : "Specimen Timestamps")</th>
+                                <th class="text-end">@(isBn ? "স্ট্যাটাস পরিবর্তন" : "Advance Status")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.PendingTests.Any())
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <i class="bi bi-check2-circle fs-1 d-block mb-2 text-success"></i>
+                                        @(isBn ? "বর্তমানে অপেক্ষমাণ কোনো নমুনা নেই। সমস্ত নমুনা প্রসেস করা হয়েছে।" : "No pending specimens requiring sample collection or intake.")
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var b in Model.PendingTests)
+                                {
+                                    var patName = b.Patient?.FullName ?? b.Patient?.UserName ?? "Patient";
+                                    var testName = b.LabTest?.Name ?? "Diagnostic Test";
+                                    var sampleCode = !string.IsNullOrEmpty(b.BarcodeNumber) ? b.BarcodeNumber : $"LX-{b.Id:D5}";
+                                    <tr>
+                                        <td class="fw-bold text-primary">#@b.Id</td>
+                                        <td>
+                                            <div class="fw-semibold">@patName</div>
+                                            <div class="text-muted small">@testName</div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-medium text-dark">
+                                                <i class="bi bi-droplet-fill text-danger me-1"></i>@(b.SampleType ?? "Venous Blood (EDTA)")
+                                            </div>
+                                            <span class="badge bg-light text-dark border font-monospace mt-1">
+                                                <i class="bi bi-upc me-1"></i>@sampleCode
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @{
+                                                var stClass = b.SampleStatus switch
+                                                {
+                                                    "SampleCollected" or "Collected" => "badge-status-collected",
+                                                    "SampleReceived" or "Received" => "badge-status-received",
+                                                    "Processing" => "badge-status-processing",
+                                                    "Rejected" => "badge-status-rejected",
+                                                    _ => "badge-status-pending"
+                                                };
+                                            }
+                                            <span class="badge-status @stClass">
+                                                <i class="bi bi-dot fs-5 p-0 m-0"></i>@b.SampleStatus
+                                            </span>
+                                            @if (!string.IsNullOrEmpty(b.RejectionReason))
+                                            {
+                                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>@b.RejectionReason</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="small text-muted">
+                                                @if (b.SampleCollectedAt.HasValue)
+                                                {
+                                                    <div><i class="bi bi-check text-success"></i>Collected: @b.SampleCollectedAt.Value.ToLocalTime().ToString("hh:mm tt")</div>
+                                                }
+                                                @if (b.SampleReceivedAt.HasValue)
+                                                {
+                                                    <div><i class="bi bi-check text-primary"></i>Received: @b.SampleReceivedAt.Value.ToLocalTime().ToString("hh:mm tt")</div>
+                                                }
+                                                @if (b.ProcessingStartedAt.HasValue)
+                                                {
+                                                    <div><i class="bi bi-gear text-warning"></i>Processing: @b.ProcessingStartedAt.Value.ToLocalTime().ToString("hh:mm tt")</div>
+                                                }
+                                                @if (!b.SampleCollectedAt.HasValue && !b.SampleReceivedAt.HasValue && !b.ProcessingStartedAt.HasValue)
+                                                {
+                                                    <span class="text-muted italic">Scheduled for @b.ScheduledAt.ToLocalTime().ToString("dd MMM, hh:mm tt")</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group btn-group-sm">
+                                                @if (b.SampleStatus == "Pending" || b.Status == "Confirmed")
+                                                {
+                                                    <!-- Quick Mark Collected -->
+                                                    <form method="post" asp-controller="LabStaffDashboard" asp-action="UpdateSampleStatus" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="BookingId" value="@b.Id" />
+                                                        <input type="hidden" name="Status" value="SampleCollected" />
+                                                        <input type="hidden" name="BarcodeNumber" value="@sampleCode" />
+                                                        <button type="submit" class="btn btn-outline-primary" title="@(isBn ? "নমুনা সংগৃহীত হিসেবে চিহ্নিত করুন" : "Mark Collected")">
+                                                            <i class="bi bi-check-circle me-1"></i>@(isBn ? "সংগৃহীত" : "Collected")
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else if (b.SampleStatus == "SampleCollected" || b.SampleStatus == "Collected")
+                                                {
+                                                    <!-- Quick Mark Received -->
+                                                    <form method="post" asp-controller="LabStaffDashboard" asp-action="UpdateSampleStatus" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="BookingId" value="@b.Id" />
+                                                        <input type="hidden" name="Status" value="SampleReceived" />
+                                                        <input type="hidden" name="BarcodeNumber" value="@sampleCode" />
+                                                        <button type="submit" class="btn btn-outline-info text-dark" title="@(isBn ? "ল্যাবে গৃহীত হিসেবে চিহ্নিত করুন" : "Mark Received")">
+                                                            <i class="bi bi-box-seam me-1"></i>@(isBn ? "গৃহীত" : "Received")
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else if (b.SampleStatus == "SampleReceived" || b.SampleStatus == "Received")
+                                                {
+                                                    <!-- Quick Mark Processing -->
+                                                    <form method="post" asp-controller="LabStaffDashboard" asp-action="UpdateSampleStatus" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="BookingId" value="@b.Id" />
+                                                        <input type="hidden" name="Status" value="Processing" />
+                                                        <input type="hidden" name="BarcodeNumber" value="@sampleCode" />
+                                                        <button type="submit" class="btn btn-outline-warning text-dark" title="@(isBn ? "প্রসেসিং শুরু করুন" : "Start Processing")">
+                                                            <i class="bi bi-gear-fill me-1"></i>@(isBn ? "প্রসেসিং" : "Processing")
+                                                        </button>
+                                                    </form>
+                                                }
+
+                                                <!-- Full Modal for Rejection / Custom Advance -->
+                                                <button type="button" class="btn btn-outline-secondary" onclick="openSampleModal(@b.Id, '@b.SampleStatus', '@sampleCode')">
+                                                    <i class="bi bi-sliders"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: RESULTS (Upload & Enter Values)     -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade @(activeTab == "results" ? "show active" : "")" id="tab-results" role="tabpanel">
+            <!-- Tests Waiting for Result Entry -->
+            <div class="lab-section-card mb-4">
+                <div class="lab-section-header bg-primary-subtle">
+                    <div>
+                        <h5 class="fw-bold text-primary mb-0">
+                            <i class="bi bi-cloud-arrow-up-fill me-2"></i>@(isBn ? "ফলাফল এন্ট্রি ও রিপোর্ট আপলোডের অপেক্ষায়" : "Awaiting Result Entry & Report Upload")
+                        </h5>
+                        <small class="text-muted">@(isBn ? "যে টেস্টগুলোর নমুনা সংগ্রহ/প্রসেসিং সম্পন্ন এবং ফলাফল লিপিবদ্ধ করতে হবে" : "Samples in processing stage waiting for diagnostic values and PDF report publishing")</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill px-3 py-2">
+                        @Model.WaitingUploadTests.Count @(isBn ? "টি টেস্ট অপেক্ষমাণ" : "Waiting Tests")
+                    </span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table lab-table">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>@(isBn ? "রোগী" : "Patient")</th>
+                                <th>@(isBn ? "টেস্টের নাম" : "Test Name")</th>
+                                <th>@(isBn ? "বারকোড" : "Barcode")</th>
+                                <th>@(isBn ? "স্ট্যাটাস" : "Status")</th>
+                                <th class="text-end">@(isBn ? "ফলাফল এন্ট্রি" : "Enter Result")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.WaitingUploadTests.Any())
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="bi bi-clipboard-check fs-2 d-block mb-1 text-success"></i>
+                                        @(isBn ? "কোন টেস্ট ফলাফল এন্ট্রির জন্য অপেক্ষমাণ নেই।" : "No pending results waiting for entry.")
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var b in Model.WaitingUploadTests)
+                                {
+                                    var patName = b.Patient?.FullName ?? b.Patient?.UserName ?? "Patient";
+                                    var testName = b.LabTest?.Name ?? "Laboratory Test";
+                                    <tr>
+                                        <td class="fw-bold text-primary">#@b.Id</td>
+                                        <td>
+                                            <div class="fw-semibold">@patName</div>
+                                            <div class="text-muted small">@(b.Patient?.PhoneNumber ?? "No Phone")</div>
+                                        </td>
+                                        <td class="fw-bold text-dark">@testName</td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border font-monospace">
+                                                <i class="bi bi-upc me-1"></i>@(b.BarcodeNumber ?? $"LX-{b.Id:D5}")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge-status badge-status-processing">
+                                                <i class="bi bi-gear-wide-connected me-1"></i>@b.Status
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-sm"
+                                                    onclick="openResultModal(@b.Id, '@patName', '@testName', '@(b.PlateletCount?.ToString() ?? "")', '@(b.WbcCount?.ToString() ?? "")', '@(b.Hematocrit?.ToString() ?? "")', '@(b.DengueNs1 ?? "")', '@(b.DengueIgm ?? "")', '@(b.DengueIgg ?? "")')">
+                                                <i class="bi bi-pencil-square me-1"></i>@(isBn ? "ফলাফল লিপিবদ্ধ করুন" : "Enter Values & Upload")
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Completed Tests & Reports List -->
+            <div class="lab-section-card">
+                <div class="lab-section-header">
+                    <div>
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-check2-all text-success me-2"></i>@(isBn ? "সম্পন্ন টেস্ট ও প্রকাশিত ডায়াগনস্টিক রিপোর্টসমূহ" : "Completed Diagnostic Lab Reports")
+                        </h5>
+                        <small class="text-muted">@(isBn ? "যাচাইকৃত রিপোর্ট দেখুন, রোগীর সাথে সিঙ্ক করা রেকর্ড ও প্রিন্ট করুন" : "Browse released laboratory findings, critical alert logs, and official printable slips")</small>
+                    </div>
+                    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
+                        @Model.CompletedTests.Count @(isBn ? "টি সম্পন্ন" : "Completed")
+                    </span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table lab-table">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>@(isBn ? "রোগী" : "Patient")</th>
+                                <th>@(isBn ? "টেস্টের নাম" : "Test")</th>
+                                <th>@(isBn ? "ল্যাব ফলাফল (Values)" : "Key Findings")</th>
+                                <th>@(isBn ? "যাচাইকরণ" : "Verification")</th>
+                                <th>@(isBn ? "তারিখ" : "Date Completed")</th>
+                                <th class="text-end">@(isBn ? "অ্যাকশন" : "Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.CompletedTests.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-file-earmark-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                        @(isBn ? "কোন সম্পন্ন টেস্ট রিপোর্ট নেই।" : "No completed test records found.")
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var b in Model.CompletedTests)
+                                {
+                                    var patName = b.Patient?.FullName ?? b.Patient?.UserName ?? "Patient";
+                                    var testName = b.LabTest?.Name ?? "Laboratory Test";
+                                    var isCriticalPlatelet = b.PlateletCount.HasValue && b.PlateletCount.Value < 50000;
+                                    <tr class="@(isCriticalPlatelet ? "table-danger" : "")">
+                                        <td class="fw-bold text-primary">#@b.Id</td>
+                                        <td>
+                                            <div class="fw-semibold">@patName</div>
+                                            <div class="text-muted small">@(b.Patient?.PhoneNumber ?? "N/A")</div>
+                                        </td>
+                                        <td class="fw-bold text-dark">@testName</td>
+                                        <td>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                @if (b.PlateletCount.HasValue)
+                                                {
+                                                    <span class="badge @(isCriticalPlatelet ? "bg-danger text-white pulse-danger" : "bg-light text-dark border")">
+                                                        Platelets: @b.PlateletCount.Value.ToString("N0")
+                                                    </span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(b.DengueNs1))
+                                                {
+                                                    <span class="badge @(b.DengueNs1.ToLower().Contains("pos") ? "bg-danger text-white" : "bg-success-subtle text-success")">
+                                                        NS1: @b.DengueNs1
+                                                    </span>
+                                                }
+                                                @if (b.WbcCount.HasValue)
+                                                {
+                                                    <span class="badge bg-light text-dark border">
+                                                        WBC: @b.WbcCount.Value.ToString("N0")
+                                                    </span>
+                                                }
+                                                @if (b.Hematocrit.HasValue)
+                                                {
+                                                    <span class="badge bg-light text-dark border">
+                                                        Hct: @b.Hematocrit.Value%
+                                                    </span>
+                                                }
+                                                @if (!b.PlateletCount.HasValue && string.IsNullOrEmpty(b.DengueNs1) && !string.IsNullOrEmpty(b.ResultLink))
+                                                {
+                                                    <span class="badge bg-info-subtle text-info">PDF Report Attached</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (b.IsVerified)
+                                            {
+                                                <span class="badge bg-success-subtle text-success rounded-pill">
+                                                    <i class="bi bi-shield-fill-check me-1"></i>@(isBn ? "যাচাইকৃত" : "Verified")
+                                                </span>
+                                                <div class="text-muted" style="font-size:0.7rem;">@b.VerifiedBy</div>
+                                            }
+                                            else
+                                            {
+                                                <form method="post" asp-controller="LabStaffDashboard" asp-action="VerifyResult" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="bookingId" value="@b.Id" />
+                                                    <button type="submit" class="btn btn-warning btn-sm rounded-pill px-2 py-0" style="font-size:0.75rem;" title="Approve & Send Notification">
+                                                        <i class="bi bi-patch-check me-1"></i>@(isBn ? "যাচাই করুন" : "Verify Now")
+                                                    </button>
+                                                </form>
+                                            }
+                                        </td>
+                                        <td class="small text-muted">
+                                            @(b.CompletedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? b.UpdatedAt.ToLocalTime().ToString("dd MMM yyyy"))
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group btn-group-sm">
+                                                <!-- Print Official Diagnostic Lab Report -->
+                                                <a asp-action="PrintReport" asp-route-id="@b.Id" target="_blank" class="btn btn-outline-primary" title="@(isBn ? "ডায়াগনস্টিক রিপোর্ট প্রিন্ট করুন" : "Print Diagnostic Lab Report")">
+                                                    <i class="bi bi-printer-fill me-1"></i>@(isBn ? "প্রিন্ট" : "Print")
+                                                </a>
+                                                <!-- View External or Uploaded File -->
+                                                @if (!string.IsNullOrEmpty(b.ResultLink))
+                                                {
+                                                    <a href="@b.ResultLink" target="_blank" class="btn btn-outline-info text-dark" title="@(isBn ? "সংযুক্ত ফাইল দেখুন" : "View Attached File")">
+                                                        <i class="bi bi-file-earmark-arrow-down"></i>
+                                                    </a>
+                                                }
+                                                <!-- Edit Values Button -->
+                                                <button type="button" class="btn btn-outline-secondary" 
+                                                        title="@(isBn ? "মান সংশোধন করুন" : "Edit Results")"
+                                                        onclick="openResultModal(@b.Id, '@patName', '@testName', '@(b.PlateletCount?.ToString() ?? "")', '@(b.WbcCount?.ToString() ?? "")', '@(b.Hematocrit?.ToString() ?? "")', '@(b.DengueNs1 ?? "")', '@(b.DengueIgm ?? "")', '@(b.DengueIgg ?? "")', '@(b.TestNotes ?? "")', '@(b.ResultLink ?? "")')">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: PATIENTS (Patient Records Integration) -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade @(activeTab == "patients" ? "show active" : "")" id="tab-patients" role="tabpanel">
+            <div class="row g-4">
+                <!-- Left 8 Cols: Patient Directory -->
+                <div class="col-lg-8">
+                    <div class="lab-section-card">
+                        <div class="lab-section-header">
+                            <div>
+                                <h5 class="fw-bold mb-0">
+                                    <i class="bi bi-people-fill text-primary me-2"></i>@(isBn ? "রোগী ডিরেক্টরি ও ল্যাব হিস্ট্রি" : "Patient Directory & Diagnostic History")
+                                </h5>
+                                <small class="text-muted">@(isBn ? "ল্যাবরেটরির সাথে সংযুক্ত রোগীদের ইতিহাস ও ইলেকট্রনিক স্বাস্থ্য রেকর্ড (EHR)" : "Patients tested at this laboratory with integrated medical record linking")</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill px-3 py-2">@Model.Patients.Count @(isBn ? "জন রোগী" : "Patients")</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table lab-table">
+                                <thead>
+                                    <tr>
+                                        <th>@(isBn ? "রোগীর নাম ও আইডি" : "Patient Info")</th>
+                                        <th>@(isBn ? "যোগাযোগ ও ঠিকানা" : "Contact & Address")</th>
+                                        <th>@(isBn ? "মোট পরীক্ষা" : "Tests Count")</th>
+                                        <th>@(isBn ? "সর্বশেষ পরীক্ষা" : "Latest Diagnostic")</th>
+                                        <th>@(isBn ? "ঝুঁকি স্ট্যাটাস" : "Risk Status")</th>
+                                        <th class="text-end">@(isBn ? "অ্যাকশন" : "Actions")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (!Model.Patients.Any())
+                                    {
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5 text-muted">
+                                                <i class="bi bi-person-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                                @(isBn ? "কোন রোগী পাওয়া যায়নি।" : "No patients matched your query.")
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var p in Model.Patients)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-bold text-dark">@p.PatientName</div>
+                                                    <small class="text-muted font-monospace" style="font-size:0.75rem;">ID: @p.PatientId.Substring(0, Math.Min(8, p.PatientId.Length))...</small>
+                                                </td>
+                                                <td>
+                                                    <div class="small"><i class="bi bi-telephone text-primary me-1"></i>@(p.PhoneNumber ?? "N/A")</div>
+                                                    <div class="text-muted small" style="font-size:0.72rem;"><i class="bi bi-geo-alt me-1"></i>@(p.Address ?? "Dhaka, Bangladesh")</div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark border">
+                                                        <i class="bi bi-journal-medical me-1 text-primary"></i>@p.TotalTests Tests
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-medium text-dark small">@(p.LatestTestName ?? "Laboratory Test")</div>
+                                                    <small class="text-muted">@(p.LatestTestDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "-")</small>
+                                                </td>
+                                                <td>
+                                                    @if (p.HasCriticalResult)
+                                                    {
+                                                        <span class="badge bg-danger text-white rounded-pill pulse-danger">
+                                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>High Alert
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success-subtle text-success rounded-pill">
+                                                            <i class="bi bi-check-circle me-1"></i>Normal / Stable
+                                                        </span>
+                                                    }
+                                                </td>
+                                                <td class="text-end">
+                                                    <a asp-controller="PatientRecords" asp-action="Index" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="View Patient Records">
+                                                        <i class="bi bi-folder2-open me-1"></i>EHR
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right 4 Cols: Recent Synced Patient Records -->
+                <div class="col-lg-4">
+                    <div class="lab-section-card">
+                        <div class="lab-section-header">
+                            <h6 class="fw-bold mb-0">
+                                <i class="bi bi-file-earmark-text text-primary me-2"></i>@(isBn ? "সিঙ্ককৃত ল্যাব রেকর্ডস" : "Synced Patient Records")
+                            </h6>
+                            <span class="badge bg-light text-muted border small">Auto-Sync</span>
+                        </div>
+                        <div class="p-3">
+                            <p class="small text-muted mb-3">
+                                @(isBn ? "ল্যাব স্টাফ যখন ফলাফল আপলোড করে, তা স্বয়ংক্রিয়ভাবে রোগীর ইলেকট্রনিক হেলথ রেকর্ডে (Patient Records) যুক্ত হয়।" : "Every completed diagnostic result is instantly bridged to the patient's centralized health record.")
+                            </p>
+                            @if (!Model.RecentLabPatientRecords.Any())
+                            {
+                                <div class="text-center py-4 text-muted small">
+                                    @(isBn ? "কোন পূর্ববর্তী ল্যাব রেকর্ড সিঙ্ক হয়নি।" : "No patient records synced yet.")
+                                </div>
+                            }
+                            else
+                            {
+                                @foreach (var r in Model.RecentLabPatientRecords)
+                                {
+                                    <div class="card border-0 bg-light rounded-3 p-2 mb-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="fw-bold small text-primary">@r.Title</span>
+                                            <span class="text-muted" style="font-size:0.7rem;">@r.Date.ToLocalTime().ToString("dd MMM")</span>
+                                        </div>
+                                        <div class="text-dark small" style="font-size:0.8rem;">
+                                            <i class="bi bi-person me-1"></i>@(r.Patient?.FullName ?? "Patient")
+                                        </div>
+                                        <div class="text-muted" style="font-size:0.75rem;">
+                                            @(r.Description ?? "Report generated.")
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(r.FileUrl))
+                                        {
+                                            <div class="mt-1">
+                                                <a href="@r.FileUrl" target="_blank" class="small text-primary text-decoration-none">
+                                                    <i class="bi bi-paperclip me-1"></i>View File
+                                                </a>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 6: AVAILABLE TESTS (Catalog Management)-->
+        <!-- ========================================== -->
+        <div class="tab-pane fade @(activeTab == "tests" ? "show active" : "")" id="tab-tests" role="tabpanel">
+            <div class="lab-section-card">
+                <div class="lab-section-header">
+                    <div>
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-card-checklist text-primary me-2"></i>@(isBn ? "ল্যাবরেটরি টেস্ট ক্যাটালগ" : "Laboratory Test Catalog & Pricing")
+                        </h5>
+                        <small class="text-muted">@(isBn ? "রোগীদের বুকিংয়ের জন্য উপলব্ধ ডায়াগনস্টিক পরীক্ষার তালিকা ও মূল্য নির্ধারণ" : "Manage available laboratory tests, descriptions, test costs in BDT, and toggle public availability")</small>
+                    </div>
+                    <button type="button" class="btn btn-primary rounded-pill px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#newTestModal">
+                        <i class="bi bi-plus-lg me-1"></i>@(isBn ? "নতুন টেস্ট যোগ করুন" : "Add New Test")
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table lab-table">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>@(isBn ? "পরীক্ষার নাম" : "Diagnostic Test Name")</th>
+                                <th>@(isBn ? "বিবরণ" : "Description")</th>
+                                <th>@(isBn ? "নির্ধারিত ফি (BDT)" : "Cost (BDT)")</th>
+                                <th>@(isBn ? "স্ট্যাটাস" : "Status")</th>
+                                <th class="text-end">@(isBn ? "অ্যাকশন" : "Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.AvailableTests.Any())
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        @(isBn ? "ক্যাটালগে কোনো টেস্ট পাওয়া যায়নি।" : "No diagnostic tests defined yet.")
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var t in Model.AvailableTests)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-primary">#@t.Id</td>
+                                        <td class="fw-bold text-dark">@t.Name</td>
+                                        <td class="text-muted small" style="max-width:320px;">@t.Description</td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border fs-6 fw-semibold">
+                                                ৳ @t.Cost.ToString("N0")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (t.IsAvailable)
+                                            {
+                                                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">
+                                                    <i class="bi bi-check-circle-fill me-1"></i>@(isBn ? "সক্রিয় / বুকিং চলছে" : "Active / Available")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-1">
+                                                    <i class="bi bi-slash-circle me-1"></i>@(isBn ? "নিষ্ক্রিয়" : "Disabled")
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-inline-flex gap-2">
+                                                <!-- Toggle Availability -->
+                                                <form method="post" asp-controller="LabStaffDashboard" asp-action="ToggleTest" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@t.Id" />
+                                                    <button type="submit" class="btn btn-sm @(t.IsAvailable ? "btn-outline-danger" : "btn-outline-success") rounded-pill px-3">
+                                                        @(t.IsAvailable ? (isBn ? "বন্ধ করুন" : "Disable") : (isBn ? "চালু করুন" : "Enable"))
+                                                    </button>
+                                                </form>
+
+                                                <!-- Edit Test Modal Trigger -->
+                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                                        onclick="openEditTestModal(@t.Id, '@t.Name', '@t.Description', @t.Cost, @(t.IsAvailable ? "true" : "false"))">
+                                                    <i class="bi bi-pencil-fill me-1"></i>@(isBn ? "সম্পাদনা" : "Edit")
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 7: PROFILE / SETTINGS                 -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade @(activeTab == "profile" ? "show active" : "")" id="tab-profile" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="lab-section-card">
+                        <div class="lab-section-header">
+                            <div>
+                                <h5 class="fw-bold mb-0">
+                                    <i class="bi bi-hospital text-primary me-2"></i>@(isBn ? "ল্যাবরেটরি প্রোফাইল ও বিবরণ" : "Laboratory Profile & Facility Details")
+                                </h5>
+                                <small class="text-muted">@(isBn ? "অফিসিয়াল যোগাযোগ, ঠিকানা ও পরিচালন তথ্যাবলী" : "Official operational and certification credentials")</small>
+                            </div>
+                            <span class="badge bg-success rounded-pill px-3 py-2">Verified Facility</span>
+                        </div>
+                        <div class="p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="small text-muted fw-semibold">@(isBn ? "ল্যাবরেটরির নাম" : "Facility Name")</label>
+                                    <div class="fw-bold text-dark">@Model.LabProfile.Name</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small text-muted fw-semibold">@(isBn ? "সুবিধা কোড" : "Facility Code")</label>
+                                    <div class="fw-bold text-primary font-monospace">@Model.LabProfile.FacilityCode</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="small text-muted fw-semibold">@(isBn ? "ঠিকানা" : "Official Address")</label>
+                                    <div class="text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i>@Model.LabProfile.Address</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small text-muted fw-semibold">@(isBn ? "জরুরী ফোন নম্বর" : "Helpline / Phone")</label>
+                                    <div class="text-dark"><i class="bi bi-telephone-fill text-success me-1"></i>@Model.LabProfile.ContactPhone</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small text-muted fw-semibold">@(isBn ? "ইমেইল যোগাযোগ" : "Contact Email")</label>
+                                    <div class="text-dark"><i class="bi bi-envelope-fill text-primary me-1"></i>@Model.LabProfile.ContactEmail</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small text-muted fw-semibold">@(isBn ? "কার্যক্রমের সময়সূচী" : "Operating Hours")</label>
+                                    <div class="text-dark"><i class="bi bi-clock-fill text-warning me-1"></i>@Model.LabProfile.OperatingHours</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small text-muted fw-semibold">@(isBn ? "ল্যাব পরিচালক" : "Laboratory Director")</label>
+                                    <div class="text-dark"><i class="bi bi-person-fill text-info me-1"></i>@Model.LabProfile.LaboratoryDirector</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="small text-muted fw-semibold">@(isBn ? "অনুমোদন ও এক্রিডিটেশন" : "Government Accreditation")</label>
+                                    <div class="badge bg-light text-dark border p-2 w-100 text-start">
+                                        <i class="bi bi-patch-check-fill text-success me-2 fs-6"></i>@Model.LabProfile.Accreditation
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <!-- Role Boundary Card -->
+                    <div class="lab-section-card">
+                        <div class="lab-section-header">
+                            <h6 class="fw-bold mb-0">
+                                <i class="bi bi-shield-lock text-primary me-2"></i>@(isBn ? "ভূমিকা ও সীমানা (Role Boundary)" : "LabStaff Operational Boundaries")
+                            </h6>
+                            <span class="badge bg-light text-secondary border small">LarvaX Security</span>
+                        </div>
+                        <div class="p-4">
+                            <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small">
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-check-circle-fill text-success fs-6 mt-1"></i>
+                                    <div>
+                                        <strong>Authorized Scope:</strong> Lab booking management, phlebotomy tracking, hematology and serology data entry, official report upload, and patient test verification.
+                                    </div>
+                                </li>
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-x-circle-fill text-danger fs-6 mt-1"></i>
+                                    <div>
+                                        <strong>Doctor Boundary:</strong> Clinical prescriptions, telemedicine visits, and triage modifications are reserved for Doctor role.
+                                    </div>
+                                </li>
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-x-circle-fill text-danger fs-6 mt-1"></i>
+                                    <div>
+                                        <strong>HealthWorker Boundary:</strong> Field household larval inspection and larvicide inventory are reserved for HealthWorker role.
+                                    </div>
+                                </li>
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-x-circle-fill text-danger fs-6 mt-1"></i>
+                                    <div>
+                                        <strong>Government Authority Boundary:</strong> National surveillance policy and aggregation metrics belong to Government dashboard.
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL: Update Sample Management Status                   -->
+<!-- ======================================================== -->
+<div class="modal fade" id="sampleStatusModal" tabindex="-1" aria-labelledby="sampleStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom bg-light">
+                <h5 class="modal-title fw-bold" id="sampleStatusModalLabel">
+                    <i class="bi bi-eyedropper text-primary me-2"></i>@(isBn ? "নমুনার অবস্থা পরিবর্তন" : "Update Sample Management Status")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-controller="LabStaffDashboard" asp-action="UpdateSampleStatus">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="modalBookingId" name="BookingId" value="0" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">@(isBn ? "নমুনা টিউব বারকোড নম্বর" : "Specimen Barcode / Tube #")</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-upc"></i></span>
+                            <input type="text" class="form-control font-monospace" id="modalBarcodeNumber" name="BarcodeNumber" required />
+                        </div>
+                        <small class="text-muted">Unique tracking identifier printed on the EDTA / serum tube.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">@(isBn ? "নতুন অবস্থা নির্বাচন করুন" : "Select Sample Stage")</label>
+                        <select class="form-select" id="modalSampleStatus" name="Status" required onchange="toggleRejectionField(this.value)">
+                            <option value="SampleCollected">Sample Collected (নমুনা সংগৃহীত)</option>
+                            <option value="SampleReceived">Sample Received in Laboratory (ল্যাবে গৃহীত)</option>
+                            <option value="Processing">Processing / Loaded to Analyzer (প্রসেসিং)</option>
+                            <option value="Completed">Testing Completed (সম্পন্ন)</option>
+                            <option value="Rejected">Rejected / Specimen Unfit (বাতিল)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-none" id="rejectionReasonDiv">
+                        <label class="form-label text-danger fw-semibold">@(isBn ? "বাতিল করার কারণ" : "Reason for Rejection")</label>
+                        <textarea class="form-control" name="RejectionReason" id="modalRejectionReason" rows="2" placeholder="e.g. Hemolyzed specimen, insufficient blood volume, clotting in EDTA tube..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Save Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL: Enter Diagnostic Values & Upload Result Report     -->
+<!-- ======================================================== -->
+<div class="modal fade" id="uploadResultModal" tabindex="-1" aria-labelledby="uploadResultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom bg-light">
+                <div>
+                    <h5 class="modal-title fw-bold" id="uploadResultModalLabel">
+                        <i class="bi bi-file-earmark-medical-fill text-primary me-2"></i>@(isBn ? "ল্যাব পরীক্ষার ফলাফল ও রিপোর্ট আপলোড" : "Enter Test Values & Upload Diagnostic Report")
+                    </h5>
+                    <small class="text-muted" id="modalResultSubtitle">Booking # — Patient</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-controller="LabStaffDashboard" asp-action="UploadResult" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="resultModalBookingId" name="BookingId" value="0" />
+                <div class="modal-body p-4">
+
+                    <!-- Dengue Serology Panel -->
+                    <h6 class="fw-bold text-primary mb-3">
+                        <i class="bi bi-virus me-2"></i>@(isBn ? "১. ডেঙ্গু সেরোলজি প্যানেল (Dengue Serology)" : "1. Dengue Serology Panel")
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Dengue NS1 Antigen</label>
+                            <select class="form-select" id="inputDengueNs1" name="DengueNs1">
+                                <option value="">-- Not Performed --</option>
+                                <option value="Negative">Negative (নেগেটিভ)</option>
+                                <option value="Positive">Positive (পজিটিভ)</option>
+                                <option value="Equivocal">Equivocal (সন্দেহজনক)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Dengue IgM Antibody</label>
+                            <select class="form-select" id="inputDengueIgm" name="DengueIgm">
+                                <option value="">-- Not Performed --</option>
+                                <option value="Negative">Negative (নেগেটিভ)</option>
+                                <option value="Positive">Positive (পজিটিভ)</option>
+                                <option value="Equivocal">Equivocal</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Dengue IgG Antibody</label>
+                            <select class="form-select" id="inputDengueIgg" name="DengueIgg">
+                                <option value="">-- Not Performed --</option>
+                                <option value="Negative">Negative (নেগেটিভ)</option>
+                                <option value="Positive">Positive (পজিটিভ)</option>
+                                <option value="Equivocal">Equivocal</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Hematology & CBC Panel -->
+                    <h6 class="fw-bold text-primary mb-3">
+                        <i class="bi bi-droplet-half me-2"></i>@(isBn ? "২. হেমাটোলজি ও সম্পূর্ণ রক্ত গণনা (CBC)" : "2. Complete Blood Count (CBC) Parameters")
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">
+                                Platelet Count (/mcL) <span class="text-danger fw-bold">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="inputPlateletCount" name="PlateletCount" placeholder="e.g. 85000" oninput="checkPlateletAlert(this.value)" />
+                                <span class="input-group-text bg-light small">/mcL</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">Ref: 150,000 - 450,000 /mcL</small>
+                            <div id="plateletCriticalWarning" class="alert alert-danger p-2 small mt-1 d-none">
+                                <i class="bi bi-exclamation-octagon-fill me-1"></i><strong>CRITICAL THROMBOCYTOPENIA!</strong> Value &lt; 50,000/mcL will trigger an immediate emergency hospital alert.
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Total WBC Count (/mcL)</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="inputWbcCount" name="WbcCount" placeholder="e.g. 3500" />
+                                <span class="input-group-text bg-light small">/mcL</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">Ref: 4,000 - 11,000 /mcL</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Hematocrit / PCV (%)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" class="form-control" id="inputHematocrit" name="Hematocrit" placeholder="e.g. 42.5" />
+                                <span class="input-group-text bg-light small">%</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">Ref: 36.0 - 50.0 %</small>
+                        </div>
+                    </div>
+
+                    <!-- Report Document Upload -->
+                    <h6 class="fw-bold text-primary mb-3">
+                        <i class="bi bi-file-earmark-arrow-up me-2"></i>@(isBn ? "৩. ল্যাব রিপোর্ট ফাইল আপলোড (PDF / Image)" : "3. Official Laboratory Report File")
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-7">
+                            <label class="form-label small fw-semibold">Upload File (PDF, PNG, JPG)</label>
+                            <input type="file" class="form-control" name="ResultFile" accept=".pdf,.jpg,.jpeg,.png" />
+                            <small class="text-muted">Maximum file size: 10MB. Stored securely on the LarvaX health portal.</small>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold">Or External Document Link</label>
+                            <input type="url" class="form-control" name="ExternalFileUrl" placeholder="https://..." />
+                        </div>
+                    </div>
+
+                    <!-- Clinical Interpretation -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Clinical Interpretation / Technologist Remarks</label>
+                        <textarea class="form-control" id="inputTestNotes" name="TestNotes" rows="2" placeholder="e.g. Leukopenia with thrombocytopenia noted. Correlate clinically for early Dengue phase."></textarea>
+                    </div>
+
+                    <!-- Auto-verify checkbox -->
+                    <div class="form-check form-switch p-3 bg-light rounded-3 border">
+                        <input class="form-check-input ms-0 me-3" type="checkbox" role="switch" id="autoVerifyCheck" name="AutoVerify" value="true" checked />
+                        <label class="form-check-label fw-semibold" for="autoVerifyCheck">
+                            @(isBn ? "স্বয়ংক্রিয়ভাবে ফলাফল অনুমোদন ও রোগীকে তাৎক্ষণিক নোটিফিকেশন পাঠান" : "Direct Verification: Approve report and notify patient immediately")
+                        </label>
+                        <small class="text-muted d-block">Results will immediately reflect on the patient portal and link to the central Patient Records.</small>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                        <i class="bi bi-check2-circle me-1"></i>Publish & Save Results
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL: Add / Edit Laboratory Test Catalog                 -->
+<!-- ======================================================== -->
+<div class="modal fade" id="newTestModal" tabindex="-1" aria-labelledby="newTestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom bg-light">
+                <h5 class="modal-title fw-bold" id="newTestModalLabel">
+                    <i class="bi bi-plus-circle text-primary me-2"></i>@(isBn ? "ল্যাব টেস্ট ক্যাটালগ যোগ / সম্পাদনা" : "Manage Lab Test in Catalog")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-controller="LabStaffDashboard" asp-action="SaveTest">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editTestId" name="Id" value="0" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">@(isBn ? "পরীক্ষার নাম" : "Diagnostic Test Name")</label>
+                        <input type="text" class="form-control" id="editTestName" name="Name" required placeholder="e.g. Dengue Duo (NS1 + IgM/IgG)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">@(isBn ? "বিবরণ" : "Clinical Description")</label>
+                        <textarea class="form-control" id="editTestDescription" name="Description" rows="2" placeholder="e.g. Rapid immunochromatographic test for early dengue detection..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">@(isBn ? "নির্ধারিত ফি (BDT)" : "Test Cost (৳ BDT)")</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">৳</span>
+                            <input type="number" step="0.01" class="form-control" id="editTestCost" name="Cost" required placeholder="500.00" />
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="editTestIsAvailable" name="IsAvailable" value="true" checked />
+                        <label class="form-check-label fw-semibold" for="editTestIsAvailable">@(isBn ? "রোগীদের বুকিংয়ের জন্য সক্রিয় রাখুন" : "Available for Patient Online Booking")</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Save Test</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL: Barcode Sample Tube & Receipt Slip                -->
+<!-- ======================================================== -->
+<div class="modal fade" id="barcodeSlipModal" tabindex="-1" aria-labelledby="barcodeSlipModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom bg-light">
+                <h5 class="modal-title fw-bold" id="barcodeSlipModalLabel">
+                    <i class="bi bi-upc-scan text-primary me-2"></i>@(isBn ? "নমুনা টিউব বারকোড ও স্লিপ" : "Specimen Tube Barcode & Intake Slip")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center" id="barcodePrintableArea">
+                <div class="p-3 border rounded-3 bg-light mb-3">
+                    <div class="text-uppercase fw-bold text-primary small mb-1">LarvaX Diagnostic Reference Lab</div>
+                    <div class="fw-bold fs-5 text-dark" id="slipPatientName">Patient Name</div>
+                    <div class="text-muted small mb-2" id="slipTestName">Dengue NS1 Ag</div>
+                    <div class="bg-white p-3 rounded border font-monospace fs-4 fw-bold letter-spacing-2" id="slipBarcode">
+                        LX-00000
+                    </div>
+                    <div class="small text-muted mt-2">
+                        <i class="bi bi-calendar3 me-1"></i>Date: @DateTime.UtcNow.ToString("dd MMM yyyy") | Specimen: EDTA Blood
+                    </div>
+                </div>
+                <small class="text-muted d-block">Stick this label onto the sample container before centrifugation and analysis.</small>
+            </div>
+            <div class="modal-footer border-top bg-light">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i>Print Slip
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live Clock Update
+    setInterval(function() {
+        const el = document.getElementById('liveClockDisplay');
+        if (el) {
+            const now = new Date();
+            el.innerText = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + now.toLocaleTimeString('en-US');
+        }
+    }, 1000);
+
+    // Sample status modal
+    function openSampleModal(bookingId, currentStatus, barcode) {
+        document.getElementById('modalBookingId').value = bookingId;
+        document.getElementById('modalBarcodeNumber').value = barcode || ('LX-' + bookingId);
+        const sel = document.getElementById('modalSampleStatus');
+        if (sel) {
+            for (let i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === currentStatus) {
+                    sel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        toggleRejectionField(sel.value);
+        new bootstrap.Modal(document.getElementById('sampleStatusModal')).show();
+    }
+
+    function toggleRejectionField(val) {
+        const div = document.getElementById('rejectionReasonDiv');
+        if (div) {
+            if (val === 'Rejected') {
+                div.classList.remove('d-none');
+            } else {
+                div.classList.add('d-none');
+            }
+        }
+    }
+
+    // Result entry modal
+    function openResultModal(bookingId, patName, testName, platelet, wbc, hct, ns1, igm, igg, notes, fileUrl) {
+        document.getElementById('resultModalBookingId').value = bookingId;
+        document.getElementById('modalResultSubtitle').innerText = 'Booking #' + bookingId + ' — ' + patName + ' (' + testName + ')';
+        document.getElementById('inputPlateletCount').value = platelet || '';
+        document.getElementById('inputWbcCount').value = wbc || '';
+        document.getElementById('inputHematocrit').value = hct || '';
+        document.getElementById('inputDengueNs1').value = ns1 || '';
+        document.getElementById('inputDengueIgm').value = igm || '';
+        document.getElementById('inputDengueIgg').value = igg || '';
+        document.getElementById('inputTestNotes').value = notes || '';
+        checkPlateletAlert(platelet);
+        new bootstrap.Modal(document.getElementById('uploadResultModal')).show();
+    }
+
+    function checkPlateletAlert(val) {
+        const warn = document.getElementById('plateletCriticalWarning');
+        if (warn) {
+            const num = parseInt(val, 10);
+            if (!isNaN(num) && num > 0 && num < 50000) {
+                warn.classList.remove('d-none');
+            } else {
+                warn.classList.add('d-none');
+            }
+        }
+    }
+
+    // Barcode Slip modal
+    function openBarcodeSlip(bookingId, patName, testName, barcode) {
+        document.getElementById('slipPatientName').innerText = patName;
+        document.getElementById('slipTestName').innerText = testName;
+        document.getElementById('slipBarcode').innerText = barcode;
+        new bootstrap.Modal(document.getElementById('barcodeSlipModal')).show();
+    }
+
+    // Catalog edit modal
+    function openEditTestModal(id, name, desc, cost, isAvailable) {
+        document.getElementById('editTestId').value = id;
+        document.getElementById('editTestName').value = name;
+        document.getElementById('editTestDescription').value = desc;
+        document.getElementById('editTestCost').value = cost;
+        document.getElementById('editTestIsAvailable').checked = isAvailable;
+        document.getElementById('newTestModalLabel').innerHTML = '<i class="bi bi-pencil-square text-primary me-2"></i>Edit Test: ' + name;
+        new bootstrap.Modal(document.getElementById('newTestModal')).show();
+    }
+
+    // SignalR Live Alert Listener integration
+    document.addEventListener("DOMContentLoaded", function () {
+        if (typeof signalR !== "undefined") {
+            try {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl("/alertshub")
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on("ReceiveAlert", function (data) {
+                    const container = document.getElementById("urgentAlertsContainer");
+                    if (container) {
+                        const newAlert = document.createElement("div");
+                        newAlert.className = "p-2 mb-2 rounded bg-danger-subtle border-start border-4 border-danger pulse-danger";
+                        newAlert.innerHTML = '<div class="small fw-bold text-danger"><i class="bi bi-bell-fill me-1"></i>' + (data.message || 'New High Priority Alert') + '</div><div class="text-muted" style="font-size:0.72rem;">Just now</div>';
+                        container.prepend(newAlert);
+                    }
+                });
+
+                connection.start().catch(err => console.log("SignalR Connection Lab Error: ", err));
+            } catch (e) {
+                console.log("SignalR hub not configured or available: ", e);
+            }
+        }
+    });
+</script>

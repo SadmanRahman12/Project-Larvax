@@ -17,5 +17,6 @@ namespace LarvaX.Core.Entities
         public string? RejectionReason { get; set; }
 
         public string? Specialty { get; set; }
+        public string? Address { get; set; }
     }
 }

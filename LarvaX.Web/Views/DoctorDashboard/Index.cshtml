@@ -1,0 +1,1651 @@
+@model LarvaX.Web.Models.DoctorDashboardViewModel
+@using LarvaX.Core.Entities
+@{
+    ViewData["Title"] = "Doctor Dashboard - LarvaX";
+    var doctorName = string.IsNullOrWhiteSpace(Model.Doctor.FullName) ? Model.Doctor.UserName : Model.Doctor.FullName;
+    var todayStr = DateTime.Now.ToString("dddd, dd MMMM yyyy");
+}
+
+<style>
+    :root {
+        --doc-primary: #0f6fad;
+        --doc-primary-dark: #0a4d7a;
+        --doc-accent: #00c6a2;
+        --doc-danger: #e53935;
+        --doc-warning: #f4a700;
+        --doc-surface: #f4f7fb;
+        --doc-card: #ffffff;
+        --doc-border: #e3eaf3;
+        --doc-text: #1a2535;
+        --doc-muted: #6b7c93;
+    }
+
+    body { background: var(--doc-surface); }
+
+    /* ── Hero Banner ── */
+    .doc-hero {
+        background: linear-gradient(135deg, #0f6fad 0%, #0a4d7a 55%, #00c6a2 100%);
+        border-radius: 1.25rem;
+        padding: 2rem 2.25rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(15,111,173,0.18);
+    }
+    .doc-hero::before {
+        content: '';
+        position: absolute;
+        right: -60px; top: -60px;
+        width: 280px; height: 280px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.06);
+    }
+    .doc-hero::after {
+        content: '';
+        position: absolute;
+        right: 80px; bottom: -80px;
+        width: 200px; height: 200px;
+        border-radius: 50%;
+        background: rgba(0,198,162,0.12);
+    }
+
+    /* ── Stat Cards ── */
+    .doc-stat {
+        border-radius: 1rem;
+        border: none;
+        box-shadow: 0 2px 16px rgba(15,111,173,0.08);
+        transition: transform .18s, box-shadow .18s;
+    }
+    .doc-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(15,111,173,0.14); }
+    .doc-stat .icon-bubble {
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    /* ── Sidebar ── */
+    .doc-sidebar {
+        position: sticky; top: 80px;
+        height: calc(100vh - 100px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    .doc-nav .nav-link {
+        border-radius: .75rem;
+        font-weight: 500;
+        color: var(--doc-text);
+        padding: .6rem 1rem;
+        display: flex; align-items: center; gap: .65rem;
+        transition: background .15s, color .15s;
+    }
+    .doc-nav .nav-link:hover,
+    .doc-nav .nav-link.active {
+        background: linear-gradient(90deg, rgba(15,111,173,0.12) 0%, rgba(0,198,162,0.07) 100%);
+        color: var(--doc-primary);
+    }
+    .doc-nav .nav-link .nav-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+
+    /* ── Section Cards ── */
+    .doc-section {
+        border-radius: 1rem;
+        border: 1px solid var(--doc-border);
+        background: var(--doc-card);
+        box-shadow: 0 2px 12px rgba(15,111,173,0.06);
+        margin-bottom: 1.5rem;
+    }
+    .doc-section-header {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid var(--doc-border);
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .doc-section-title {
+        font-weight: 700; font-size: 1rem;
+        color: var(--doc-text); margin: 0;
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .doc-section-title .section-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .95rem;
+    }
+
+    /* ── Appointment Timeline ── */
+    .appt-item {
+        display: flex; align-items: flex-start; gap: 1rem;
+        padding: .9rem 1.25rem;
+        border-bottom: 1px solid var(--doc-border);
+        transition: background .15s;
+    }
+    .appt-item:last-child { border-bottom: none; }
+    .appt-item:hover { background: var(--doc-surface); }
+    .appt-avatar {
+        width: 42px; height: 42px; border-radius: 50%;
+        background: linear-gradient(135deg, #0f6fad, #00c6a2);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-weight: 700; font-size: .95rem;
+        flex-shrink: 0;
+    }
+
+    /* ── Status Badges ── */
+    .badge-booked   { background: rgba(15,111,173,0.12); color: #0f6fad; }
+    .badge-confirmed { background: rgba(0,198,162,0.12); color: #008870; }
+    .badge-cancelled { background: rgba(229,57,53,0.1); color: #c62828; }
+    .badge-completed { background: rgba(76,175,80,0.12); color: #2e7d32; }
+    .status-badge {
+        padding: .25rem .65rem; border-radius: 999px; font-size: .72rem; font-weight: 600;
+    }
+
+    /* ── Lab Result Row ── */
+    .lab-row {
+        display: flex; align-items: center; gap: 1rem;
+        padding: .75rem 1.25rem;
+        border-bottom: 1px solid var(--doc-border);
+    }
+    .lab-row:last-child { border-bottom: none; }
+    .lab-avatar {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: rgba(244,167,0,0.12);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--doc-warning); font-size: 1rem; flex-shrink: 0;
+    }
+
+    /* ── Risk Alert Card ── */
+    .risk-alert-card {
+        border-radius: .9rem;
+        border: 1.5px solid rgba(229,57,53,0.25);
+        background: linear-gradient(135deg, #fff5f5 0%, #fff 100%);
+        padding: 1rem 1.2rem;
+        transition: box-shadow .18s;
+    }
+    .risk-alert-card:hover { box-shadow: 0 4px 16px rgba(229,57,53,0.12); }
+
+    /* ── IV Fluid Calculator ── */
+    .fluid-calc-card {
+        background: linear-gradient(135deg, #e8f4fd 0%, #f0faf8 100%);
+        border-radius: 1rem;
+        border: 1px solid var(--doc-border);
+        padding: 1.5rem;
+    }
+    .fluid-result-box {
+        background: var(--doc-card);
+        border: 1px solid var(--doc-border);
+        border-radius: .75rem;
+        padding: 1rem 1.25rem;
+    }
+    .fluid-phase-bar {
+        display: flex; border-radius: .5rem; overflow: hidden;
+        height: 10px; margin-bottom: .35rem;
+    }
+
+    /* ── Profile Card ── */
+    .profile-field {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: .6rem 0; border-bottom: 1px solid var(--doc-border);
+        font-size: .88rem;
+    }
+    .profile-field:last-child { border-bottom: none; }
+    .profile-field .label { color: var(--doc-muted); font-weight: 500; }
+
+    /* ── Notification item ── */
+    .notif-item {
+        display: flex; align-items: flex-start; gap: .9rem;
+        padding: .8rem 1.25rem; border-bottom: 1px solid var(--doc-border);
+        transition: background .15s;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--doc-surface); }
+    .notif-dot {
+        width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+    }
+
+    /* ── ICU Hospitals ── */
+    .icu-row {
+        display: flex; align-items: center; gap: 1rem;
+        padding: .8rem 1.25rem; border-bottom: 1px solid var(--doc-border);
+    }
+    .icu-row:last-child { border-bottom: none; }
+
+    /* ── Empty State ── */
+    .empty-state {
+        padding: 2.5rem 1rem; text-align: center; color: var(--doc-muted);
+    }
+    .empty-state i { font-size: 2.5rem; margin-bottom: .75rem; display: block; }
+
+    /* ── Responsive tweaks ── */
+    @@media (max-width: 991.98px) {
+        .doc-sidebar { position: relative; height: auto; }
+    }
+</style>
+
+<div class="container-fluid px-2 px-md-3 py-3">
+
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @* HERO BANNER *@
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    <div class="doc-hero mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 position-relative" style="z-index:1;">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    <span class="badge bg-white text-primary fw-bold px-3 py-1 rounded-pill">
+                        <i class="bi bi-shield-plus me-1"></i>Doctor
+                    </span>
+                    @if (Model.Doctor.IsApproved)
+                    {
+                        <span class="badge bg-success bg-opacity-25 text-white border border-white border-opacity-25 px-2 py-1 rounded-pill">
+                            <i class="bi bi-patch-check-fill me-1"></i>Verified &amp; Active
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark px-2 py-1 rounded-pill">
+                            <i class="bi bi-hourglass-split me-1"></i>Pending Approval
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Doctor.Specialty))
+                    {
+                        <span class="badge bg-white bg-opacity-15 text-white px-2 py-1 rounded-pill">
+                            <i class="bi bi-award me-1"></i>@Model.Doctor.Specialty
+                        </span>
+                    }
+                </div>
+                <h2 class="fw-bold mb-1">Welcome, Dr. @doctorName</h2>
+                <p class="mb-0 opacity-75 small"><i class="bi bi-calendar3 me-1"></i>@todayStr</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="Telemedicine" asp-action="Index" class="btn btn-light fw-bold rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-camera-video-fill me-1 text-primary"></i>Telemedicine
+                </a>
+                <a asp-controller="IcuBeds" asp-action="Index" class="btn btn-outline-light rounded-pill px-3">
+                    <i class="bi bi-hospital me-1"></i>ICU Beds
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @* STAT CARDS ROW *@
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card doc-stat h-100 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="icon-bubble" style="background:rgba(15,111,173,0.1);color:#0f6fad;">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
+                </div>
+                <div class="text-muted small fw-semibold">Today's Appts</div>
+                <h3 class="fw-bold mb-0" style="color:#0f6fad;">@Model.TodayAppointmentsCount</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card doc-stat h-100 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="icon-bubble" style="background:rgba(244,167,0,0.12);color:#f4a700;">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+                <div class="text-muted small fw-semibold">Pending Requests</div>
+                <h3 class="fw-bold mb-0" style="color:#f4a700;">@Model.PendingRequestsCount</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card doc-stat h-100 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="icon-bubble" style="background:rgba(0,198,162,0.12);color:#00c6a2;">
+                        <i class="bi bi-camera-video-fill"></i>
+                    </div>
+                </div>
+                <div class="text-muted small fw-semibold">Active Consults</div>
+                <h3 class="fw-bold mb-0" style="color:#00c6a2;">@Model.ActiveConsultationsCount</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card doc-stat h-100 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="icon-bubble" style="background:rgba(76,175,80,0.12);color:#388e3c;">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div class="text-muted small fw-semibold">Total Patients</div>
+                <h3 class="fw-bold mb-0" style="color:#388e3c;">@Model.TotalPatientsCount</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card doc-stat h-100 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="icon-bubble" style="background:rgba(229,57,53,0.1);color:#e53935;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                </div>
+                <div class="text-muted small fw-semibold">High-Risk Zones</div>
+                <h3 class="fw-bold mb-0" style="color:#e53935;">@Model.ActiveHighRiskZonesCount</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card doc-stat h-100 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="icon-bubble" style="background:rgba(123,31,162,0.1);color:#7b1fa2;">
+                        <i class="bi bi-bell-fill"></i>
+                    </div>
+                </div>
+                <div class="text-muted small fw-semibold">Active Alerts</div>
+                <h3 class="fw-bold mb-0" style="color:#7b1fa2;">@Model.RecentAlerts.Count</h3>
+            </div>
+        </div>
+    </div>
+
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    @* MAIN LAYOUT: SIDEBAR + CONTENT *@
+    @* ═══════════════════════════════════════════════════════════════════ *@
+    <div class="row g-4">
+
+        @* ─── SIDEBAR ─────────────────────────────────────────────────── *@
+        <div class="col-lg-2 col-xl-2 d-none d-lg-block">
+            <div class="doc-sidebar">
+                <div class="card border-0 shadow-sm rounded-4 p-2">
+                    <ul class="nav flex-column doc-nav gap-1 py-1">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#section-overview">
+                                <span class="nav-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>Overview
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-appointments">
+                                <span class="nav-icon"><i class="bi bi-calendar-week-fill"></i></span>Appointments
+                                @if (Model.PendingRequestsCount > 0)
+                                {
+                                    <span class="badge bg-warning text-dark ms-auto rounded-pill small">@Model.PendingRequestsCount</span>
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-schedule">
+                                <span class="nav-icon"><i class="bi bi-clock-history"></i></span>My Schedule
+                                <span class="badge @(Model.ActiveSchedulesCount > 0 ? "bg-success" : "bg-warning text-dark") ms-auto rounded-pill small">
+                                    @(Model.ActiveSchedulesCount > 0 ? $"{Model.ActiveSchedulesCount} Active" : "Not Set")
+                                </span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-telemedicine">
+                                <span class="nav-icon"><i class="bi bi-camera-video-fill"></i></span>Telemedicine
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-patients">
+                                <span class="nav-icon"><i class="bi bi-people-fill"></i></span>Patients
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-lab">
+                                <span class="nav-icon"><i class="bi bi-eyedropper"></i></span>Lab Results
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-dengue">
+                                <span class="nav-icon"><i class="bi bi-exclamation-triangle-fill"></i></span>Dengue Risk
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-icu">
+                                <span class="nav-icon"><i class="bi bi-hospital-fill"></i></span>ICU Bed Finder
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-iv">
+                                <span class="nav-icon"><i class="bi bi-droplet-half"></i></span>IV Calculator
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-notifications">
+                                <span class="nav-icon"><i class="bi bi-bell-fill"></i></span>Notifications
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section-profile">
+                                <span class="nav-icon"><i class="bi bi-person-badge-fill"></i></span>Profile
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* ─── MAIN CONTENT ──────────────────────────────────────────────── *@
+        <div class="col-lg-10 col-xl-10">
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §1 OVERVIEW *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-overview" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(15,111,173,0.1);color:#0f6fad;">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                        </span>
+                        Overview &amp; Quick Actions
+                    </h2>
+                </div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a asp-controller="Telemedicine" asp-action="Index" class="text-decoration-none">
+                                <div class="card h-100 border rounded-3 p-3 shadow-sm" style="border-color:rgba(15,111,173,0.2)!important; transition:.15s;" onmouseover="this.style.borderColor='#0f6fad'" onmouseout="this.style.borderColor='rgba(15,111,173,0.2)'">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="p-3 rounded-3 fs-3" style="background:rgba(15,111,173,0.1);color:#0f6fad;"><i class="bi bi-camera-video-fill"></i></div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1 text-dark">Telemedicine</h6>
+                                            <small class="text-muted">Start or join a video consultation</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="PatientRecords" asp-action="Index" class="text-decoration-none">
+                                <div class="card h-100 border rounded-3 p-3 shadow-sm" style="border-color:rgba(0,198,162,0.2)!important; transition:.15s;" onmouseover="this.style.borderColor='#00c6a2'" onmouseout="this.style.borderColor='rgba(0,198,162,0.2)'">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="p-3 rounded-3 fs-3" style="background:rgba(0,198,162,0.1);color:#00c6a2;"><i class="bi bi-folder2-open"></i></div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1 text-dark">Patient Records</h6>
+                                            <small class="text-muted">View diagnoses, prescriptions &amp; history</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="Lab" asp-action="Bookings" class="text-decoration-none">
+                                <div class="card h-100 border rounded-3 p-3 shadow-sm" style="border-color:rgba(244,167,0,0.2)!important; transition:.15s;" onmouseover="this.style.borderColor='#f4a700'" onmouseout="this.style.borderColor='rgba(244,167,0,0.2)'">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="p-3 rounded-3 fs-3" style="background:rgba(244,167,0,0.1);color:#f4a700;"><i class="bi bi-eyedropper"></i></div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1 text-dark">Lab Results</h6>
+                                            <small class="text-muted">Track CBC, NS1, platelet bookings</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="IcuBeds" asp-action="Index" class="text-decoration-none">
+                                <div class="card h-100 border rounded-3 p-3 shadow-sm" style="border-color:rgba(229,57,53,0.2)!important; transition:.15s;" onmouseover="this.style.borderColor='#e53935'" onmouseout="this.style.borderColor='rgba(229,57,53,0.2)'">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="p-3 rounded-3 fs-3" style="background:rgba(229,57,53,0.08);color:#e53935;"><i class="bi bi-hospital-fill"></i></div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1 text-dark">ICU Bed Finder</h6>
+                                            <small class="text-muted">Locate emergency beds near patient</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="FluidManagement" asp-action="Index" class="text-decoration-none">
+                                <div class="card h-100 border rounded-3 p-3 shadow-sm" style="border-color:rgba(15,111,173,0.2)!important; transition:.15s;" onmouseover="this.style.borderColor='#0f6fad'" onmouseout="this.style.borderColor='rgba(15,111,173,0.2)'">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="p-3 rounded-3 fs-3" style="background:rgba(15,111,173,0.08);color:#0f6fad;"><i class="bi bi-droplet-half"></i></div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1 text-dark">IV Fluid Calculator</h6>
+                                            <small class="text-muted">WHO dengue fluid management tool</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a asp-controller="SymptomChecker" asp-action="Index" class="text-decoration-none">
+                                <div class="card h-100 border rounded-3 p-3 shadow-sm" style="border-color:rgba(0,198,162,0.2)!important; transition:.15s;" onmouseover="this.style.borderColor='#00c6a2'" onmouseout="this.style.borderColor='rgba(0,198,162,0.2)'">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="p-3 rounded-3 fs-3" style="background:rgba(0,198,162,0.08);color:#00c6a2;"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1 text-dark">AI Triage Tool</h6>
+                                            <small class="text-muted">AI dengue risk classification</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §2 APPOINTMENTS *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-appointments" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(15,111,173,0.1);color:#0f6fad;">
+                            <i class="bi bi-calendar-week-fill"></i>
+                        </span>
+                        Appointments
+                    </h2>
+                    <div class="d-flex gap-2">
+                        @if (Model.PendingRequestsCount > 0)
+                        {
+                            <span class="badge bg-warning text-dark rounded-pill">@Model.PendingRequestsCount pending</span>
+                        }
+                        <a asp-controller="Telemedicine" asp-action="Appointments" class="btn btn-sm btn-primary rounded-pill px-3">
+                            <i class="bi bi-list-ul me-1"></i>All Appointments
+                        </a>
+                    </div>
+                </div>
+
+                @* Pending Requests *@
+                @if (Model.PendingRequests.Any())
+                {
+                    <div class="px-4 pt-3 pb-1">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="fw-bold small text-warning"><i class="bi bi-hourglass-split me-1"></i>Pending Consultation Requests</span>
+                        </div>
+                        @foreach (var req in Model.PendingRequests.Take(5))
+                        {
+                            var patName = req.Patient?.FullName ?? req.Patient?.UserName ?? "Patient";
+                            var initials = patName.Length >= 2 ? patName.Substring(0, 2).ToUpper() : patName.ToUpper();
+                            <div class="appt-item" style="background:#fffbf0;">
+                                <div class="appt-avatar" style="background:linear-gradient(135deg,#f4a700,#e53935);">@initials</div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small">@patName</div>
+                                    <div class="text-muted" style="font-size:.78rem;">
+                                        <i class="bi bi-clock me-1"></i>@req.ScheduledAt.ToString("ddd, dd MMM yyyy • hh:mm tt")
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(req.Notes))
+                                    {
+                                        <div class="text-muted mt-1" style="font-size:.78rem;"><i class="bi bi-chat-text me-1"></i>@req.Notes</div>
+                                    }
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    <form asp-action="ConfirmAppointment" asp-controller="DoctorDashboard" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@req.Id" />
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                                            <i class="bi bi-check-lg me-1"></i>Accept
+                                        </button>
+                                    </form>
+                                    <form asp-action="RejectAppointment" asp-controller="DoctorDashboard" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@req.Id" />
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                            <i class="bi bi-x-lg me-1"></i>Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <hr class="my-0">
+                }
+
+                @* Today's Appointments *@
+                <div class="px-4 pt-3 pb-1">
+                    <div class="fw-bold small mb-2" style="color:#0f6fad;"><i class="bi bi-calendar-day me-1"></i>Today's Schedule</div>
+                    @if (Model.TodayAppointments.Any())
+                    {
+                        @foreach (var appt in Model.TodayAppointments)
+                        {
+                            var patName = appt.Patient?.FullName ?? appt.Patient?.UserName ?? "Patient";
+                            var initials = patName.Length >= 2 ? patName.Substring(0, 2).ToUpper() : patName.ToUpper();
+                            var statusClass = appt.Status switch {
+                                AppointmentStatus.Confirmed => "badge-confirmed",
+                                AppointmentStatus.Cancelled => "badge-cancelled",
+                                AppointmentStatus.Completed => "badge-completed",
+                                _ => "badge-booked"
+                            };
+                            <div class="appt-item">
+                                <div class="appt-avatar">@initials</div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-bold small">@patName</span>
+                                        <span class="status-badge @statusClass">@appt.Status</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size:.78rem;"><i class="bi bi-clock me-1"></i>@appt.ScheduledAt.ToString("hh:mm tt")</div>
+                                    @if (!string.IsNullOrEmpty(appt.Notes))
+                                    {
+                                        <div class="text-muted" style="font-size:.78rem;">@appt.Notes</div>
+                                    }
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    @if (appt.Status == AppointmentStatus.Confirmed)
+                                    {
+                                        <a asp-controller="Telemedicine" asp-action="Room" asp-route-id="@appt.Id"
+                                           class="btn btn-sm btn-primary rounded-pill px-3">
+                                            <i class="bi bi-camera-video-fill me-1"></i>Start
+                                        </a>
+                                        <form asp-action="CompleteAppointment" asp-controller="DoctorDashboard" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@appt.Id" />
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-2">
+                                                <i class="bi bi-check2-circle"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else if (appt.Status == AppointmentStatus.Booked)
+                                    {
+                                        <form asp-action="ConfirmAppointment" asp-controller="DoctorDashboard" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@appt.Id" />
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                                                <i class="bi bi-check-lg me-1"></i>Confirm
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-calendar-x"></i>
+                            <div class="fw-semibold">No appointments today</div>
+                            <small>Your schedule is clear for today.</small>
+                        </div>
+                    }
+                </div>
+
+                @* Upcoming Appointments *@
+                @if (Model.UpcomingAppointments.Any())
+                {
+                    <hr class="my-0">
+                    <div class="px-4 pt-3 pb-3">
+                        <div class="fw-bold small mb-2 text-muted"><i class="bi bi-calendar3 me-1"></i>Upcoming</div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="font-size:.875rem;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Date &amp; Time</th>
+                                        <th>Notes</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var appt in Model.UpcomingAppointments)
+                                    {
+                                        var patName = appt.Patient?.FullName ?? appt.Patient?.UserName ?? "Patient";
+                                        var statusClass = appt.Status switch {
+                                            AppointmentStatus.Confirmed => "bg-success",
+                                            AppointmentStatus.Booked    => "bg-primary",
+                                            AppointmentStatus.Cancelled => "bg-danger",
+                                            _                           => "bg-secondary"
+                                        };
+                                        <tr>
+                                            <td class="fw-semibold">@patName</td>
+                                            <td>@appt.ScheduledAt.ToString("dd MMM • hh:mm tt")</td>
+                                            <td class="text-muted small">@(appt.Notes ?? "—")</td>
+                                            <td><span class="badge @statusClass">@appt.Status</span></td>
+                                            <td class="text-end">
+                                                <a asp-controller="Telemedicine" asp-action="Room" asp-route-id="@appt.Id"
+                                                   class="btn btn-sm btn-outline-primary rounded-pill">
+                                                    <i class="bi bi-camera-video-fill me-1"></i>Join
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §2B DOCTOR SCHEDULE & WORKING HOURS                        *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-schedule" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(0,198,162,0.12);color:#008870;">
+                            <i class="bi bi-clock-history"></i>
+                        </span>
+                        Consultation Schedule &amp; Working Hours
+                    </h2>
+                    <span class="badge @(Model.ActiveSchedulesCount > 0 ? "bg-success" : "bg-warning text-dark") px-3 py-2 rounded-pill">
+                        @(Model.ActiveSchedulesCount > 0 ? $"{Model.ActiveSchedulesCount} Active Slots" : "No Schedule Set")
+                    </span>
+                </div>
+                <div class="p-4">
+                    @* Notice info *@
+                    <div class="alert alert-info border-0 rounded-3 shadow-sm d-flex align-items-start gap-3 mb-4" style="background:rgba(15,111,173,0.08);color:#084298;">
+                        <i class="bi bi-info-circle-fill fs-4 mt-1 flex-shrink-0 text-primary"></i>
+                        <div>
+                            <div class="fw-bold">Fix Your Available Consultation Hours</div>
+                            <div class="small">Doctors are not available at all times. Once you fix your schedule below, patients can <strong>only book appointments during your active time slots</strong>. Outside these hours, your schedule will show as unavailable.</div>
+                        </div>
+                    </div>
+
+                    @* Presets & Quick Actions Toolbar *@
+                    <div class="card border rounded-3 p-3 mb-4 shadow-sm" style="background:var(--doc-surface);">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                            <div>
+                                <h6 class="fw-bold mb-1"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>Quick Schedule Presets</h6>
+                                <div class="text-muted small">Apply pre-configured standard medical shifts with one click:</div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <form asp-action="QuickSchedulePreset" asp-controller="DoctorDashboard" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="presetType" value="weekday_morning" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill">
+                                        <i class="bi bi-sun me-1"></i>Weekdays Morning (9 AM–1 PM)
+                                    </button>
+                                </form>
+                                <form asp-action="QuickSchedulePreset" asp-controller="DoctorDashboard" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="presetType" value="weekday_evening" />
+                                    <button type="submit" class="btn btn-sm btn-outline-info rounded-pill">
+                                        <i class="bi bi-moon-stars me-1"></i>Weekdays Evening (5 PM–9 PM)
+                                    </button>
+                                </form>
+                                <form asp-action="QuickSchedulePreset" asp-controller="DoctorDashboard" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="presetType" value="everyday_morning" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">
+                                        <i class="bi bi-calendar-check me-1"></i>Daily (9 AM–12 PM)
+                                    </button>
+                                </form>
+                                @if (Model.Schedules.Any())
+                                {
+                                    <form asp-action="QuickSchedulePreset" asp-controller="DoctorDashboard" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to clear all schedules? Patients will not be able to book until you add slots again.');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="presetType" value="clear_all" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
+                                            <i class="bi bi-trash me-1"></i>Clear All
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Add Schedule Slot Form *@
+                    <div class="card border rounded-3 p-3 mb-4 shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-plus-circle me-1"></i>Add Custom Schedule Slot</h6>
+                            <span class="text-muted small">Set custom day &amp; hours</span>
+                        </div>
+                        <form asp-action="AddSchedule" asp-controller="DoctorDashboard" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Day of Week</label>
+                                    <select name="DayOfWeek" class="form-select form-select-sm" required>
+                                        <option value="Sunday">Sunday</option>
+                                        <option value="Monday">Monday</option>
+                                        <option value="Tuesday">Tuesday</option>
+                                        <option value="Wednesday">Wednesday</option>
+                                        <option value="Thursday">Thursday</option>
+                                        <option value="Friday">Friday</option>
+                                        <option value="Saturday">Saturday</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-semibold">Start Time</label>
+                                    <input type="time" name="StartTime" value="09:00" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-semibold">End Time</label>
+                                    <input type="time" name="EndTime" value="13:00" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-semibold">Slot Duration</label>
+                                    <select name="SlotDurationMinutes" class="form-select form-select-sm">
+                                        <option value="15">15 Minutes</option>
+                                        <option value="20">20 Minutes</option>
+                                        <option value="30" selected>30 Minutes</option>
+                                        <option value="45">45 Minutes</option>
+                                        <option value="60">60 Minutes</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex gap-2">
+                                    <div class="flex-grow-1">
+                                        <label class="form-label small fw-semibold">Shift / Note</label>
+                                        <input type="text" name="ShiftName" placeholder="e.g. OPD Consultation" class="form-control form-control-sm" />
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-primary rounded-3 align-self-end px-3">
+                                        <i class="bi bi-save me-1"></i>Save
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    @* Active Schedule Slots Table *@
+                    <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar-event text-primary"></i>Your Configured Schedules
+                        <span class="badge bg-light text-dark border ms-auto">@Model.Schedules.Count schedule(s)</span>
+                    </h6>
+
+                    @if (Model.Schedules.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="font-size:.875rem;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Day of Week</th>
+                                        <th>Shift Name</th>
+                                        <th>Working Hours</th>
+                                        <th>Slot Duration</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var s in Model.Schedules.OrderBy(x => (int)x.DayOfWeek).ThenBy(x => x.StartTime))
+                                    {
+                                        var startFormatted = DateTime.Today.Add(s.StartTime).ToString("hh:mm tt");
+                                        var endFormatted = DateTime.Today.Add(s.EndTime).ToString("hh:mm tt");
+                                        var duration = s.SlotDurationMinutes > 0 ? s.SlotDurationMinutes : 30;
+                                        var slotsCount = Math.Max(0, (int)((s.EndTime - s.StartTime).TotalMinutes / duration));
+
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-2 py-1 rounded-pill">
+                                                    <i class="bi bi-calendar-day me-1"></i>@s.DayOfWeek
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="fw-semibold">@(string.IsNullOrEmpty(s.ShiftName) ? "Consultation" : s.ShiftName)</span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold text-dark"><i class="bi bi-clock me-1 text-muted"></i>@startFormatted – @endFormatted</div>
+                                                <small class="text-muted">(@slotsCount appointment slots available)</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-dark border">@duration mins / patient</span>
+                                            </td>
+                                            <td>
+                                                @if (s.IsActive)
+                                                {
+                                                    <span class="badge bg-success bg-opacity-15 text-success rounded-pill px-2 py-1">
+                                                        <i class="bi bi-check-circle-fill me-1"></i>Active
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary bg-opacity-15 text-secondary rounded-pill px-2 py-1">
+                                                        <i class="bi bi-pause-circle-fill me-1"></i>Paused
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-inline-flex gap-2">
+                                                    <form asp-action="ToggleSchedule" asp-controller="DoctorDashboard" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@s.Id" />
+                                                        <button type="submit" class="btn btn-sm @(s.IsActive ? "btn-outline-warning" : "btn-outline-success") rounded-pill px-2" title="@(s.IsActive ? "Pause this slot" : "Activate this slot")">
+                                                            <i class="bi @(s.IsActive ? "bi-pause-fill" : "bi-play-fill")"></i> @(s.IsActive ? "Pause" : "Activate")
+                                                        </button>
+                                                    </form>
+                                                    <form asp-action="DeleteSchedule" asp-controller="DoctorDashboard" method="post" class="d-inline" onsubmit="return confirm('Delete this schedule slot?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@s.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Delete slot">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state p-4 border rounded-3 text-center" style="background:var(--doc-surface);">
+                            <i class="bi bi-calendar-x text-warning fs-1"></i>
+                            <h6 class="fw-bold mt-2">No Consultation Schedule Set Yet</h6>
+                            <p class="text-muted small mb-3">Patients cannot book appointments with you until you define your working hours. Choose a quick preset above or use the form to set your schedule.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §3 TELEMEDICINE *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-telemedicine" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(15,111,173,0.1);color:#0f6fad;">
+                            <i class="bi bi-camera-video-fill"></i>
+                        </span>
+                        Telemedicine Console
+                    </h2>
+                    <a asp-controller="Telemedicine" asp-action="Index" class="btn btn-sm btn-primary rounded-pill px-3">
+                        <i class="bi bi-arrow-right-circle me-1"></i>Open Telemedicine Portal
+                    </a>
+                </div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card border rounded-3 p-3 h-100" style="background:linear-gradient(135deg,#e8f4fd,#f0faf8);">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="p-2 rounded-circle" style="background:#0f6fad;color:#fff;"><i class="bi bi-broadcast-pin"></i></div>
+                                    <h6 class="fw-bold mb-0">Active Consultations</h6>
+                                </div>
+                                <p class="text-muted small mb-3">You have <strong class="text-primary">@Model.ActiveConsultationsCount</strong> confirmed consultation(s) ready to start. Click below to open the video room.</p>
+                                @if (Model.UpcomingAppointments.Any(a => a.Status == AppointmentStatus.Confirmed))
+                                {
+                                    @foreach (var conf in Model.UpcomingAppointments.Where(a => a.Status == AppointmentStatus.Confirmed).Take(3))
+                                    {
+                                        var pName = conf.Patient?.FullName ?? conf.Patient?.UserName ?? "Patient";
+                                        <div class="d-flex align-items-center justify-content-between p-2 bg-white rounded-3 mb-2 shadow-sm">
+                                            <div>
+                                                <div class="fw-semibold small">@pName</div>
+                                                <div class="text-muted" style="font-size:.75rem;">@conf.ScheduledAt.ToString("hh:mm tt • dd MMM")</div>
+                                            </div>
+                                            <a asp-controller="Telemedicine" asp-action="Room" asp-route-id="@conf.Id"
+                                               class="btn btn-sm btn-primary rounded-pill px-3">
+                                                <i class="bi bi-camera-video-fill me-1"></i>Join Room
+                                            </a>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="text-muted small">No active video sessions right now.</div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border rounded-3 p-3 h-100" style="background:linear-gradient(135deg,#fff7e6,#fffcf0);">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="p-2 rounded-circle" style="background:#f4a700;color:#fff;"><i class="bi bi-info-circle-fill"></i></div>
+                                    <h6 class="fw-bold mb-0">Telemedicine How-to</h6>
+                                </div>
+                                <ul class="list-unstyled text-muted small mb-0" style="line-height:1.8;">
+                                    <li><span class="badge bg-primary me-2 rounded-pill">1</span>Patient books an appointment with you</li>
+                                    <li><span class="badge bg-warning text-dark me-2 rounded-pill">2</span>You <strong>Accept</strong> the request above</li>
+                                    <li><span class="badge bg-success me-2 rounded-pill">3</span>Click <strong>Join Room</strong> at the scheduled time</li>
+                                    <li><span class="badge bg-secondary me-2 rounded-pill">4</span>Mark consultation as <strong>Completed</strong></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §4 PATIENTS / PATIENT RECORDS *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-patients" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(0,198,162,0.1);color:#00c6a2;">
+                            <i class="bi bi-people-fill"></i>
+                        </span>
+                        Patient Records
+                    </h2>
+                    <a asp-controller="PatientRecords" asp-action="Index" class="btn btn-sm rounded-pill px-3" style="background:#00c6a2;color:#fff;">
+                        <i class="bi bi-folder2-open me-1"></i>All Records
+                    </a>
+                </div>
+                <div id="section-records">
+                    @if (Model.RecentPatientRecords.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="font-size:.875rem;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Record</th>
+                                        <th>Type</th>
+                                        <th>Date</th>
+                                        <th>Notes</th>
+                                        <th class="text-end">File</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var rec in Model.RecentPatientRecords)
+                                    {
+                                        var pName = rec.Patient?.FullName ?? rec.Patient?.UserName ?? "Patient";
+                                        var typeColor = rec.RecordType switch {
+                                            "LabResult"     => "bg-warning text-dark",
+                                            "Prescription"  => "bg-primary",
+                                            "MedicalHistory"=> "bg-info text-dark",
+                                            _               => "bg-secondary"
+                                        };
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="appt-avatar" style="width:32px;height:32px;font-size:.75rem;">
+                                                        @(pName.Length >= 2 ? pName.Substring(0,2).ToUpper() : pName.ToUpper())
+                                                    </div>
+                                                    <span class="fw-semibold">@pName</span>
+                                                </div>
+                                            </td>
+                                            <td class="fw-semibold text-dark">@rec.Title</td>
+                                            <td><span class="badge @typeColor small">@rec.RecordType</span></td>
+                                            <td class="text-muted">@rec.Date.ToString("dd MMM yyyy")</td>
+                                            <td class="text-muted small">@(string.IsNullOrEmpty(rec.Description) ? "—" : rec.Description.Length > 50 ? rec.Description.Substring(0,50)+"…" : rec.Description)</td>
+                                            <td class="text-end">
+                                                @if (!string.IsNullOrEmpty(rec.FileUrl))
+                                                {
+                                                    <a href="@rec.FileUrl" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-2">
+                                                        <i class="bi bi-eye me-1"></i>View
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">—</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-folder2-open"></i>
+                            <div class="fw-semibold">No patient records found</div>
+                            <small>Records will appear here once patients have been seen.</small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §5 LAB RESULTS *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-lab" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(244,167,0,0.12);color:#f4a700;">
+                            <i class="bi bi-eyedropper"></i>
+                        </span>
+                        Lab Results
+                    </h2>
+                    <a asp-controller="Lab" asp-action="Bookings" class="btn btn-sm btn-warning text-dark rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-list-ul me-1"></i>All Lab Bookings
+                    </a>
+                </div>
+                @if (Model.RecentLabResults.Any())
+                {
+                    @foreach (var lab in Model.RecentLabResults)
+                    {
+                        var pName = lab.Patient?.FullName ?? lab.Patient?.UserName ?? "Patient";
+                        var statusColor = lab.Status switch {
+                            "Completed"       => "badge-confirmed",
+                            "SampleCollected" => "badge-booked",
+                            _                 => "status-badge bg-warning bg-opacity-10 text-warning"
+                        };
+                        var statusText = lab.Status switch {
+                            "Completed"       => "Available",
+                            "SampleCollected" => "Processing",
+                            _                 => "Pending"
+                        };
+                        <div class="lab-row">
+                            <div class="lab-avatar"><i class="bi bi-flask-fill"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold small">@pName</span>
+                                    <span class="status-badge @statusColor">@statusText</span>
+                                </div>
+                                <div class="text-muted" style="font-size:.78rem;">
+                                    <i class="bi bi-eyedropper me-1"></i>@(lab.LabTest?.Name ?? "Lab Test")
+                                    &nbsp;·&nbsp;
+                                    <i class="bi bi-calendar me-1"></i>@lab.ScheduledAt.ToString("dd MMM yyyy")
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 flex-shrink-0">
+                                @if (!string.IsNullOrEmpty(lab.ResultLink))
+                                {
+                                    <a href="@lab.ResultLink" target="_blank" class="btn btn-sm btn-success rounded-pill px-3">
+                                        <i class="bi bi-file-earmark-medical me-1"></i>Open Report
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small fst-italic">Awaiting result</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-eyedropper"></i>
+                        <div class="fw-semibold">No lab results yet</div>
+                        <small>Lab bookings for your patients will appear here.</small>
+                    </div>
+                }
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §6 DENGUE RISK / PATIENT ALERTS *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-dengue" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(229,57,53,0.1);color:#e53935;">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </span>
+                        Dengue Risk &amp; Alerts
+                    </h2>
+                    <a asp-controller="Government" asp-action="Dashboard" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                        <i class="bi bi-map me-1"></i>Risk Map
+                    </a>
+                </div>
+                <div class="p-4">
+                    @if (Model.HighRiskZones.Any())
+                    {
+                        <div class="row g-3 mb-3">
+                            @foreach (var zone in Model.HighRiskZones)
+                            {
+                                var conf = (int)(zone.ConfidenceScore * 100);
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="risk-alert-card">
+                                        <div class="d-flex align-items-start justify-content-between mb-2">
+                                            <div>
+                                                <span class="badge bg-danger rounded-pill mb-1">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>HIGH RISK
+                                                </span>
+                                                <div class="fw-bold">@zone.Region</div>
+                                            </div>
+                                            <div class="text-muted small text-end">
+                                                <div>Confidence</div>
+                                                <div class="fw-bold text-danger">@conf%</div>
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2" style="height:6px;">
+                                            <div class="progress-bar bg-danger" style="width:@conf%;"></div>
+                                        </div>
+                                        <div class="text-muted" style="font-size:.75rem;">
+                                            <i class="bi bi-geo-alt me-1"></i>@zone.Latitude.ToString("F4"), @zone.Longitude.ToString("F4")
+                                            &nbsp;·&nbsp;
+                                            <i class="bi bi-clock me-1"></i>@zone.LastModelRun.ToString("dd MMM HH:mm")
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-success border-0 rounded-3 d-flex align-items-center gap-3 mb-3">
+                            <i class="bi bi-check-circle-fill fs-4"></i>
+                            <div><strong>No active high-risk zones</strong> — dengue risk is currently low across monitored regions.</div>
+                        </div>
+                    }
+
+                    @* Recent System Alerts *@
+                    @if (Model.RecentAlerts.Any())
+                    {
+                        <h6 class="fw-bold small text-muted mb-2"><i class="bi bi-bell me-1"></i>Recent System Alerts</h6>
+                        @foreach (var alert in Model.RecentAlerts.Take(5))
+                        {
+                            <div class="d-flex align-items-start gap-3 p-2 rounded-3 mb-2" style="background:#fff5f5;border:1px solid rgba(229,57,53,0.15);">
+                                <i class="bi bi-broadcast-pin text-danger mt-1"></i>
+                                <div class="flex-grow-1">
+                                    <div class="small fw-semibold">@alert.Message</div>
+                                    <div class="text-muted" style="font-size:.73rem;"><i class="bi bi-clock me-1"></i>@alert.SentAt.ToString("dd MMM yyyy, HH:mm")</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §7 ICU BED FINDER *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-icu" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(229,57,53,0.1);color:#c62828;">
+                            <i class="bi bi-hospital-fill"></i>
+                        </span>
+                        ICU Bed Finder
+                    </h2>
+                    <a asp-controller="IcuBeds" asp-action="Index" class="btn btn-sm btn-danger rounded-pill px-3">
+                        <i class="bi bi-search me-1"></i>Full Search
+                    </a>
+                </div>
+                <div class="p-4">
+                    <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3 mb-3" style="background:rgba(15,111,173,0.08);">
+                        <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+                        <div class="small">Use the full ICU Bed Finder to filter by city, view real-time bed availability, distance, and cost. Click <strong>Full Search</strong> to open the tool.</div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card border rounded-3 p-3 h-100" style="border-color:rgba(229,57,53,0.2)!important;">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-hospital-fill me-2 text-danger"></i>ICU Bed Availability</h6>
+                                <p class="text-muted small mb-3">Search for real-time ICU availability across hospitals in Bangladesh. Includes bed count, distance estimate, and cost per day.</p>
+                                <a asp-controller="IcuBeds" asp-action="Index" class="btn btn-danger rounded-pill w-100 fw-semibold">
+                                    <i class="bi bi-hospital me-2"></i>Search ICU Beds Now
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border rounded-3 p-3 h-100" style="border-color:rgba(0,198,162,0.2)!important;">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-lightbulb-fill me-2" style="color:#00c6a2;"></i>When to Use This Tool</h6>
+                                <ul class="text-muted small mb-0 ps-3" style="line-height:1.9;">
+                                    <li>Dengue Severe with warning signs</li>
+                                    <li>Plasma leakage or shock suspected</li>
+                                    <li>Platelet count &lt; 20,000 with bleeding</li>
+                                    <li>Multi-organ failure indicators</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §8 IV FLUID CALCULATOR *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-iv" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(15,111,173,0.1);color:#0f6fad;">
+                            <i class="bi bi-droplet-half"></i>
+                        </span>
+                        IV Fluid Calculator
+                        <span class="badge bg-success rounded-pill ms-1 small fw-normal">WHO Dengue Protocol</span>
+                    </h2>
+                    <a asp-controller="FluidManagement" asp-action="Index" class="btn btn-sm btn-primary rounded-pill px-3">
+                        <i class="bi bi-arrow-right-circle me-1"></i>Full Tool
+                    </a>
+                </div>
+                <div class="p-4">
+                    <div class="fluid-calc-card" id="ivCalcWidget">
+                        <div class="row g-4 align-items-start">
+                            <div class="col-md-5">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-calculator me-2 text-primary"></i>Quick IV Fluid Calculator</h6>
+                                <p class="text-muted small mb-3">Enter patient weight to calculate WHO-recommended IV fluid rate for dengue management.</p>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small">Patient Weight (kg)</label>
+                                    <div class="input-group">
+                                        <input type="number" id="ivWeight" class="form-control rounded-start-3" placeholder="e.g. 60" min="1" max="200" step="0.5" />
+                                        <span class="input-group-text bg-white">kg</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small">Dengue Phase</label>
+                                    <select id="ivPhase" class="form-select">
+                                        <option value="critical">Critical (Febrile + Warning Signs)</option>
+                                        <option value="compensated">Compensated Shock</option>
+                                        <option value="severe">Severe Shock (Hypotensive)</option>
+                                        <option value="maintenance">Maintenance Phase</option>
+                                    </select>
+                                </div>
+                                <button onclick="calcIV()" class="btn btn-primary rounded-pill w-100 fw-semibold">
+                                    <i class="bi bi-calculator me-2"></i>Calculate
+                                </button>
+                            </div>
+                            <div class="col-md-7" id="ivResult" style="display:none;">
+                                <div class="fluid-result-box">
+                                    <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-clipboard2-pulse me-2"></i>Recommended IV Fluid Plan</h6>
+                                    <div id="ivResultContent"></div>
+                                    <div class="mt-3 p-2 rounded-3" style="background:rgba(229,57,53,0.06);border:1px solid rgba(229,57,53,0.15);">
+                                        <div class="text-danger small fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i>Clinical Judgment Required</div>
+                                        <div class="text-muted" style="font-size:.72rem;">This is a reference guide based on WHO dengue fluid management guidelines. Always apply clinical judgment and monitor patient response.</div>
+                                    </div>
+                                    <div class="mt-2 text-end">
+                                        <a asp-controller="FluidManagement" asp-action="Index" class="btn btn-sm btn-outline-primary rounded-pill">
+                                            <i class="bi bi-arrow-right me-1"></i>Advanced Calculator
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §9 NOTIFICATIONS *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-notifications" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(123,31,162,0.1);color:#7b1fa2;">
+                            <i class="bi bi-bell-fill"></i>
+                        </span>
+                        Notifications
+                    </h2>
+                    <span class="badge rounded-pill" style="background:#7b1fa2;">@Model.RecentAlerts.Count system alerts</span>
+                </div>
+
+                @* Static notification items (populated from real data + simulated) *@
+                @if (Model.PendingRequests.Any())
+                {
+                    <div class="notif-item">
+                        <div class="notif-dot bg-warning"></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">🔔 New consultation request</div>
+                            <div class="text-muted" style="font-size:.78rem;">@Model.PendingRequests.First().Patient?.FullName ?? "A patient" has requested a consultation.</div>
+                        </div>
+                        <small class="text-muted flex-shrink-0">@Model.PendingRequests.First().CreatedAt.ToString("hh:mm tt")</small>
+                    </div>
+                }
+                @if (Model.RecentLabResults.Any(l => l.Status == "Completed"))
+                {
+                    var completedLab = Model.RecentLabResults.First(l => l.Status == "Completed");
+                    <div class="notif-item">
+                        <div class="notif-dot" style="background:#00c6a2;"></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">🔔 Lab result available</div>
+                            <div class="text-muted" style="font-size:.78rem;">@(completedLab.LabTest?.Name ?? "Lab test") result for @(completedLab.Patient?.FullName ?? "patient") is ready.</div>
+                        </div>
+                        <small class="text-muted flex-shrink-0">@completedLab.ScheduledAt.ToString("dd MMM")</small>
+                    </div>
+                }
+                @if (Model.HighRiskZones.Any())
+                {
+                    <div class="notif-item">
+                        <div class="notif-dot bg-danger"></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">🔔 Patient high-risk alert</div>
+                            <div class="text-muted" style="font-size:.78rem;">@Model.ActiveHighRiskZonesCount high-risk dengue zone(s) active in monitored regions.</div>
+                        </div>
+                        <small class="text-muted flex-shrink-0">Active</small>
+                    </div>
+                }
+                @if (Model.TodayAppointments.Any(a => a.Status == AppointmentStatus.Confirmed))
+                {
+                    var nextAppt = Model.TodayAppointments.FirstOrDefault(a => a.Status == AppointmentStatus.Confirmed);
+                    <div class="notif-item">
+                        <div class="notif-dot bg-primary"></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">🔔 Appointment starting soon</div>
+                            <div class="text-muted" style="font-size:.78rem;">Consultation with @(nextAppt?.Patient?.FullName ?? "patient") at @nextAppt?.ScheduledAt.ToString("hh:mm tt").</div>
+                        </div>
+                        <small class="text-muted flex-shrink-0">Today</small>
+                    </div>
+                }
+                @foreach (var alert in Model.RecentAlerts.Take(4))
+                {
+                    <div class="notif-item">
+                        <div class="notif-dot bg-danger"></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">🔔 Dengue System Alert</div>
+                            <div class="text-muted" style="font-size:.78rem;">@(alert.Message.Length > 80 ? alert.Message.Substring(0,80)+"…" : alert.Message)</div>
+                        </div>
+                        <small class="text-muted flex-shrink-0">@alert.SentAt.ToString("dd MMM, HH:mm")</small>
+                    </div>
+                }
+                @if (!Model.PendingRequests.Any() && !Model.RecentLabResults.Any() && !Model.HighRiskZones.Any() && !Model.RecentAlerts.Any())
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-bell-slash"></i>
+                        <div class="fw-semibold">All clear</div>
+                        <small>No new notifications at this time.</small>
+                    </div>
+                }
+            </div>
+
+            @* ════════════════════════════════════════════════════════════ *@
+            @* §10 DOCTOR PROFILE & AVAILABILITY *@
+            @* ════════════════════════════════════════════════════════════ *@
+            <div id="section-profile" class="doc-section">
+                <div class="doc-section-header">
+                    <h2 class="doc-section-title">
+                        <span class="section-icon" style="background:rgba(15,111,173,0.1);color:#0f6fad;">
+                            <i class="bi bi-person-badge-fill"></i>
+                        </span>
+                        Doctor Profile &amp; Availability
+                    </h2>
+                    <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                        <i class="bi bi-pencil me-1"></i>Edit Profile
+                    </a>
+                </div>
+                <div class="p-4">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <div class="d-flex align-items-center gap-3 mb-4">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white fs-2"
+                                     style="width:80px;height:80px;background:linear-gradient(135deg,#0f6fad,#00c6a2);flex-shrink:0;">
+                                    @(doctorName.Length >= 2 ? doctorName.Substring(0, 2).ToUpper() : doctorName.ToUpper())
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-1">Dr. @doctorName</h5>
+                                    <div class="text-muted small"><i class="bi bi-envelope me-1"></i>@Model.Doctor.Email</div>
+                                    @if (!string.IsNullOrEmpty(Model.Doctor.PhoneNumber))
+                                    {
+                                        <div class="text-muted small"><i class="bi bi-telephone me-1"></i>@Model.Doctor.PhoneNumber</div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="profile-field">
+                                <span class="label"><i class="bi bi-award me-2"></i>Specialization</span>
+                                <span class="fw-semibold">@(Model.Doctor.Specialty ?? "—")</span>
+                            </div>
+                            <div class="profile-field">
+                                <span class="label"><i class="bi bi-shield-check me-2"></i>Verification</span>
+                                @if (Model.Doctor.IsApproved)
+                                {
+                                    <span class="badge bg-success rounded-pill">Verified</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark rounded-pill">Pending</span>
+                                }
+                            </div>
+                            <div class="profile-field">
+                                <span class="label"><i class="bi bi-translate me-2"></i>Preferred Language</span>
+                                <span class="fw-semibold">@(Model.Doctor.PreferredLanguage == "bn" ? "বাংলা" : "English")</span>
+                            </div>
+                            <div class="profile-field">
+                                <span class="label"><i class="bi bi-person-badge me-2"></i>Role</span>
+                                <span class="fw-semibold">@string.Join(", ", Model.Roles)</span>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2 text-primary"></i>Practice Summary</h6>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="card border-0 rounded-3 p-3 text-center h-100" style="background:rgba(15,111,173,0.07);">
+                                        <div class="fs-3 fw-bold" style="color:#0f6fad;">@Model.TotalPatientsCount</div>
+                                        <div class="text-muted small">Total Patients</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card border-0 rounded-3 p-3 text-center h-100" style="background:rgba(0,198,162,0.07);">
+                                        <div class="fs-3 fw-bold" style="color:#00c6a2;">@Model.TodayAppointmentsCount</div>
+                                        <div class="text-muted small">Today's Appts</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card border-0 rounded-3 p-3 text-center h-100" style="background:rgba(244,167,0,0.07);">
+                                        <div class="fs-3 fw-bold" style="color:#f4a700;">@Model.PendingRequestsCount</div>
+                                        <div class="text-muted small">Pending Requests</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card border-0 rounded-3 p-3 text-center h-100" style="background:rgba(229,57,53,0.06);">
+                                        <div class="fs-3 fw-bold text-danger">@Model.ActiveHighRiskZonesCount</div>
+                                        <div class="text-muted small">High Risk Zones</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 p-3 rounded-3" style="background:rgba(15,111,173,0.05);border:1px solid rgba(15,111,173,0.12);">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <h6 class="fw-bold mb-0 small text-dark"><i class="bi bi-clock-history me-1 text-primary"></i>Active Consultation Hours</h6>
+                                    <a href="#section-schedule" class="btn btn-sm btn-primary rounded-pill px-3 py-1">
+                                        <i class="bi bi-gear-fill me-1"></i>Manage Schedule
+                                    </a>
+                                </div>
+                                @if (Model.Schedules.Any(s => s.IsActive))
+                                {
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var sc in Model.Schedules.Where(s => s.IsActive).OrderBy(s => (int)s.DayOfWeek))
+                                        {
+                                            var st = DateTime.Today.Add(sc.StartTime).ToString("hh:mm tt");
+                                            var en = DateTime.Today.Add(sc.EndTime).ToString("hh:mm tt");
+                                            <span class="badge bg-white text-dark border shadow-sm px-2 py-1">
+                                                <strong>@sc.DayOfWeek:</strong> @st – @en
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="small text-danger fw-semibold"><i class="bi bi-exclamation-circle me-1"></i>No consultation schedule set. Patients cannot book appointments with you until you configure your schedule slots.</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>@* /col main content *@
+    </div>@* /row *@
+</div>@* /container *@
+
+@section Scripts {
+<script>
+    // ── Smooth scroll for sidebar nav ───────────────────────────────
+    document.querySelectorAll('.doc-nav .nav-link[href^="#"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            // active state
+            document.querySelectorAll('.doc-nav .nav-link').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // ── Scroll spy ─────────────────────────────────────────────────
+    const sections = ['section-overview','section-appointments','section-telemedicine',
+                      'section-patients','section-lab','section-dengue',
+                      'section-icu','section-iv','section-notifications','section-profile'];
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                document.querySelectorAll('.doc-nav .nav-link').forEach(l => {
+                    l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+                });
+            }
+        });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+    });
+
+    // ── IV Fluid Calculator ─────────────────────────────────────────
+    function calcIV() {
+        const weight = parseFloat(document.getElementById('ivWeight').value);
+        const phase  = document.getElementById('ivPhase').value;
+        const resultDiv  = document.getElementById('ivResult');
+        const contentDiv = document.getElementById('ivResultContent');
+
+        if (!weight || weight <= 0 || weight > 250) {
+            alert('Please enter a valid patient weight (1–250 kg).');
+            return;
+        }
+
+        let html = '';
+        let bolus = 0, rate1 = 0, rate2 = 0, duration1 = 0, duration2 = 0;
+        let fluidType = 'Normal Saline (0.9% NaCl) or Ringer\'s Lactate';
+
+        if (phase === 'critical') {
+            // WHO: 5–7 ml/kg/hr for first 2–3h then reassess
+            rate1 = Math.round(weight * 6);
+            rate2 = Math.round(weight * 3);
+            html = `
+                <div class="mb-3">
+                    <div class="text-muted small fw-semibold mb-1">Fluid Type</div>
+                    <div class="fw-bold">${fluidType}</div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 text-center" style="background:rgba(15,111,173,0.08);">
+                            <div class="fw-bold text-primary fs-5">${rate1} mL/hr</div>
+                            <div class="text-muted small">First 2–3 hours<br>(6 mL/kg/hr)</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 text-center" style="background:rgba(0,198,162,0.08);">
+                            <div class="fw-bold fs-5" style="color:#00c6a2;">${rate2} mL/hr</div>
+                            <div class="text-muted small">Next 2–3 hours<br>(3 mL/kg/hr)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-muted small">⚕ Monitor urine output (target ≥ 0.5 mL/kg/hr). Reassess every 2–3 hours.</div>`;
+        } else if (phase === 'compensated') {
+            bolus = Math.round(weight * 10);
+            rate1 = Math.round(weight * 5);
+            html = `
+                <div class="mb-3">
+                    <div class="text-muted small fw-semibold mb-1">Fluid Type</div>
+                    <div class="fw-bold">Crystalloid — ${fluidType}</div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 text-center" style="background:rgba(244,167,0,0.1);">
+                            <div class="fw-bold text-warning fs-5">${bolus} mL</div>
+                            <div class="text-muted small">Initial Bolus<br>(10 mL/kg over 15 min)</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 text-center" style="background:rgba(15,111,173,0.08);">
+                            <div class="fw-bold text-primary fs-5">${rate1} mL/hr</div>
+                            <div class="text-muted small">Maintenance<br>(5 mL/kg/hr)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-muted small">⚕ If shock persists after 2 boluses, switch to colloids. Strict monitoring required.</div>`;
+        } else if (phase === 'severe') {
+            bolus = Math.round(weight * 20);
+            rate1 = Math.round(weight * 10);
+            html = `
+                <div class="mb-3">
+                    <div class="text-muted small fw-semibold mb-1">Fluid Type</div>
+                    <div class="fw-bold text-danger">Colloid (Dextran 40) or Crystalloid rapid bolus</div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 text-center" style="background:rgba(229,57,53,0.1);">
+                            <div class="fw-bold text-danger fs-5">${bolus} mL</div>
+                            <div class="text-muted small">Rapid Bolus<br>(20 mL/kg over 15 min)</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 text-center" style="background:rgba(244,167,0,0.08);">
+                            <div class="fw-bold text-warning fs-5">${rate1} mL/hr</div>
+                            <div class="text-muted small">Post-bolus<br>(10 mL/kg/hr × 1hr)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-danger border-0 rounded-3 p-2 small">⚠ Severe shock — this is a clinical emergency. ICU admission strongly recommended.</div>`;
+        } else {
+            // maintenance
+            rate1 = Math.round(weight * 1.5);
+            html = `
+                <div class="mb-3">
+                    <div class="text-muted small fw-semibold mb-1">Fluid Type</div>
+                    <div class="fw-bold">Oral Rehydration or Slow IV (0.9% NaCl)</div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-12">
+                        <div class="p-2 rounded-3 text-center" style="background:rgba(0,198,162,0.08);">
+                            <div class="fw-bold fs-5" style="color:#00c6a2;">${rate1} mL/hr</div>
+                            <div class="text-muted small">Maintenance rate (1.5 mL/kg/hr)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-muted small">⚕ Monitor for reabsorption phase fluid overload. Reduce rate if pulmonary oedema signs appear.</div>`;
+        }
+
+        contentDiv.innerHTML = html;
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+</script>
+}

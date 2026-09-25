@@ -73,6 +73,9 @@ namespace LarvaX.Infrastructure.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
@@ -232,6 +235,184 @@ namespace LarvaX.Infrastructure.Migrations
                     b.ToTable("Articles");
                 });
 
+            modelBuilder.Entity("LarvaX.Core.Entities.CaseReferral", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClinicalNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DengueCaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PatientName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReferredById")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Target")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Urgency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DengueCaseId");
+
+                    b.HasIndex("ReferredById");
+
+                    b.ToTable("CaseReferrals");
+                });
+
+            modelBuilder.Entity("LarvaX.Core.Entities.DengueCase", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Age")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AssignedWorkerId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EscalationReason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FieldNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Hematocrit")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("IsEscalated")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("NextFollowUpDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PatientAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientPhone")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PlateletCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ReportedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Symptoms")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedWorkerId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("DengueCases");
+                });
+
+            modelBuilder.Entity("LarvaX.Core.Entities.DoctorSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DayOfWeek")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DoctorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("interval");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ShiftName")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SlotDurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("interval");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoctorId");
+
+                    b.HasIndex("DoctorId", "DayOfWeek");
+
+                    b.ToTable("DoctorSchedules");
+                });
+
             modelBuilder.Entity("LarvaX.Core.Entities.Donor", b =>
                 {
                     b.Property<int>("Id")
@@ -298,6 +479,53 @@ namespace LarvaX.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("FlowAnalytics");
+                });
+
+            modelBuilder.Entity("LarvaX.Core.Entities.HealthWorkerTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("HealthWorkerId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HealthWorkerId");
+
+                    b.HasIndex("IsCompleted");
+
+                    b.ToTable("HealthWorkerTasks");
                 });
 
             modelBuilder.Entity("LarvaX.Core.Entities.InventoryItem", b =>
@@ -368,8 +596,37 @@ namespace LarvaX.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("BarcodeNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DengueIgg")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("DengueIgm")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("DengueNs1")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<double?>("Hematocrit")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LabStaffId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
 
                     b.Property<int>("LabTestId")
                         .HasColumnType("integer");
@@ -378,9 +635,37 @@ namespace LarvaX.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("PatientNotified")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("PlateletCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ProcessingStartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<string>("ResultLink")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("SampleCollectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SampleReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SampleStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SampleType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("timestamp with time zone");
@@ -390,8 +675,22 @@ namespace LarvaX.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("TestNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VerifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("WbcCount")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -553,6 +852,9 @@ namespace LarvaX.Infrastructure.Migrations
 
                     b.Property<string>("DiseaseType")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FieldNotes")
                         .HasColumnType("text");
 
                     b.Property<double>("Latitude")
@@ -747,12 +1049,10 @@ namespace LarvaX.Infrastructure.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProviderKey")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("text");
@@ -789,12 +1089,10 @@ namespace LarvaX.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Value")
                         .HasColumnType("text");
@@ -841,6 +1139,41 @@ namespace LarvaX.Infrastructure.Migrations
                     b.Navigation("Author");
                 });
 
+            modelBuilder.Entity("LarvaX.Core.Entities.CaseReferral", b =>
+                {
+                    b.HasOne("LarvaX.Core.Entities.DengueCase", "DengueCase")
+                        .WithMany()
+                        .HasForeignKey("DengueCaseId");
+
+                    b.HasOne("LarvaX.Core.Entities.ApplicationUser", "ReferredBy")
+                        .WithMany()
+                        .HasForeignKey("ReferredById");
+
+                    b.Navigation("DengueCase");
+
+                    b.Navigation("ReferredBy");
+                });
+
+            modelBuilder.Entity("LarvaX.Core.Entities.DengueCase", b =>
+                {
+                    b.HasOne("LarvaX.Core.Entities.ApplicationUser", "AssignedWorker")
+                        .WithMany()
+                        .HasForeignKey("AssignedWorkerId");
+
+                    b.Navigation("AssignedWorker");
+                });
+
+            modelBuilder.Entity("LarvaX.Core.Entities.DoctorSchedule", b =>
+                {
+                    b.HasOne("LarvaX.Core.Entities.ApplicationUser", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+                });
+
             modelBuilder.Entity("LarvaX.Core.Entities.Donor", b =>
                 {
                     b.HasOne("LarvaX.Core.Entities.ApplicationUser", "User")
@@ -850,6 +1183,15 @@ namespace LarvaX.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LarvaX.Core.Entities.HealthWorkerTask", b =>
+                {
+                    b.HasOne("LarvaX.Core.Entities.ApplicationUser", "HealthWorker")
+                        .WithMany()
+                        .HasForeignKey("HealthWorkerId");
+
+                    b.Navigation("HealthWorker");
                 });
 
             modelBuilder.Entity("LarvaX.Core.Entities.InventoryTransaction", b =>

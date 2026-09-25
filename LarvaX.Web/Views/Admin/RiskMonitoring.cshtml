@@ -1,0 +1,237 @@
+@model LarvaX.Web.Models.AdminRiskMonitoringViewModel
+@{
+    ViewData["Title"] = "Dengue Risk Monitoring - LarvaX Admin";
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<partial name="_AdminNav" />
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- HEADER -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-activity text-danger me-2"></i>Dengue Risk Monitoring & Surveillance</h4>
+                <p class="text-muted small mb-0">Multi-zone epidemiological surveillance combining validated citizen hazard reports and hospital case data.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <form asp-action="TriggerRiskCalculation" method="post">
+                    <button type="submit" class="btn btn-danger shadow-sm">
+                        <i class="bi bi-cpu me-1"></i>Run Risk Engine Recalculation
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RISK SUMMARY CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 border-start border-danger border-4">
+            <div class="card-body">
+                <span class="text-muted small fw-semibold text-uppercase">High Risk Zones</span>
+                <h3 class="fw-bold mb-1 text-danger">@Model.HighRiskZonesCount</h3>
+                <small class="text-muted">Immediate vector intervention required</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 border-start border-warning border-4">
+            <div class="card-body">
+                <span class="text-muted small fw-semibold text-uppercase">Medium Risk Zones</span>
+                <h3 class="fw-bold mb-1 text-warning">@Model.MediumRiskZonesCount</h3>
+                <small class="text-muted">Increased surveillance active</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 border-start border-success border-4">
+            <div class="card-body">
+                <span class="text-muted small fw-semibold text-uppercase">Low Risk Zones</span>
+                <h3 class="fw-bold mb-1 text-success">@Model.LowRiskZonesCount</h3>
+                <small class="text-muted">Baseline monitoring</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 border-start border-primary border-4">
+            <div class="card-body">
+                <span class="text-muted small fw-semibold text-uppercase">Last AI Model Run</span>
+                <h6 class="fw-bold mb-1 text-primary mt-1">@(Model.LastModelRun?.ToString("dd MMM, HH:mm") ?? "Pending") UTC</h6>
+                <small class="text-muted">Hourly automated background job</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INTERACTIVE MAP -->
+<div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden">
+    <div class="card-header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-map-fill text-danger me-2"></i>Live Geospatial Risk Map</h5>
+        <div class="d-flex gap-3 small text-muted align-items-center">
+            <span><i class="bi bi-circle-fill text-danger me-1"></i>High Risk Area</span>
+            <span><i class="bi bi-circle-fill text-warning me-1"></i>Medium Risk Area</span>
+            <span><i class="bi bi-circle-fill text-success me-1"></i>Low Risk Area</span>
+            <span><i class="bi bi-circle-fill text-primary me-1"></i>Verified Hazard Site</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div id="fullRiskMap" style="height: 520px; width: 100%;"></div>
+    </div>
+</div>
+
+<!-- MONITORED RISK ZONES TABLE -->
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+    <div class="card-header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-list-check text-primary me-2"></i>Monitored Risk Zones & Model Attributes</h5>
+        <span class="badge bg-secondary rounded-pill">Total: @Model.RiskZones.Count Zones</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-uppercase">
+                <tr>
+                    <th>Zone / Region</th>
+                    <th>Disease Type</th>
+                    <th>Risk Level</th>
+                    <th>Confidence Score</th>
+                    <th>Data Sufficiency</th>
+                    <th>Coordinates & Radius</th>
+                    <th>Last Model Run</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var z in Model.RiskZones)
+                {
+                    <tr>
+                        <td class="fw-bold text-dark">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>@z.Region
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">@z.DiseaseType</span>
+                        </td>
+                        <td>
+                            <span class="badge @(z.RiskLevel == LarvaX.Core.Entities.RiskLevel.High ? "bg-danger" : z.RiskLevel == LarvaX.Core.Entities.RiskLevel.Medium ? "bg-warning text-dark" : "bg-success") rounded-pill px-3 py-1">
+                                @z.RiskLevel
+                            </span>
+                        </td>
+                        <td>
+                            @{
+                                var scorePct = Math.Round(z.ConfidenceScore * 100, 0);
+                            }
+                            <div class="d-flex align-items-center gap-2" style="width: 140px;">
+                                <div class="progress flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar bg-info" style="width: @scorePct%;"></div>
+                                </div>
+                                <small class="fw-semibold">@scorePct%</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge @(z.DataSufficiency == LarvaX.Core.Entities.DataSufficiency.Sufficient ? "bg-success" : z.DataSufficiency == LarvaX.Core.Entities.DataSufficiency.PartiallySufficient ? "bg-warning text-dark" : "bg-secondary") rounded-pill">
+                                @z.DataSufficiency
+                            </span>
+                        </td>
+                        <td class="small text-muted">
+                            <div>@z.Latitude.ToString("F4"), @z.Longitude.ToString("F4")</div>
+                            <small class="text-secondary">Radius: @((z.RadiusMetres / 1000.0).ToString("F1")) km</small>
+                        </td>
+                        <td class="small text-muted">
+                            @z.LastModelRun.ToString("dd MMM yyyy, HH:mm") UTC
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const map = L.map('fullRiskMap').setView([23.8103, 90.4125], 11);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            const zones = @Html.Raw(Model.MapZonesJson);
+            const reports = @Html.Raw(Model.MapReportsJson);
+            const cases = @Html.Raw(Model.MapCasesJson);
+
+            // Render Zones
+            zones.forEach(z => {
+                if (z.lat && z.lng) {
+                    const color = z.riskLevel === 'High' ? '#dc3545' : (z.riskLevel === 'Medium' ? '#ffc107' : '#198754');
+                    const circle = L.circle([z.lat, z.lng], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.22,
+                        radius: z.radius || 3000
+                    }).addTo(map);
+
+                    circle.bindPopup(`
+                        <div style="font-size: 13px;">
+                            <strong style="color: ${color}; font-size: 14px;">${z.region}</strong><br/>
+                            <b>Risk Level:</b> ${z.riskLevel}<br/>
+                            <b>Data Sufficiency:</b> ${z.sufficiency}<br/>
+                            <b>Confidence Score:</b> ${z.confidence}%<br/>
+                            <small class="text-muted">Updated: ${z.lastRun || 'N/A'}</small>
+                        </div>
+                    `);
+                }
+            });
+
+            // Render Verified Reports
+            reports.forEach(r => {
+                if (r.lat && r.lng) {
+                    const marker = L.circleMarker([r.lat, r.lng], {
+                        radius: 6,
+                        color: '#0d6efd',
+                        fillColor: '#0d6efd',
+                        fillOpacity: 0.85
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div style="font-size: 12px;">
+                            <strong>Citizen Report #${r.id}</strong><br/>
+                            <b>Disease:</b> ${r.diseaseType}<br/>
+                            <b>Status:</b> ${r.status}<br/>
+                            <b>Details:</b> ${r.desc}
+                        </div>
+                    `);
+                }
+            });
+
+            // Render Hospital Cases
+            cases.forEach(c => {
+                if (c.lat && c.lng) {
+                    const caseMarker = L.circleMarker([c.lat, c.lng], {
+                        radius: 5,
+                        color: '#6f42c1',
+                        fillColor: '#6f42c1',
+                        fillOpacity: 0.9
+                    }).addTo(map);
+
+                    caseMarker.bindPopup(`
+                        <div style="font-size: 12px;">
+                            <strong>Hospital Case: ${c.name}</strong><br/>
+                            <b>Status:</b> ${c.status}<br/>
+                            <b>Severity:</b> ${c.severity}<br/>
+                            <small>${c.address}</small>
+                        </div>
+                    `);
+                }
+            });
+        });
+    </script>
+}

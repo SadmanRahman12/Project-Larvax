@@ -83,6 +83,7 @@
   <data name="Tele_AllSpecialties" xml:space="preserve"><value>সব বিশেষত্ব</value></data>
 
   <!-- Lab -->
+  <data name="Lab_Dashboard" xml:space="preserve"><value>ল্যাব স্টাফ ড্যাশবোর্ড</value></data>
   <data name="Lab_AvailableTests" xml:space="preserve"><value>উপলব্ধ ল্যাব পরীক্ষা</value></data>
   <data name="Lab_BookTest" xml:space="preserve"><value>পরীক্ষা বুক করুন</value></data>
   <data name="Lab_MyBookings" xml:space="preserve"><value>আমার ল্যাব বুকিং</value></data>
@@ -93,6 +94,18 @@
   <data name="Lab_Status_Completed" xml:space="preserve"><value>সম্পন্ন</value></data>
   <data name="Lab_ViewResult" xml:space="preserve"><value>ফলাফল দেখুন</value></data>
   <data name="Lab_NotAvailable" xml:space="preserve"><value>এখনও পাওয়া যায়নি</value></data>
+  <data name="Lab_TodayTests" xml:space="preserve"><value>আজকের টেস্ট</value></data>
+  <data name="Lab_PendingTests" xml:space="preserve"><value>অপেক্ষমাণ পরীক্ষা</value></data>
+  <data name="Lab_WaitingUpload" xml:space="preserve"><value>আপলোডের অপেক্ষায় ফলাফল</value></data>
+  <data name="Lab_SampleManagement" xml:space="preserve"><value>নমুনা ব্যবস্থাপনা</value></data>
+  <data name="Lab_EnterValues" xml:space="preserve"><value>পরীক্ষার ফলাফল লিপিবদ্ধ করুন</value></data>
+  <data name="Lab_PatientRecords" xml:space="preserve"><value>রোগীর রেকর্ড</value></data>
+  <data name="Lab_CompletedTests" xml:space="preserve"><value>সম্পন্ন পরীক্ষা</value></data>
+  <data name="Lab_CriticalAlert" xml:space="preserve"><value>আশঙ্কাজনক প্লাটিলেট সতর্কতা</value></data>
+  <data name="Lab_Profile" xml:space="preserve"><value>ল্যাবরেটরি প্রোফাইল</value></data>
+  <data name="Lab_Workflow" xml:space="preserve"><value>ল্যাব টেস্ট কর্মপ্রবাহ</value></data>
+  <data name="Lab_PrintReport" xml:space="preserve"><value>ডায়াগনস্টিক রিপোর্ট প্রিন্ট করুন</value></data>
+  <data name="Lab_VerifyResult" xml:space="preserve"><value>যাচাই করুন ও রোগীকে অবহিত করুন</value></data>
 
   <!-- Reports / Risk -->
   <data name="Risk_HighAlert" xml:space="preserve"><value>উচ্চ সতর্কতা</value></data>

@@ -10,6 +10,7 @@ namespace LarvaX.Core.Entities
     public enum DataSufficiency
     {
         Sufficient,
+        PartiallySufficient,
         Insufficient
     }
 

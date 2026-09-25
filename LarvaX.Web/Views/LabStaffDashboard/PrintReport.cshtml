@@ -1,0 +1,414 @@
+@model LarvaX.Core.Entities.LabBooking
+@{
+    Layout = null; // Clean standalone print page
+    ViewData["Title"] = $"Lab Diagnostic Report #{Model.Id} - {Model.Patient?.FullName ?? "Patient"}";
+    var isCriticalPlatelet = Model.PlateletCount.HasValue && Model.PlateletCount.Value < 50000;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 20px 0;
+        }
+
+        .report-paper {
+            background: #ffffff;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 25mm 20mm;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .report-header {
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .facility-title {
+            color: #1e1b4b;
+            font-weight: 800;
+            font-size: 1.45rem;
+            letter-spacing: -0.01em;
+            margin-bottom: 2px;
+        }
+
+        .patient-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+
+        .results-table th {
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 2px solid #cbd5e1;
+            padding: 8px 12px;
+        }
+
+        .results-table td {
+            padding: 10px 12px;
+            font-size: 0.88rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .critical-tag {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .signature-line {
+            width: 180px;
+            border-top: 1px solid #475569;
+            margin-top: 50px;
+            margin-bottom: 4px;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 5rem;
+            font-weight: 900;
+            color: rgba(15, 23, 42, 0.03);
+            text-transform: uppercase;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .no-print-toolbar {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+        }
+
+        @@media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+            .report-paper {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                min-height: auto;
+                padding: 15mm 15mm;
+            }
+            .no-print-toolbar {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Action Toolbar -->
+    <div class="no-print-toolbar">
+        <button onclick="window.print()" class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold">
+            <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+        </button>
+        <button onclick="window.close()" class="btn btn-secondary rounded-pill shadow-sm px-3">
+            <i class="bi bi-x-lg me-1"></i> Close
+        </button>
+    </div>
+
+    <!-- Printable Paper Area -->
+    <div class="report-paper">
+        <div class="watermark">LARVAX LAB</div>
+
+        <!-- Header -->
+        <div class="report-header">
+            <div class="row align-items-center">
+                <div class="col-8">
+                    <div class="small text-uppercase fw-bold text-success mb-1">
+                        <i class="bi bi-shield-check me-1"></i>Government of the People's Republic of Bangladesh • DGHS Registered
+                    </div>
+                    <div class="facility-title">LarvaX Dengue Diagnostic Reference Laboratory</div>
+                    <div class="small text-muted">
+                        IEDCR Surveillance Annex, Mohakhali Health Complex, Dhaka-1212 | Tel: +880 2-9898796
+                    </div>
+                    <div class="small text-muted font-monospace">
+                        Facility ID: LX-LAB-DHAKA-01 • ISO 15189 Quality Compliant
+                    </div>
+                </div>
+                <div class="col-4 text-end">
+                    <div class="badge bg-primary fs-6 px-3 py-2 mb-1">DIAGNOSTIC REPORT</div>
+                    <div class="font-monospace small fw-bold">ID: @(Model.BarcodeNumber ?? $"LX-{Model.Id:D5}")</div>
+                    <div class="small text-muted">Booking Reference: #@Model.Id</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Demographics Box -->
+        <div class="patient-box">
+            <div class="row g-2 small">
+                <div class="col-4">
+                    <span class="text-muted d-block">Patient Name:</span>
+                    <strong class="text-dark fs-6">@(Model.Patient?.FullName ?? Model.Patient?.UserName ?? "N/A")</strong>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block">Contact Phone:</span>
+                    <strong>@(Model.Patient?.PhoneNumber ?? "N/A")</strong>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block">Patient ID:</span>
+                    <span class="font-monospace">@Model.PatientId.Substring(0, Math.Min(12, Model.PatientId.Length))</span>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block">Test Requested:</span>
+                    <strong class="text-primary">@(Model.LabTest?.Name ?? "Laboratory Test")</strong>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block">Specimen Type:</span>
+                    <span>@(Model.SampleType ?? "Venous Blood (EDTA)")</span>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block">Collection Date:</span>
+                    <span>@(Model.SampleCollectedAt?.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt") ?? Model.ScheduledAt.ToLocalTime().ToString("dd-MMM-yyyy"))</span>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block">Received in Lab:</span>
+                    <span>@(Model.SampleReceivedAt?.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt") ?? "-")</span>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block">Report Issued:</span>
+                    <span>@(Model.CompletedAt?.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt") ?? Model.UpdatedAt.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt"))</span>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block">Verification Status:</span>
+                    @if (Model.IsVerified)
+                    {
+                        <span class="badge bg-success-subtle text-success">Verified & Approved</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning-subtle text-warning">Provisional Release</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (isCriticalPlatelet)
+        {
+            <div class="alert alert-danger border-danger p-2 small mb-3">
+                <i class="bi bi-exclamation-octagon-fill me-1"></i>
+                <strong>CRITICAL CLINICAL ALERT:</strong> Severe Thrombocytopenia detected (Platelet count &lt; 50,000/mcL). Close clinical observation for plasma leakage and hemorrhagic manifestations advised.
+            </div>
+        }
+
+        <!-- Structured Lab Results Table -->
+        <h6 class="fw-bold text-dark border-bottom pb-1 mb-2">
+            <i class="bi bi-clipboard2-pulse me-1 text-primary"></i> Laboratory Investigation Findings
+        </h6>
+        <table class="table results-table w-100 mb-4">
+            <thead>
+                <tr>
+                    <th style="width: 32%;">Test Parameter</th>
+                    <th style="width: 20%;">Observed Result</th>
+                    <th style="width: 16%;">Unit</th>
+                    <th style="width: 22%;">Biological Ref. Range</th>
+                    <th style="width: 10%;">Method</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dengue NS1 -->
+                @if (!string.IsNullOrEmpty(Model.DengueNs1))
+                {
+                    <tr>
+                        <td>
+                            <strong>Dengue NS1 Antigen</strong>
+                            <small class="text-muted d-block">Early Dengue Non-Structural Protein</small>
+                        </td>
+                        <td>
+                            <strong class="@(Model.DengueNs1.ToLower().Contains("pos") ? "text-danger" : "text-success")">
+                                @Model.DengueNs1.ToUpper()
+                            </strong>
+                        </td>
+                        <td>Qualitative</td>
+                        <td>Negative</td>
+                        <td><small class="text-muted">ICT / ELISA</small></td>
+                    </tr>
+                }
+
+                <!-- Dengue IgM -->
+                @if (!string.IsNullOrEmpty(Model.DengueIgm))
+                {
+                    <tr>
+                        <td>
+                            <strong>Dengue IgM Antibody</strong>
+                            <small class="text-muted d-block">Primary / Acute Phase Antibodies</small>
+                        </td>
+                        <td>
+                            <strong class="@(Model.DengueIgm.ToLower().Contains("pos") ? "text-danger" : "text-success")">
+                                @Model.DengueIgm.ToUpper()
+                            </strong>
+                        </td>
+                        <td>Qualitative</td>
+                        <td>Negative</td>
+                        <td><small class="text-muted">ICT / ELISA</small></td>
+                    </tr>
+                }
+
+                <!-- Dengue IgG -->
+                @if (!string.IsNullOrEmpty(Model.DengueIgg))
+                {
+                    <tr>
+                        <td>
+                            <strong>Dengue IgG Antibody</strong>
+                            <small class="text-muted d-block">Secondary / Past Exposure Antibodies</small>
+                        </td>
+                        <td>
+                            <strong>@Model.DengueIgg.ToUpper()</strong>
+                        </td>
+                        <td>Qualitative</td>
+                        <td>Negative</td>
+                        <td><small class="text-muted">ICT / ELISA</small></td>
+                    </tr>
+                }
+
+                <!-- Platelet Count -->
+                @if (Model.PlateletCount.HasValue)
+                {
+                    <tr class="@(isCriticalPlatelet ? "table-danger" : "")">
+                        <td>
+                            <strong>Platelet Count (Thrombocytes)</strong>
+                            <small class="text-muted d-block">Automated Impedance Cell Counter</small>
+                        </td>
+                        <td>
+                            <strong class="@(isCriticalPlatelet ? "text-danger fs-6" : "text-dark")">
+                                @Model.PlateletCount.Value.ToString("N0")
+                            </strong>
+                            @if (isCriticalPlatelet)
+                            {
+                                <span class="badge bg-danger ms-1">CRITICAL LOW</span>
+                            }
+                            else if (Model.PlateletCount.Value < 150000)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">LOW</span>
+                            }
+                        </td>
+                        <td>/mcL (mm³)</td>
+                        <td>150,000 - 450,000</td>
+                        <td><small class="text-muted">Impedance</small></td>
+                    </tr>
+                }
+
+                <!-- WBC Count -->
+                @if (Model.WbcCount.HasValue)
+                {
+                    <tr>
+                        <td>
+                            <strong>Total WBC Count (Leukocytes)</strong>
+                        </td>
+                        <td>
+                            <strong>@Model.WbcCount.Value.ToString("N0")</strong>
+                            @if (Model.WbcCount.Value < 4000)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">LEUKOPENIA</span>
+                            }
+                        </td>
+                        <td>/mcL (mm³)</td>
+                        <td>4,000 - 11,000</td>
+                        <td><small class="text-muted">Flow Cytometry</small></td>
+                    </tr>
+                }
+
+                <!-- Hematocrit -->
+                @if (Model.Hematocrit.HasValue)
+                {
+                    <tr>
+                        <td>
+                            <strong>Hematocrit / PCV</strong>
+                            <small class="text-muted d-block">Packed Cell Volume</small>
+                        </td>
+                        <td>
+                            <strong>@Model.Hematocrit.Value.ToString("0.0") %</strong>
+                        </td>
+                        <td>%</td>
+                        <td>36.0 - 50.0</td>
+                        <td><small class="text-muted">Calculated</small></td>
+                    </tr>
+                }
+
+                @if (!Model.PlateletCount.HasValue && string.IsNullOrEmpty(Model.DengueNs1) && !string.IsNullOrEmpty(Model.ResultLink))
+                {
+                    <tr>
+                        <td colspan="5" class="py-3 text-center text-muted">
+                            Complete laboratory document is attached to this record: <br />
+                            <a href="@Model.ResultLink" target="_blank" class="fw-bold text-primary">@Model.ResultLink</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Clinical Notes / Interpretation -->
+        <div class="mb-4">
+            <h6 class="fw-bold text-dark mb-1 small text-uppercase">Pathologist &amp; Technologist Remarks:</h6>
+            <div class="p-3 bg-light rounded border small">
+                @if (!string.IsNullOrWhiteSpace(Model.TestNotes))
+                {
+                    <p class="mb-0">@Model.TestNotes</p>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Results verified against biological reference intervals. Clinical correlation advised.</p>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ResultLink))
+        {
+            <div class="mb-4 small text-muted">
+                <i class="bi bi-paperclip me-1"></i>Attached Document File: <a href="@Model.ResultLink" target="_blank" class="text-decoration-none">@Model.ResultLink</a>
+            </div>
+        }
+
+        <!-- Signatures & Accreditation Footer -->
+        <div class="row align-items-end mt-5 pt-4">
+            <div class="col-6">
+                <div class="signature-line"></div>
+                <div class="fw-bold small">@(Model.VerifiedBy ?? "Certified Medical Technologist")</div>
+                <div class="text-muted" style="font-size:0.75rem;">Verified By • Laboratory Technologist</div>
+                <div class="text-muted" style="font-size:0.7rem;">Time: @(Model.VerifiedAt?.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt") ?? DateTime.UtcNow.ToString("dd-MMM-yyyy"))</div>
+            </div>
+            <div class="col-6 text-end">
+                <div class="signature-line ms-auto"></div>
+                <div class="fw-bold small">Dr. M. S. Rahman, MBBS, MD</div>
+                <div class="text-muted" style="font-size:0.75rem;">Consultant Pathologist &amp; Lab Director</div>
+                <div class="text-muted" style="font-size:0.7rem;">LarvaX Dengue Surveillance Reference Network</div>
+            </div>
+        </div>
+
+        <div class="text-center text-muted small mt-5 pt-3 border-top" style="font-size:0.72rem;">
+            This is a computer-generated diagnostic pathology report produced by LarvaX Healthcare Surveillance Platform.
+            Report Authentication Barcode: <span class="font-monospace fw-bold">@(Model.BarcodeNumber ?? $"LX-{Model.Id:D5}")</span>
+        </div>
+    </div>
+
+</body>
+</html>

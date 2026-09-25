@@ -1,0 +1,94 @@
+@model LarvaX.Web.Models.AdminActivityLogViewModel
+@{
+    ViewData["Title"] = "System Activity & Audit Log - LarvaX Admin";
+}
+
+<partial name="_AdminNav" />
+
+<!-- HEADER -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-journal-text text-danger me-2"></i>Platform System & Audit Log</h4>
+                <p class="text-muted small mb-0">Immutable tracking of administrator actions, citizen report validations, professional account approvals, and emergency alerts.</p>
+            </div>
+            <span class="badge bg-dark rounded-pill px-3 py-2">
+                <i class="bi bi-shield-lock me-1"></i>Security Audit Active
+            </span>
+        </div>
+
+        <hr class="my-3" />
+
+        <!-- FILTERS -->
+        <form method="get" asp-action="ActivityLog" class="row g-2 align-items-center">
+            <div class="col-md-6 col-lg-7">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by action, details, or actor..." value="@Model.FilterSearch" />
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="All" selected="@(Model.FilterCategory == "All")">All Activity Categories</option>
+                    <option value="Reports" selected="@(Model.FilterCategory == "Reports")">Report Lifecycle & Verification</option>
+                    <option value="Users" selected="@(Model.FilterCategory == "Users")">User Account & Approvals</option>
+                    <option value="Alerts" selected="@(Model.FilterCategory == "Alerts")">Alert Broadcasts</option>
+                    <option value="Risk" selected="@(Model.FilterCategory == "Risk")">Risk Engine Recalculations</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-filter me-1"></i>Filter</button>
+                <a asp-action="ActivityLog" class="btn btn-sm btn-outline-secondary" title="Reset filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ACTIVITY TIMELINE LIST -->
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+    <div class="card-header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0 text-dark">Audit Event Stream (@Model.Activities.Count Events)</h6>
+        <small class="text-muted">Chronological order (Newest first)</small>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Activities.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-journal-x fs-1 mb-2 d-block"></i>
+                <p class="mb-0">No activity logged matching the search and category filters.</p>
+            </div>
+        }
+        else
+        {
+            <div class="list-group list-group-flush">
+                @foreach (var act in Model.Activities)
+                {
+                    <div class="list-group-item p-3 d-flex align-items-start gap-3">
+                        <div class="badge @act.BadgeClass rounded-circle p-2 mt-1 shadow-sm" style="min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi @act.Icon fs-6"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold text-dark">@act.Action</span>
+                                    <span class="badge bg-light text-dark border small">@act.Category</span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>@act.Timestamp.ToString("dd MMM yyyy, HH:mm:ss") UTC
+                                </small>
+                            </div>
+                            <p class="text-secondary small mb-1">@act.Description</p>
+                            <div class="small">
+                                <span class="text-muted">Actor:</span>
+                                <span class="badge bg-light text-primary border fw-semibold">@act.Actor</span>
+                                <span class="text-muted ms-2">Trace ID:</span>
+                                <code class="small text-muted">@act.Id.Substring(0, Math.Min(8, act.Id.Length))</code>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

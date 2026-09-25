@@ -1,0 +1,136 @@
+@model LarvaX.Web.Models.AdminDataReportsViewModel
+@{
+    ViewData["Title"] = "Data & Administrative Reports - LarvaX Admin";
+}
+
+<partial name="_AdminNav" />
+
+<!-- HEADER -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-file-earmark-spreadsheet text-danger me-2"></i>Data & Administrative Report Management</h4>
+                <p class="text-muted small mb-0">Export platform records, review raw surveillance submissions, and generate administrative dataset extracts.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-controller="Government" asp-action="Dashboard" class="btn btn-outline-warning text-dark fw-semibold shadow-sm">
+                    <i class="bi bi-file-earmark-pdf me-1 text-danger"></i>Government DGHS PDF Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EXPORT DATASETS CARDS -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success me-3">
+                    <i class="bi bi-shield-check fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">Citizen Reports</h5>
+                    <small class="text-muted">Total: @Model.TotalReports records</small>
+                </div>
+            </div>
+            <p class="small text-muted mb-3">
+                Full export of citizen hazard submissions including coordinates, disease category, verification status, and timestamp.
+            </p>
+            <a asp-action="ExportReportsCsv" class="btn btn-outline-success mt-auto w-100">
+                <i class="bi bi-download me-1"></i>Download Reports CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary me-3">
+                    <i class="bi bi-people fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">User Directory</h5>
+                    <small class="text-muted">Total: @Model.TotalUsers accounts</small>
+                </div>
+            </div>
+            <p class="small text-muted mb-3">
+                Directory of registered citizens and healthcare professionals, approval flags, specialties, and contact records.
+            </p>
+            <a asp-action="ExportUsersCsv" class="btn btn-outline-primary mt-auto w-100">
+                <i class="bi bi-download me-1"></i>Download Users CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-danger bg-opacity-10 p-3 text-danger me-3">
+                    <i class="bi bi-broadcast fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">Alert Broadcasts</h5>
+                    <small class="text-muted">Total: @Model.TotalAlerts dispatches</small>
+                </div>
+            </div>
+            <p class="small text-muted mb-3">
+                Historical record of all SignalR emergency broadcasts, dispatch radii, delivery confirmation counts, and regions.
+            </p>
+            <a asp-action="ExportAlertsCsv" class="btn btn-outline-danger mt-auto w-100">
+                <i class="bi bi-download me-1"></i>Download Alerts CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- SURVEILLANCE DATA SUMMARY -->
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+    <div class="card-header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-table text-primary me-2"></i>Recent Verified Surveillance Submissions</h5>
+        <a asp-action="Reports" asp-route-tab="verified" class="btn btn-sm btn-outline-primary">View All Verified</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-uppercase">
+                <tr>
+                    <th>Report ID</th>
+                    <th>Disease</th>
+                    <th>Coordinates</th>
+                    <th>Citizen Submitter</th>
+                    <th>Description</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RecentReports.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No report records available.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var r in Model.RecentReports)
+                    {
+                        <tr>
+                            <td><span class="badge bg-secondary">#@r.Id</span></td>
+                            <td class="fw-bold text-dark">@r.DiseaseType</td>
+                            <td class="small text-muted">@r.Latitude.ToString("F4"), @r.Longitude.ToString("F4")</td>
+                            <td class="small">@(r.User?.FullName ?? "Citizen")</td>
+                            <td class="small text-truncate" style="max-width: 250px;">@(r.Description ?? "No description")</td>
+                            <td class="small text-muted">@r.CreatedAt.ToString("dd MMM yyyy, HH:mm")</td>
+                            <td>
+                                <span class="badge @(r.Status == LarvaX.Core.Entities.ReportStatus.Resolved ? "bg-success" : r.Status == LarvaX.Core.Entities.ReportStatus.UnderReview ? "bg-warning text-dark" : "bg-primary") rounded-pill">
+                                    @r.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

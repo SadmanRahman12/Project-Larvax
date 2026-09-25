@@ -64,6 +64,30 @@
                                 <a class="nav-link text-warning fw-bold" asp-controller="Government" asp-action="Dashboard"><i class="bi bi-shield-check me-1"></i>Government Dashboard</a>
                             </li>
                         }
+                        @if (User.IsInRole("Doctor") || User.IsInRole("Administrator"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link fw-bold" asp-controller="DoctorDashboard" asp-action="Index" style="color:#7de8d0;">
+                                    <i class="bi bi-heart-pulse-fill me-1"></i>Doctor Dashboard
+                                </a>
+                            </li>
+                        }
+                        @if (User.IsInRole("HealthWorker") || User.IsInRole("Administrator"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link fw-bold" asp-controller="HealthWorkerDashboard" asp-action="Index" style="color:#38bdf8;">
+                                    <i class="bi bi-shield-shaded me-1"></i>Health Worker Dashboard
+                                </a>
+                            </li>
+                        }
+                        @if (User.IsInRole("LabStaff") || User.IsInRole("Administrator"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link fw-bold" asp-controller="LabStaffDashboard" asp-action="Index" style="color:#a78bfa;">
+                                    <i class="bi bi-eyedropper me-1"></i>Lab Staff Dashboard
+                                </a>
+                            </li>
+                        }
                         @if (User.IsInRole("Administrator"))
                         {
                             <li class="nav-item">

@@ -35,7 +35,9 @@ namespace LarvaX.Application.Services
 
         public DataSufficiency DetermineDataSufficiency(int sampleCount)
         {
-            return sampleCount >= 10 ? DataSufficiency.Sufficient : DataSufficiency.Insufficient;
+            if (sampleCount >= 10) return DataSufficiency.Sufficient;
+            if (sampleCount > 5)  return DataSufficiency.PartiallySufficient;
+            return DataSufficiency.Insufficient;
         }
 
         public string GeneratePublicAdvice(RiskLevel level, string language = "en")

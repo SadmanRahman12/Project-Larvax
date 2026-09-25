@@ -1,0 +1,142 @@
+@model LarvaX.Web.Models.AdminSettingsViewModel
+@{
+    ViewData["Title"] = "System Settings - LarvaX Admin";
+}
+
+<partial name="_AdminNav" />
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-gear-fill text-danger me-2"></i>Platform Configuration & System Settings</h4>
+        <p class="text-muted small mb-0">Configure operational rules, medical thresholds, account approval policies, and real-time alert dispatch parameters.</p>
+    </div>
+</div>
+
+<form asp-action="SaveSettings" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-4 mb-4">
+        <!-- 1. ACCOUNT APPROVAL & ROLE SETTINGS -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white p-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-person-lock me-2 text-primary"></i>Account & Role Verification</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" asp-for="RequireProfessionalApproval" id="requireApprovalCheck">
+                        <label class="form-check-label fw-bold text-dark" for="requireApprovalCheck">
+                            Mandatory Administrator Approval for Professional Users
+                        </label>
+                        <small class="text-muted d-block mt-1">
+                            When enabled, newly registered Doctors, Health Workers, and Lab Staff cannot access clinical workflows until an Administrator verifies their credentials.
+                        </small>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" asp-for="AutoEscalateSevereReports" id="autoEscalateCheck">
+                        <label class="form-check-label fw-bold text-dark" for="autoEscalateCheck">
+                            Auto-Escalate Severe Hazard Reports
+                        </label>
+                        <small class="text-muted d-block mt-1">
+                            Automatically flags reports containing mosquito breeding sites near hospitals or schools as high-priority investigation tasks.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. EMERGENCY ALERT & SIGNALR CONFIGURATION -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white p-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-broadcast me-2 text-danger"></i>Alert Dispatch Parameters</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" asp-for="EnableSignalRBroadcast" id="enableSignalRCheck">
+                        <label class="form-check-label fw-bold text-dark" for="enableSignalRCheck">
+                            Enable Real-Time SignalR Broadcasts
+                        </label>
+                        <small class="text-muted d-block mt-1">
+                            Pushes toast notifications and audio alerts immediately to connected mobile and web clients upon risk elevation.
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Default Alert Radius (Kilometers):</label>
+                        <div class="input-group">
+                            <input type="number" asp-for="DefaultAlertRadiusKm" class="form-control" min="1" max="50" step="0.5" />
+                            <span class="input-group-text">km</span>
+                        </div>
+                        <small class="text-muted">Standard geographical zone radius for emergency risk alert distribution.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. CLINICAL THRESHOLDS & EPIDEMIOLOGY -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white p-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-heart-pulse me-2 text-success"></i>Clinical Decision Support Thresholds</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Critical Platelet Warning Threshold (/μL):</label>
+                        <div class="input-group">
+                            <input type="number" asp-for="CriticalPlateletThreshold" class="form-control" min="10000" max="150000" step="1000" />
+                            <span class="input-group-text">cells/μL</span>
+                        </div>
+                        <small class="text-muted">Patients with platelet count below this threshold trigger immediate emergency hospital transfer alerts.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SYSTEM & LOCALIZATION PREFERENCES -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white p-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-sliders me-2 text-secondary"></i>Localization & Platform Mode</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Default System Language:</label>
+                        <select asp-for="DefaultLanguage" class="form-select">
+                            <option value="en">English (UK / Global)</option>
+                            <option value="bn">বাংলা (Bengali / National)</option>
+                        </select>
+                        <small class="text-muted">Default interface and notification dialect for new users.</small>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" asp-for="MaintenanceMode" id="maintenanceCheck">
+                        <label class="form-check-label fw-bold text-danger" for="maintenanceCheck">
+                            Platform Maintenance Mode
+                        </label>
+                        <small class="text-muted d-block mt-1">
+                            Disables public report submission while database migrations or scheduled maintenance occur.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAVE BUTTON -->
+    <div class="d-flex justify-content-end gap-2 mb-5">
+        <a asp-action="Index" class="btn btn-outline-secondary">Discard Changes</a>
+        <button type="submit" class="btn btn-danger px-4 shadow-sm">
+            <i class="bi bi-save me-1"></i>Save Configuration Changes
+        </button>
+    </div>
+</form>

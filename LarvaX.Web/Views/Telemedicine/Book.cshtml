@@ -1,31 +1,395 @@
 @model LarvaX.Web.Models.AppointmentViewModel
 @{
     ViewData["Title"] = "Book Appointment - Telemedicine";
+    var doctorInitial = !string.IsNullOrEmpty(Model.DoctorName) && Model.DoctorName.Length >= 2 
+        ? Model.DoctorName.Substring(0, 2).ToUpper() 
+        : "DR";
 }
 
-<div class="row justify-content-center mt-3">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Book Video Consultation with @Model.DoctorName</h5>
+<style>
+    .booking-card {
+        border-radius: 1.25rem;
+        border: 1px solid rgba(15,111,173,0.15);
+        box-shadow: 0 8px 30px rgba(15,111,173,0.08);
+        overflow: hidden;
+    }
+    .booking-header {
+        background: linear-gradient(135deg, #0f6fad 0%, #008870 100%);
+        color: #fff;
+        padding: 1.75rem 2rem;
+    }
+    .slot-pill {
+        border-radius: .65rem;
+        padding: .55rem .9rem;
+        font-weight: 600;
+        font-size: .88rem;
+        transition: all .15s ease-in-out;
+        cursor: pointer;
+    }
+    .slot-pill:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(15,111,173,0.2);
+    }
+    .slot-pill.active {
+        background-color: #0f6fad !important;
+        border-color: #0f6fad !important;
+        color: #fff !important;
+        box-shadow: 0 4px 14px rgba(15,111,173,0.35);
+    }
+    .day-badge {
+        font-size: .8rem;
+        padding: .35rem .75rem;
+        border-radius: 999px;
+    }
+</style>
+
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8 col-xl-7">
+        
+        <a asp-action="Index" class="btn btn-link text-decoration-none text-muted mb-3 px-0">
+            <i class="bi bi-arrow-left me-1"></i>Back to Doctors List
+        </a>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <div class="card-body">
-                <form asp-action="Book" method="post">
-                    <input type="hidden" asp-for="DoctorId" />
+        }
 
-                    <div class="mb-3">
-                        <label class="form-label">Appointment Date & Time</label>
-                        <input asp-for="ScheduledAt" type="datetime-local" class="form-control" required />
+        <div class="card booking-card">
+            
+            @* Doctor Card Header *@
+            <div class="booking-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white fs-3 shadow"
+                         style="width:68px;height:68px;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
+                        @doctorInitial
+                    </div>
+                    <div>
+                        <span class="badge bg-white bg-opacity-25 text-white mb-1 px-3 py-1 rounded-pill">
+                            <i class="bi bi-shield-check me-1"></i>Verified Doctor
+                        </span>
+                        <h4 class="fw-bold mb-1 text-white">Dr. @Model.DoctorName</h4>
+                        <div class="text-white-50 small">
+                            <i class="bi bi-award me-1"></i>@(Model.DoctorSpecialty ?? "General Telemedicine Specialist")
+                            @if (!string.IsNullOrEmpty(Model.DoctorEmail))
+                            {
+                                <span class="ms-2">• <i class="bi bi-envelope me-1"></i>@Model.DoctorEmail</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+
+                @* CASE 1: Doctor has NOT fixed their schedule *@
+                @if (!Model.HasSchedule)
+                {
+                    <div class="text-center py-5">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                             style="width:80px;height:80px;background:rgba(244,167,0,0.12);color:#f4a700;">
+                            <i class="bi bi-calendar-x fs-1"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Schedule Not Fixed Yet</h5>
+                        <p class="text-muted mx-auto mb-4" style="max-width:480px;">
+                            <strong>Dr. @Model.DoctorName</strong> has not set up their consultation hours yet.
+                            In LarvaX, doctors are not available all the time and must fix their schedule before appointments can be booked.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a asp-action="Index" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                                <i class="bi bi-search me-1"></i>Find an Available Doctor
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @* CASE 2: Doctor HAS fixed schedule — Patient books within schedule *@
+
+                    @* Fixed Schedule Info Strip *@
+                    <div class="card border-0 rounded-3 p-3 mb-4" style="background:rgba(15,111,173,0.06);border:1px solid rgba(15,111,173,0.15)!important;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="small fw-bold text-primary">
+                                <i class="bi bi-clock-history me-1"></i>Dr. @Model.DoctorName's Fixed Consultation Hours:
+                            </span>
+                            <span class="badge bg-success bg-opacity-15 text-success rounded-pill px-2 py-1 small">
+                                <i class="bi bi-check-circle-fill me-1"></i>Appointments Open
+                            </span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var s in Model.Schedules.Where(s => s.IsActive).OrderBy(s => (int)s.DayOfWeek))
+                            {
+                                var st = DateTime.Today.Add(s.StartTime).ToString("hh:mm tt");
+                                var en = DateTime.Today.Add(s.EndTime).ToString("hh:mm tt");
+                                <span class="badge bg-white text-dark border shadow-sm px-2 py-1 day-badge">
+                                    <strong class="text-primary">@s.DayOfWeek:</strong> @st – @en
+                                    <span class="text-muted">(@s.SlotDurationMinutes min slots)</span>
+                                </span>
+                            }
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Notes (optional)</label>
-                        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
-                    </div>
+                    <form asp-action="Book" method="post" id="bookingForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="DoctorId" />
+                        <input type="hidden" asp-for="ScheduledAt" id="selectedScheduledAt" />
 
-                    <button type="submit" class="btn btn-success w-100">Confirm Booking</button>
-                </form>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 mb-3"></div>
+
+                        @* STEP 1: Choose Appointment Date *@
+                        <div class="mb-4">
+                            <label class="form-label fw-bold d-flex align-items-center gap-2 text-dark">
+                                <span class="badge rounded-circle bg-primary text-white" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;">1</span>
+                                Select Appointment Date
+                            </label>
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-6">
+                                    <input type="date" id="datePicker" name="SelectedDate" value="@Model.SelectedDate"
+                                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                           max="@DateTime.Today.AddDays(30).ToString("yyyy-MM-dd")"
+                                           class="form-control form-control-lg border-2 shadow-sm" required />
+                                </div>
+                                <div class="col-md-6 text-muted small">
+                                    Available working days:
+                                    <div class="mt-1 d-flex flex-wrap gap-1">
+                                        @foreach (var day in Model.WorkingDaysSummary)
+                                        {
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">@day</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* STEP 2: Choose Available Slot *@
+                        <div class="mb-4">
+                            <label class="form-label fw-bold d-flex align-items-center justify-content-between text-dark">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge rounded-circle bg-primary text-white" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;">2</span>
+                                    Select Available Time Slot
+                                </div>
+                                <span id="slotCountBadge" class="badge bg-light text-dark border small fw-normal"></span>
+                            </label>
+
+                            <div id="slotsLoading" class="text-center py-3 d-none">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                <span class="text-muted small">Loading available slots for selected date...</span>
+                            </div>
+
+                            <div id="slotsContainer" class="d-flex flex-wrap gap-2">
+                                @if (Model.AvailableSlots.Any())
+                                {
+                                    @foreach (var slot in Model.AvailableSlots)
+                                    {
+                                        if (slot.IsAvailable)
+                                        {
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary slot-pill slot-btn @(Model.ScheduledAt == slot.SlotValue ? "active" : "")"
+                                                    data-slot="@slot.SlotValue" 
+                                                    data-display="@slot.TimeFormatted">
+                                                <i class="bi bi-clock me-1"></i>@slot.TimeFormatted
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-light text-muted border slot-pill" disabled title="@slot.UnavailabilityReason">
+                                                <span class="text-decoration-line-through">@slot.TimeFormatted</span>
+                                                <small class="d-block" style="font-size:.68rem;">@slot.UnavailabilityReason</small>
+                                            </button>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning border-0 rounded-3 w-100 p-3 mb-0" id="noSlotsAlert">
+                                        <i class="bi bi-info-circle me-1"></i>Dr. @Model.DoctorName is not available on this date or has no open slots. Please pick one of the doctor's scheduled working days above.
+                                    </div>
+                                }
+                            </div>
+                            <span asp-validation-for="ScheduledAt" class="text-danger small mt-2 d-block"></span>
+                        </div>
+
+                        @* Selected Slot Preview Banner *@
+                        <div id="selectedSlotBanner" class="alert alert-success border-0 rounded-3 shadow-sm d-flex align-items-center justify-content-between py-2 px-3 mb-4 @(string.IsNullOrEmpty(Model.ScheduledAt) ? "d-none" : "")">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                <div>
+                                    <div class="fw-bold small text-success">Selected Appointment Slot</div>
+                                    <div id="selectedSlotText" class="fw-bold text-dark">@Model.ScheduledAt</div>
+                                </div>
+                            </div>
+                            <button type="button" id="clearSlotBtn" class="btn btn-sm btn-link text-danger text-decoration-none">Change</button>
+                        </div>
+
+                        @* STEP 3: Notes / Symptoms *@
+                        <div class="mb-4">
+                            <label class="form-label fw-bold d-flex align-items-center gap-2 text-dark">
+                                <span class="badge rounded-circle bg-primary text-white" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;">3</span>
+                                Reason for Consultation (Optional)
+                            </label>
+                            <textarea asp-for="Notes" class="form-control rounded-3" rows="3" 
+                                      placeholder="Briefly describe your symptoms (e.g., high fever, platelet count, warning signs, duration of illness)..."></textarea>
+                        </div>
+
+                        @* Submit Button *@
+                        <div class="pt-2">
+                            <button type="submit" id="submitBookingBtn" class="btn btn-primary btn-lg w-100 rounded-pill shadow" @(string.IsNullOrEmpty(Model.ScheduledAt) ? "disabled" : "")>
+                                <i class="bi bi-calendar-check-fill me-2"></i>Confirm Appointment with Dr. @Model.DoctorName
+                            </button>
+                            <div class="text-center text-muted small mt-2">
+                                <i class="bi bi-shield-lock me-1"></i>Your video consultation is private, encrypted, and scheduled strictly according to doctor's availability.
+                            </div>
+                        </div>
+
+                    </form>
+                }
+
             </div>
         </div>
+
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const datePicker = document.getElementById('datePicker');
+            const slotsContainer = document.getElementById('slotsContainer');
+            const slotsLoading = document.getElementById('slotsLoading');
+            const scheduledAtInput = document.getElementById('selectedScheduledAt');
+            const submitBtn = document.getElementById('submitBookingBtn');
+            const selectedSlotBanner = document.getElementById('selectedSlotBanner');
+            const selectedSlotText = document.getElementById('selectedSlotText');
+            const clearSlotBtn = document.getElementById('clearSlotBtn');
+            const doctorId = '@Model.DoctorId';
+
+            function attachSlotClickHandlers() {
+                const buttons = document.querySelectorAll('.slot-btn');
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        buttons.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        const slotVal = this.getAttribute('data-slot');
+                        const displayVal = this.getAttribute('data-display');
+                        const dateVal = datePicker ? datePicker.value : '';
+
+                        scheduledAtInput.value = slotVal;
+                        selectedSlotText.textContent = dateVal + ' at ' + displayVal;
+                        selectedSlotBanner.classList.remove('d-none');
+                        submitBtn.removeAttribute('disabled');
+                    });
+                });
+            }
+
+            // Initial slot attachment
+            attachSlotClickHandlers();
+
+            if (clearSlotBtn) {
+                clearSlotBtn.addEventListener('click', function () {
+                    scheduledAtInput.value = '';
+                    selectedSlotBanner.classList.add('d-none');
+                    submitBtn.setAttribute('disabled', 'disabled');
+                    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('active'));
+                });
+            }
+
+            // Date change AJAX loader
+            if (datePicker) {
+                datePicker.addEventListener('change', function () {
+                    const chosenDate = this.value;
+                    if (!chosenDate) return;
+
+                    slotsContainer.innerHTML = '';
+                    slotsLoading.classList.remove('d-none');
+                    scheduledAtInput.value = '';
+                    selectedSlotBanner.classList.add('d-none');
+                    submitBtn.setAttribute('disabled', 'disabled');
+
+                    fetch(`/Telemedicine/GetSlots?doctorId=${encodeURIComponent(doctorId)}&date=${encodeURIComponent(chosenDate)}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network error');
+                            return response.json();
+                        })
+                        .then(data => {
+                            slotsLoading.classList.add('d-none');
+
+                            if (!data.worksOnThisDay) {
+                                slotsContainer.innerHTML = `
+                                    <div class="alert alert-warning border-0 rounded-3 w-100 p-3 mb-0">
+                                        <i class="bi bi-calendar-x me-1"></i>Dr. @Model.DoctorName does not have consultation hours on <strong>${data.dayName}s</strong>. Please pick one of their scheduled days above.
+                                    </div>
+                                `;
+                                return;
+                            }
+
+                            if (!data.slots || data.slots.length === 0) {
+                                slotsContainer.innerHTML = `
+                                    <div class="alert alert-secondary border-0 rounded-3 w-100 p-3 mb-0">
+                                        <i class="bi bi-clock me-1"></i>No slots available on this date.
+                                    </div>
+                                `;
+                                return;
+                            }
+
+                            let html = '';
+                            let availableCount = 0;
+
+                            data.slots.forEach(slot => {
+                                if (slot.isAvailable) {
+                                    availableCount++;
+                                    html += `
+                                        <button type="button" 
+                                                class="btn btn-outline-primary slot-pill slot-btn"
+                                                data-slot="${slot.slotValue}" 
+                                                data-display="${slot.timeFormatted}">
+                                            <i class="bi bi-clock me-1"></i>${slot.timeFormatted}
+                                        </button>
+                                    `;
+                                } else {
+                                    html += `
+                                        <button type="button" class="btn btn-light text-muted border slot-pill" disabled title="${slot.unavailabilityReason || 'Unavailable'}">
+                                            <span class="text-decoration-line-through">${slot.timeFormatted}</span>
+                                            <small class="d-block" style="font-size:.68rem;">${slot.unavailabilityReason || 'Booked'}</small>
+                                        </button>
+                                    `;
+                                }
+                            });
+
+                            if (availableCount === 0) {
+                                html = `
+                                    <div class="alert alert-info border-0 rounded-3 w-100 p-3 mb-0">
+                                        <i class="bi bi-info-circle me-1"></i>All schedule slots for this day are already fully booked or passed. Please try another date.
+                                    </div>
+                                ` + html;
+                            }
+
+                            slotsContainer.innerHTML = html;
+                            attachSlotClickHandlers();
+                        })
+                        .catch(err => {
+                            slotsLoading.classList.add('d-none');
+                            slotsContainer.innerHTML = `
+                                <div class="alert alert-danger border-0 rounded-3 w-100 p-3 mb-0">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Failed to load slots. Please refresh the page and try again.
+                                </div>
+                            `;
+                        });
+                });
+            }
+
+            // Form submit validation
+            const form = document.getElementById('bookingForm');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    if (!scheduledAtInput.value) {
+                        e.preventDefault();
+                        alert('Please select an available appointment time slot first.');
+                    }
+                });
+            }
+        });
+    </script>
+}

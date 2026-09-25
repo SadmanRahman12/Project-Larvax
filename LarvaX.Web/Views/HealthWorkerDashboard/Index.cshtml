@@ -1,0 +1,2223 @@
+@model LarvaX.Web.Models.HealthWorkerDashboardViewModel
+@using LarvaX.Core.Entities
+@{
+    ViewData["Title"] = "Health Worker Dashboard - LarvaX";
+    var workerName = string.IsNullOrWhiteSpace(Model.Worker.FullName) ? Model.Worker.UserName : Model.Worker.FullName;
+    var todayStr = DateTime.UtcNow.ToString("dddd, dd MMMM yyyy");
+    var isBn = Model.CurrentLanguage == "bn";
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+<style>
+    :root {
+        --hw-primary: #0284c7;
+        --hw-primary-dark: #0369a1;
+        --hw-accent: #0f766e;
+        --hw-teal: #0d9488;
+        --hw-emerald: #10b981;
+        --hw-crimson: #ef4444;
+        --hw-amber: #f59e0b;
+        --hw-surface: #f8fafc;
+        --hw-card: #ffffff;
+        --hw-border: #e2e8f0;
+        --hw-text: #0f172a;
+        --hw-muted: #64748b;
+    }
+
+    body { background-color: var(--hw-surface); color: var(--hw-text); }
+
+    /* ── Hero Banner ── */
+    .hw-hero {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 40%, #0f766e 100%);
+        border-radius: 1.25rem;
+        padding: 2.25rem 2.5rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(2, 132, 199, 0.2);
+    }
+    .hw-hero::before {
+        content: '';
+        position: absolute;
+        right: -50px; top: -50px;
+        width: 260px; height: 260px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.06);
+    }
+    .hw-hero::after {
+        content: '';
+        position: absolute;
+        right: 120px; bottom: -70px;
+        width: 180px; height: 180px;
+        border-radius: 50%;
+        background: rgba(13, 148, 136, 0.18);
+    }
+
+    /* ── Quick Stats Cards ── */
+    .hw-stat-card {
+        border-radius: 1rem;
+        border: 1px solid var(--hw-border);
+        background: var(--hw-card);
+        padding: 1.25rem;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+        transition: transform .2s ease, box-shadow .2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .hw-stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.12);
+    }
+    .hw-stat-card .icon-box {
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    /* ── Sidebar Navigation ── */
+    .hw-sidebar {
+        position: sticky; top: 80px;
+        height: calc(100vh - 100px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    .hw-nav .nav-link {
+        border-radius: .75rem;
+        font-weight: 500;
+        color: var(--hw-text);
+        padding: .65rem 1rem;
+        display: flex; align-items: center; justify-content: space-between;
+        transition: all .15s ease-in-out;
+        margin-bottom: .25rem;
+        text-decoration: none;
+    }
+    .hw-nav .nav-link:hover,
+    .hw-nav .nav-link.active {
+        background: linear-gradient(90deg, rgba(2, 132, 199, 0.12) 0%, rgba(13, 148, 136, 0.08) 100%);
+        color: var(--hw-primary);
+        font-weight: 600;
+    }
+    .hw-nav .nav-link .nav-left { display: flex; align-items: center; gap: .7rem; }
+    .hw-nav .nav-link .nav-icon { font-size: 1.15rem; width: 22px; text-align: center; }
+
+    /* ── Section Cards ── */
+    .hw-section {
+        border-radius: 1.1rem;
+        border: 1px solid var(--hw-border);
+        background: var(--hw-card);
+        box-shadow: 0 2px 14px rgba(15, 23, 42, 0.04);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+    .hw-section-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--hw-border);
+        display: flex; align-items: center; justify-content: space-between;
+        background: #fafcff;
+    }
+    .hw-section-title {
+        font-weight: 700; font-size: 1.05rem;
+        color: var(--hw-text); margin: 0;
+        display: flex; align-items: center; gap: .6rem;
+    }
+
+    /* ── Pipeline Tracker ── */
+    .pipeline-container {
+        display: flex; gap: .5rem;
+        padding: 1rem 1.5rem;
+        background: #f1f5f9;
+        border-radius: .75rem;
+        overflow-x: auto;
+    }
+    .pipeline-step {
+        flex: 1; min-width: 120px;
+        background: #fff;
+        padding: .75rem 1rem;
+        border-radius: .6rem;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        position: relative;
+    }
+    .pipeline-step.active {
+        border-color: var(--hw-primary);
+        background: #f0f9ff;
+    }
+
+    /* ── Badges ── */
+    .badge-suspected { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+    .badge-observation { background: rgba(2, 132, 199, 0.15); color: #0369a1; }
+    .badge-confirmed { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }
+    .badge-recovering { background: rgba(16, 185, 129, 0.15); color: #047857; }
+    .badge-closed { background: rgba(100, 116, 139, 0.15); color: #475569; }
+
+    .badge-urgent { background: rgba(239, 68, 68, 0.15); color: #dc2626; font-weight: 600; }
+    .badge-high { background: rgba(245, 158, 11, 0.15); color: #d97706; font-weight: 600; }
+    .badge-medium { background: rgba(2, 132, 199, 0.15); color: #0284c7; }
+    .badge-low { background: rgba(100, 116, 139, 0.15); color: #475569; }
+
+    .low-stock-pulse {
+        animation: pulseWarning 2s infinite;
+    }
+    @@keyframes pulseWarning {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.85; }
+    }
+
+    /* ── Task Checklist ── */
+    .task-item {
+        padding: .9rem 1.25rem;
+        border-bottom: 1px solid var(--hw-border);
+        display: flex; align-items: center; justify-content: space-between;
+        transition: background .15s;
+    }
+    .task-item:last-child { border-bottom: none; }
+    .task-item:hover { background: #f8fafc; }
+    .task-item.completed { text-decoration: line-through; opacity: 0.65; }
+
+    /* ── Blood Donor Item ── */
+    .donor-card {
+        border: 1px solid var(--hw-border);
+        border-radius: .85rem;
+        padding: 1rem;
+        background: #fff;
+        transition: transform .15s, box-shadow .15s;
+    }
+    .donor-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+</style>
+
+<div class="container-fluid py-3">
+
+    <!-- Flash Notifications -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill fs-4 me-3 text-success"></i>
+                <div>
+                    <h6 class="mb-0 fw-bold">Success</h6>
+                    <p class="mb-0">@TempData["SuccessMessage"]</p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
+                <div>
+                    <h6 class="mb-0 fw-bold">Notice / Error</h6>
+                    <p class="mb-0">@TempData["ErrorMessage"]</p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ── Hero Banner ───────────────────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <div class="hw-hero mb-4">
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <span class="badge rounded-pill bg-white text-dark px-3 py-2 fw-semibold">
+                        <i class="bi bi-shield-shaded text-primary me-1"></i> Community Health Worker Portal
+                    </span>
+                    <span class="badge rounded-pill bg-success-subtle text-white px-3 py-2" style="background: rgba(16, 185, 129, 0.25) !important;">
+                        <i class="bi bi-broadcast me-1"></i> Sentinel Live
+                    </span>
+                    <span class="text-white-50 small"><i class="bi bi-calendar3 me-1"></i> @todayStr</span>
+                </div>
+                <h2 class="fw-bold display-6 mb-1 text-white">
+                    @(isBn ? "স্বাগতম, " + workerName : "Welcome, " + workerName)
+                </h2>
+                <p class="text-white-50 mb-4" style="max-width: 680px;">
+                    Dengue surveillance command, community case monitoring, citizen report investigations, risk map tracking, healthcare resource management, and clinical referral coordination.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-light fw-bold text-primary rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddCase">
+                        <i class="bi bi-person-plus-fill me-1"></i> Register Dengue Case
+                    </button>
+                    <button class="btn btn-warning fw-bold text-dark rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalBroadcastAlert">
+                        <i class="bi bi-megaphone-fill me-1"></i> Trigger Field Alert
+                    </button>
+                    <button class="btn btn-outline-light rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAddTask">
+                        <i class="bi bi-check2-square me-1"></i> Add Task
+                    </button>
+                    <button class="btn btn-outline-light rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAdjustInventory">
+                        <i class="bi bi-box-seam me-1"></i> Adjust Stock
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-10 d-inline-block text-start" style="min-width: 250px;">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="rounded-circle bg-danger p-2 d-inline-flex">
+                            <i class="bi bi-radioactive text-white fs-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-white-50 small d-block">Dhaka High Risk Zones</span>
+                            <span class="fw-bold text-white fs-5">@Model.HighRiskZonesCount Active Clusters</span>
+                        </div>
+                    </div>
+                    <hr class="my-2 border-white border-opacity-25" />
+                    <div class="d-flex justify-content-between text-white-50 small">
+                        <span>Low Stock Items: <strong class="text-warning">@Model.LowStockItemsCount</strong></span>
+                        <span>Pending Tasks: <strong class="text-white">@Model.PendingTasksCount</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ── 1. Summary Cards Overview ──────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <div class="row g-3 mb-4" id="section-overview">
+        <!-- High Risk Cases -->
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="hw-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">High Risk Cases</span>
+                    <div class="icon-box bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-exclamation-octagon-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-danger mb-1">@Model.HighRiskCasesCount</h3>
+                <span class="small text-muted"><i class="bi bi-activity me-1 text-danger"></i>Severe / Critical</span>
+            </div>
+        </div>
+
+        <!-- Pending Citizen Reports -->
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="hw-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Pending Reports</span>
+                    <div class="icon-box bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-file-earmark-text-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-warning mb-1">@Model.PendingReportsCount</h3>
+                <span class="small text-muted"><i class="bi bi-clock-history me-1"></i>Awaiting Review</span>
+            </div>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="hw-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Active Alerts</span>
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-bell-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-primary mb-1">@Model.ActiveAlertsCount</h3>
+                <span class="small text-muted"><i class="bi bi-broadcast me-1"></i>Real-time Sentinel</span>
+            </div>
+        </div>
+
+        <!-- Low Stock Items -->
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="hw-stat-card @(Model.LowStockItemsCount > 0 ? "border-danger border-opacity-50" : "")">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Low Stock Items</span>
+                    <div class="icon-box @(Model.LowStockItemsCount > 0 ? "bg-danger text-danger low-stock-pulse" : "bg-secondary text-secondary") bg-opacity-10">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold @(Model.LowStockItemsCount > 0 ? "text-danger" : "text-dark") mb-1">@Model.LowStockItemsCount</h3>
+                <span class="small text-muted"><i class="bi bi-shield-exclamation me-1"></i>Below Threshold</span>
+            </div>
+        </div>
+
+        <!-- Cases Requiring Follow-up -->
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="hw-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Cases Follow-up</span>
+                    <div class="icon-box bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-info mb-1">@Model.CasesRequiringFollowUpCount</h3>
+                <span class="small text-muted"><i class="bi bi-clock me-1"></i>Due for Check</span>
+            </div>
+        </div>
+
+        <!-- Assigned Tasks -->
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="hw-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Assigned Tasks</span>
+                    <div class="icon-box bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-card-checklist"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-success mb-1">@Model.AssignedTasksCount</h3>
+                <span class="small text-muted"><i class="bi bi-check2-all me-1"></i>Field Activities</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ── Main Grid Layout: Sidebar & Content ────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 col-xl-2">
+            <div class="hw-sidebar">
+                <div class="hw-nav nav flex-column">
+                    <a class="nav-link active" href="#section-overview">
+                        <span class="nav-left"><i class="bi bi-grid-fill nav-icon text-primary"></i> Dashboard</span>
+                    </a>
+                    <a class="nav-link" href="#section-cases">
+                        <span class="nav-left"><i class="bi bi-heart-pulse-fill nav-icon text-danger"></i> Dengue Cases</span>
+                        <span class="badge bg-danger rounded-pill">@Model.DengueCases.Count</span>
+                    </a>
+                    <a class="nav-link" href="#section-reports">
+                        <span class="nav-left"><i class="bi bi-card-list nav-icon text-warning"></i> Citizen Reports</span>
+                        <span class="badge bg-warning text-dark rounded-pill">@Model.PendingReportsCount</span>
+                    </a>
+                    <a class="nav-link" href="#section-map">
+                        <span class="nav-left"><i class="bi bi-map-fill nav-icon text-success"></i> Risk Map</span>
+                    </a>
+                    <a class="nav-link" href="#section-alerts">
+                        <span class="nav-left"><i class="bi bi-bell-fill nav-icon text-primary"></i> Alerts & Sentinel</span>
+                        <span class="badge bg-primary rounded-pill">@Model.ActiveAlertsCount</span>
+                    </a>
+                    <a class="nav-link" href="#section-inventory">
+                        <span class="nav-left"><i class="bi bi-box-seam-fill nav-icon text-info"></i> Inventory</span>
+                        @if (Model.LowStockItemsCount > 0)
+                        {
+                            <span class="badge bg-danger rounded-pill">@Model.LowStockItemsCount ⚠</span>
+                        }
+                    </a>
+                    <a class="nav-link" href="#section-patients">
+                        <span class="nav-left"><i class="bi bi-people-fill nav-icon text-secondary"></i> Patient Records</span>
+                    </a>
+                    <a class="nav-link" href="#section-referrals">
+                        <span class="nav-left"><i class="bi bi-arrow-up-right-circle-fill nav-icon text-danger"></i> Referrals</span>
+                        <span class="badge bg-danger rounded-pill">@Model.PendingReferralsCount</span>
+                    </a>
+                    <a class="nav-link" href="#section-donors">
+                        <span class="nav-left"><i class="bi bi-droplet-fill nav-icon text-danger"></i> Blood Donors</span>
+                    </a>
+                    <a class="nav-link" href="#section-education">
+                        <span class="nav-left"><i class="bi bi-book-half nav-icon text-success"></i> Awareness & Ed</span>
+                    </a>
+                    <a class="nav-link" href="#section-tasks">
+                        <span class="nav-left"><i class="bi bi-check2-square nav-icon text-dark"></i> Field Tasks</span>
+                        <span class="badge bg-dark rounded-pill">@Model.PendingTasksCount</span>
+                    </a>
+                    <a class="nav-link" href="#section-profile">
+                        <span class="nav-left"><i class="bi bi-gear-fill nav-icon text-muted"></i> Profile & Settings</span>
+                    </a>
+                </div>
+
+                <div class="mt-4 p-3 rounded-4 bg-light border text-center">
+                    <small class="text-muted d-block mb-1">Health Worker Shift</small>
+                    <span class="badge bg-success-subtle text-success fw-bold px-3 py-2 rounded-pill d-inline-block">
+                        <i class="bi bi-dot"></i> Active On Duty
+                    </span>
+                    <p class="small text-muted mt-2 mb-0">Supervisor ID: #HW-@Model.Worker.Id.Substring(0, Math.Min(6, Model.Worker.Id.Length))</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-lg-9 col-xl-10">
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 2. Dengue Case Management Section ──────────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-cases">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-danger bg-opacity-10 text-danger p-2 rounded-3"><i class="bi bi-heart-pulse-fill"></i></span>
+                            Dengue Case Management & Surveillance
+                        </h4>
+                        <small class="text-muted">Track community cases through status progression: <strong>Suspected → Under Observation → Confirmed → Recovering → Closed</strong></small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAddCase">
+                            <i class="bi bi-plus-circle me-1"></i> Register New Case
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-3 border-bottom bg-light">
+                    <!-- Status Progression Pipeline Summary -->
+                    <div class="pipeline-container mb-3">
+                        <div class="pipeline-step @(Model.SuspectedCasesCount > 0 ? "active" : "")">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Suspected</small>
+                            <span class="fw-bold text-warning fs-5">@Model.SuspectedCasesCount</span>
+                        </div>
+                        <div class="pipeline-step @(Model.UnderObservationCasesCount > 0 ? "active" : "")">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Under Observation</small>
+                            <span class="fw-bold text-info fs-5">@Model.UnderObservationCasesCount</span>
+                        </div>
+                        <div class="pipeline-step @(Model.ConfirmedCasesCount > 0 ? "active" : "")">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Confirmed</small>
+                            <span class="fw-bold text-danger fs-5">@Model.ConfirmedCasesCount</span>
+                        </div>
+                        <div class="pipeline-step @(Model.RecoveringCasesCount > 0 ? "active" : "")">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Recovering</small>
+                            <span class="fw-bold text-success fs-5">@Model.RecoveringCasesCount</span>
+                        </div>
+                        <div class="pipeline-step @(Model.ClosedCasesCount > 0 ? "active" : "")">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Closed</small>
+                            <span class="fw-bold text-secondary fs-5">@Model.ClosedCasesCount</span>
+                        </div>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-5">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="caseSearchInput" class="form-control border-start-0" placeholder="Search by patient name, phone, address, symptoms..." onkeyup="filterCasesTable()" />
+                            </div>
+                        </div>
+                        <div class="col-md-7 d-flex justify-content-md-end gap-1 flex-wrap">
+                            <button class="btn btn-outline-secondary btn-sm active rounded-pill filter-case-btn" onclick="filterCaseStatus('ALL', this)">All (@Model.DengueCases.Count)</button>
+                            <button class="btn btn-outline-warning btn-sm rounded-pill filter-case-btn" onclick="filterCaseStatus('Suspected', this)">Suspected (@Model.SuspectedCasesCount)</button>
+                            <button class="btn btn-outline-info btn-sm rounded-pill filter-case-btn" onclick="filterCaseStatus('UnderObservation', this)">Observation (@Model.UnderObservationCasesCount)</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-case-btn" onclick="filterCaseStatus('Confirmed', this)">Confirmed (@Model.ConfirmedCasesCount)</button>
+                            <button class="btn btn-outline-success btn-sm rounded-pill filter-case-btn" onclick="filterCaseStatus('Recovering', this)">Recovering (@Model.RecoveringCasesCount)</button>
+                            <button class="btn btn-outline-secondary btn-sm rounded-pill filter-case-btn" onclick="filterCaseStatus('Escalated', this)">Escalated (@Model.EscalatedCasesCount)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="casesTable">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th>Case ID & Patient</th>
+                                <th>Status</th>
+                                <th>Severity</th>
+                                <th>Platelet / Hematocrit</th>
+                                <th>Field Observations & Symptoms</th>
+                                <th>Next Follow-up</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.DengueCases.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-2 d-block mb-1"></i> No dengue cases currently logged. Click "Register New Case" to add one.
+                                    </td>
+                                </tr>
+                            }
+                            @foreach (var c in Model.DengueCases)
+                            {
+                                var statusClass = c.Status switch {
+                                    CaseStatus.Suspected => "badge-suspected",
+                                    CaseStatus.UnderObservation => "badge-observation",
+                                    CaseStatus.Confirmed => "badge-confirmed",
+                                    CaseStatus.Recovering => "badge-recovering",
+                                    _ => "badge-closed"
+                                };
+
+                                var sevClass = c.Severity switch {
+                                    CaseSeverity.Critical => "badge-urgent",
+                                    CaseSeverity.Severe => "badge-urgent",
+                                    CaseSeverity.Moderate => "badge-high",
+                                    _ => "badge-low"
+                                };
+
+                                var isLowPlatelet = c.PlateletCount.HasValue && c.PlateletCount < 100000;
+                                var isCriticalPlatelet = c.PlateletCount.HasValue && c.PlateletCount < 50000;
+
+                                <tr class="case-row" data-status="@c.Status" data-escalated="@(c.IsEscalated ? "true" : "false")">
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle bg-light border p-2 text-center" style="width: 38px; height: 38px;">
+                                                <i class="bi bi-person text-secondary"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark">
+                                                    #@c.Id — @c.PatientName
+                                                    @if (c.IsEscalated)
+                                                    {
+                                                        <span class="badge bg-danger rounded-pill ms-1" title="Escalated to Hospital/Doctor">
+                                                            <i class="bi bi-exclamation-triangle-fill"></i> Escalated
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <small class="text-muted d-block">
+                                                    @c.Age yrs, @c.Gender • <i class="bi bi-telephone me-1"></i>@(c.PatientPhone ?? "N/A")
+                                                </small>
+                                                <small class="text-muted d-block text-truncate" style="max-width: 220px;" title="@c.PatientAddress">
+                                                    <i class="bi bi-geo-alt me-1 text-danger"></i>@(c.PatientAddress ?? "Dhaka")
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill @statusClass px-2 py-1">@c.Status</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill @sevClass px-2 py-1">@c.Severity</span>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong class="@(isCriticalPlatelet ? "text-danger fw-bold" : (isLowPlatelet ? "text-warning fw-bold" : "text-dark"))">
+                                                @(c.PlateletCount.HasValue ? c.PlateletCount.Value.ToString("N0") : "—") /μL
+                                            </strong>
+                                            @if (isCriticalPlatelet)
+                                            {
+                                                <span class="badge bg-danger ms-1" title="Critical Thrombocytopenia"><i class="bi bi-droplet-half"></i> &lt;50k</span>
+                                            }
+                                        </div>
+                                        <small class="text-muted">HCT: @(c.Hematocrit.HasValue ? c.Hematocrit.Value.ToString("F1") + "%" : "—")</small>
+                                    </td>
+                                    <td style="max-width: 260px;">
+                                        <div class="text-truncate small fw-medium" title="@c.Symptoms">
+                                            <strong>Symptoms:</strong> @(c.Symptoms ?? "Fever, body ache")
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(c.FieldNotes))
+                                        {
+                                            <div class="text-muted small text-truncate" title="@c.FieldNotes">
+                                                <i class="bi bi-chat-left-text me-1 text-primary"></i>@c.FieldNotes
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (c.NextFollowUpDate.HasValue)
+                                        {
+                                            var isOverdue = c.NextFollowUpDate.Value < DateTime.UtcNow;
+                                            <span class="badge @(isOverdue ? "bg-danger" : "bg-info bg-opacity-25 text-primary") rounded-pill px-2 py-1">
+                                                <i class="bi bi-calendar-event me-1"></i>@c.NextFollowUpDate.Value.ToString("dd MMM, hh:mm tt")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Not scheduled</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-outline-primary btn-sm rounded-pill" onclick="openUpdateCaseModal(@c.Id, '@c.PatientName', '@c.Status', '@c.Severity', @(c.PlateletCount ?? 0), @(c.Hematocrit ?? 0), '@(c.NextFollowUpDate?.ToString("yyyy-MM-ddTHH:mm") ?? "")', @(c.IsEscalated ? "true" : "false"))">
+                                            <i class="bi bi-pencil-square me-1"></i> Update
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm rounded-pill" onclick="openReferralModal(@c.Id, '@c.PatientName', '@(c.PatientPhone ?? "")')">
+                                            <i class="bi bi-arrow-up-right me-1"></i> Refer
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 3. Citizen Report Queue Section ────────────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-reports">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-warning bg-opacity-10 text-warning p-2 rounded-3"><i class="bi bi-card-list"></i></span>
+                            Citizen Report Queue & Field Verification
+                        </h4>
+                        <small class="text-muted">Citizens report hazards and suspected mosquito breeding sites. Health workers investigate, verify, and resolve.</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-warning text-dark align-self-center px-3 py-2 rounded-pill">
+                            <i class="bi bi-inbox-fill me-1"></i> @Model.PendingReportsCount Pending Field Actions
+                        </span>
+                    </div>
+                </div>
+
+                <div class="p-3 border-bottom bg-light">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-5">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="reportSearchInput" class="form-control border-start-0" placeholder="Search reports by description, location, user..." onkeyup="filterReportsTable()" />
+                            </div>
+                        </div>
+                        <div class="col-md-7 d-flex justify-content-md-end gap-1 flex-wrap">
+                            <button class="btn btn-outline-secondary btn-sm active rounded-pill filter-report-btn" onclick="filterReportStatus('ALL', this)">All (@Model.CitizenReports.Count)</button>
+                            <button class="btn btn-outline-warning btn-sm rounded-pill filter-report-btn" onclick="filterReportStatus('Received', this)">New / Received (@Model.NewReportsCount)</button>
+                            <button class="btn btn-outline-info btn-sm rounded-pill filter-report-btn" onclick="filterReportStatus('UnderReview', this)">Under Review (@Model.UnderReviewReportsCount)</button>
+                            <button class="btn btn-outline-primary btn-sm rounded-pill filter-report-btn" onclick="filterReportStatus('Investigating', this)">Investigating (@Model.InvestigatingReportsCount)</button>
+                            <button class="btn btn-outline-success btn-sm rounded-pill filter-report-btn" onclick="filterReportStatus('Resolved', this)">Resolved (@Model.ResolvedReportsCount)</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-report-btn" onclick="filterReportStatus('Escalated', this)">Escalated (@Model.EscalatedReportsCount)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="reportsTable">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th>Report # & Submitted</th>
+                                <th>Disease / Hazard</th>
+                                <th>Location (GPS)</th>
+                                <th>Status</th>
+                                <th>Verification</th>
+                                <th>Field Notes / Observations</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.CitizenReports.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-clipboard-x fs-2 d-block mb-1"></i> No citizen reports found.
+                                    </td>
+                                </tr>
+                            }
+                            @foreach (var r in Model.CitizenReports)
+                            {
+                                var repStatusBadge = r.Status switch {
+                                    ReportStatus.Received => "bg-warning text-dark",
+                                    ReportStatus.UnderReview => "bg-info text-dark",
+                                    ReportStatus.Assigned => "bg-primary text-white",
+                                    ReportStatus.Investigating => "bg-primary text-white",
+                                    ReportStatus.Resolved => "bg-success text-white",
+                                    ReportStatus.Escalated => "bg-danger text-white",
+                                    _ => "bg-secondary text-white"
+                                };
+
+                                var verBadge = r.Verification switch {
+                                    ReportVerification.Verified => "bg-success-subtle text-success",
+                                    ReportVerification.Invalid => "bg-danger-subtle text-danger",
+                                    _ => "bg-secondary-subtle text-secondary"
+                                };
+
+                                <tr class="report-row" data-status="@r.Status">
+                                    <td>
+                                        <div class="fw-bold text-dark">#@r.Id</div>
+                                        <small class="text-muted"><i class="bi bi-clock me-1"></i>@r.CreatedAt.ToString("dd MMM yyyy, HH:mm")</small>
+                                        <div class="small text-muted"><i class="bi bi-person me-1"></i>@(r.User?.FullName ?? r.User?.UserName ?? "Citizen")</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 mb-1">
+                                            <i class="bi bi-virus me-1"></i>@r.DiseaseType
+                                        </span>
+                                        <div class="small text-muted text-truncate" style="max-width: 200px;" title="@r.Description">
+                                            @(string.IsNullOrWhiteSpace(r.Description) ? "No detailed description provided." : r.Description)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="small">
+                                            <code>@r.Latitude.ToString("F4"), @r.Longitude.ToString("F4")</code>
+                                        </div>
+                                        <a href="#section-map" onclick="zoomMapTo(@r.Latitude, @r.Longitude, 'Report #@r.Id: @r.DiseaseType')" class="small text-primary text-decoration-none">
+                                            <i class="bi bi-geo-alt-fill me-1"></i> Locate on Map
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge @repStatusBadge rounded-pill px-2 py-1">@r.Status</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @verBadge rounded-pill px-2 py-1">@r.Verification</span>
+                                    </td>
+                                    <td style="max-width: 220px;">
+                                        @if (!string.IsNullOrWhiteSpace(r.FieldNotes))
+                                        {
+                                            <small class="text-dark d-block text-truncate" title="@r.FieldNotes">
+                                                <i class="bi bi-clipboard2-check me-1 text-success"></i>@r.FieldNotes
+                                            </small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">No field notes yet</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-outline-warning btn-sm rounded-pill text-dark" onclick="openUpdateReportModal(@r.Id, '@r.Status', '@r.Verification', '@(r.FieldNotes?.Replace("'", "\\'") ?? "")')">
+                                            <i class="bi bi-tools me-1"></i> Review & Action
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 4. Dengue Risk Map Section ─────────────────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-map">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-success bg-opacity-10 text-success p-2 rounded-3"><i class="bi bi-map-fill"></i></span>
+                            Dengue Risk & Field Surveillance Map
+                        </h4>
+                        <small class="text-muted">Interactive map overlaying AI Risk Zones, active community dengue cases, and pending citizen hazard reports.</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="small text-muted d-none d-md-inline"><i class="bi bi-info-circle me-1"></i> Click markers for details</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-secondary" onclick="resetMapView()"><i class="bi bi-crosshair"></i> Reset View</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light border-bottom">
+                    <!-- Map Legend -->
+                    <div class="d-flex flex-wrap align-items-center gap-3 small">
+                        <span class="fw-bold text-dark">Map Legend:</span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ef4444; opacity:0.8;"></span> High Risk Zone
+                        </span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#f59e0b; opacity:0.8;"></span> Medium Risk Zone
+                        </span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#10b981; opacity:0.8;"></span> Low Risk Zone
+                        </span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <span style="display:inline-block; width:14px; height:14px; border-radius:3px; background:#b91c1c;"></span> Confirmed Dengue Case
+                        </span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <span style="display:inline-block; width:14px; height:14px; border-radius:3px; background:#d97706;"></span> Suspected Case
+                        </span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:#0284c7;"></span> Citizen Report
+                        </span>
+                    </div>
+                </div>
+
+                <div style="height: 480px; width: 100%; position: relative;">
+                    <div id="healthWorkerMap" style="height: 100%; width: 100%;"></div>
+                </div>
+
+                <div class="p-3 bg-light border-top">
+                    <div class="row g-2">
+                        <div class="col-12"><small class="text-muted fw-bold text-uppercase">High Risk Hotspots for Field Visits:</small></div>
+                        @foreach (var z in Model.RiskZones.Where(x => x.RiskLevel == RiskLevel.High).Take(4))
+                        {
+                            <div class="col-md-3 col-sm-6">
+                                <div class="p-2 rounded-3 bg-white border d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <span class="fw-bold d-block text-truncate small" style="max-width: 140px;">@z.Region</span>
+                                        <small class="text-danger">Score: @((z.ConfidenceScore * 100).ToString("F0"))% Confidence</small>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm rounded-circle p-1" onclick="zoomMapTo(@z.Latitude, @z.Longitude, 'Risk Zone: @z.Region')" title="Locate">
+                                        <i class="bi bi-geo-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 5. Alerts & Notifications Section ──────────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-alerts">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-primary bg-opacity-10 text-primary p-2 rounded-3"><i class="bi bi-bell-fill"></i></span>
+                            Real-Time Sentinel Alerts & Notifications
+                        </h4>
+                        <small class="text-muted">Real-time alerts distributed to field workers and citizens through SignalR WebSocket push.</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-warning btn-sm fw-bold text-dark rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalBroadcastAlert">
+                            <i class="bi bi-megaphone me-1"></i> Broadcast Field Alert
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-1">
+                            <i class="bi bi-wifi me-1"></i> SignalR Sentinel Connected
+                        </span>
+                        <span class="small text-muted">Listening for live cluster updates across Dhaka metropolitan sectors.</span>
+                    </div>
+                    <span class="small text-muted">Total: <strong>@Model.RecentAlerts.Count</strong> alerts recorded</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th>Sent Date & Time</th>
+                                <th>Alert Notification Content</th>
+                                <th>Language</th>
+                                <th>Coverage Radius</th>
+                                <th>Delivered / Opened</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.RecentAlerts.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="bi bi-bell-slash fs-2 d-block mb-1"></i> No recent broadcast alerts.
+                                    </td>
+                                </tr>
+                            }
+                            @foreach (var a in Model.RecentAlerts)
+                            {
+                                <tr>
+                                    <td style="white-space: nowrap;">
+                                        <div class="fw-bold text-dark">@a.SentAt.ToString("dd MMM yyyy")</div>
+                                        <small class="text-muted">@a.SentAt.ToString("hh:mm tt")</small>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+                                            <span class="fw-medium text-dark">@a.Message</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 text-uppercase">@a.Language</span>
+                                    </td>
+                                    <td>
+                                        <span class="small text-muted"><i class="bi bi-geo me-1"></i>@(a.RadiusKm.HasValue ? a.RadiusKm.Value.ToString("F1") + " km" : "District wide")</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1"><i class="bi bi-check-all me-1"></i>@a.DeliveredCount sent</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 6. Inventory & Healthcare Supplies Management ──────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-inventory">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-info bg-opacity-10 text-info p-2 rounded-3"><i class="bi bi-box-seam-fill"></i></span>
+                            Healthcare Resource & Inventory Management
+                        </h4>
+                        <small class="text-muted">Monitor available healthcare supplies in field clinics and storage. Update stock quantities and log usage.</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAddInventoryItem">
+                            <i class="bi bi-plus me-1"></i> Add New Item
+                        </button>
+                        <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAdjustInventory">
+                            <i class="bi bi-arrow-down-up me-1"></i> Dispense / Restock
+                        </button>
+                    </div>
+                </div>
+
+                @if (Model.LowStockItems.Any())
+                {
+                    <div class="p-3 bg-danger bg-opacity-10 border-bottom border-danger border-opacity-25">
+                        <div class="d-flex align-items-center gap-2 text-danger">
+                            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                            <div>
+                                <strong>Low Stock Alert:</strong> The following items are below minimum safety threshold:
+                                <em>@string.Join(", ", Model.LowStockItems.Select(x => x.Name + " (" + x.Quantity + " remaining)"))</em>.
+                                Immediate procurement or restock requisition required!
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="p-3">
+                    <div class="row g-3">
+                        @foreach (var item in Model.InventoryItems)
+                        {
+                            var isLow = item.Quantity <= item.Threshold;
+                            var pct = item.Threshold > 0 ? Math.Min(100, (int)((double)item.Quantity / (item.Threshold * 2) * 100)) : 100;
+                            var barColor = isLow ? "bg-danger" : (pct < 50 ? "bg-warning" : "bg-success");
+
+                            <div class="col-md-6 col-xl-3">
+                                <div class="p-3 rounded-4 border bg-white shadow-sm h-100 position-relative">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="fw-bold mb-0 text-truncate" style="max-width: 170px;" title="@item.Name">@item.Name</h6>
+                                        @if (isLow)
+                                        {
+                                            <span class="badge bg-danger rounded-pill px-2 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Low Stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">Available</span>
+                                        }
+                                    </div>
+                                    <div class="d-flex align-items-baseline gap-2 mb-2">
+                                        <span class="display-6 fw-bold @(isLow ? "text-danger" : "text-dark")">@item.Quantity</span>
+                                        <small class="text-muted">units / Safety: @item.Threshold</small>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar @barColor" style="width: @pct%;"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                        <small class="text-muted text-truncate" style="max-width: 140px;"><i class="bi bi-geo-alt me-1"></i>@item.Location</small>
+                                        <button class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-semibold" onclick="openDispenseModal(@item.Id, '@item.Name', @item.Quantity)">
+                                            Adjust <i class="bi bi-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Recent Transactions History Log -->
+                <div class="p-3 border-top bg-light">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-clock-history me-1"></i> Recent Inventory Transaction History</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0 bg-white rounded-3 border">
+                            <thead class="table-light text-muted small text-uppercase">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Item</th>
+                                    <th>Quantity Change</th>
+                                    <th>Reason / Ward</th>
+                                    <th>Authorized User</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.RecentTransactions.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-3 text-muted small">No transactions recorded yet.</td>
+                                    </tr>
+                                }
+                                @foreach (var t in Model.RecentTransactions)
+                                {
+                                    <tr>
+                                        <td class="small text-muted">@t.Date.ToString("dd MMM yyyy, HH:mm")</td>
+                                        <td class="fw-medium text-dark">@(t.InventoryItem?.Name ?? "Item #" + t.InventoryItemId)</td>
+                                        <td>
+                                            @if (t.QuantityChange > 0)
+                                            {
+                                                <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">
+                                                    <i class="bi bi-plus"></i>@t.QuantityChange units (Restocked)
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1">
+                                                    @t.QuantityChange units (Dispensed)
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="small text-muted">@t.Reason</td>
+                                        <td class="small text-muted">@(t.User?.FullName ?? t.User?.UserName ?? "Health Worker")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 7. Patient Records Section ─────────────────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-patients">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary p-2 rounded-3"><i class="bi bi-people-fill"></i></span>
+                            Patient Records & Field Observations
+                        </h4>
+                        <small class="text-muted">Controlled access to patient medical histories, clinical records, and prescription notes.</small>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient Name</th>
+                                <th>Record Type</th>
+                                <th>Title & Summary</th>
+                                <th>File / Attachment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.PatientRecords.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="bi bi-folder2-open fs-2 d-block mb-1"></i> No patient records linked yet.
+                                    </td>
+                                </tr>
+                            }
+                            @foreach (var pr in Model.PatientRecords)
+                            {
+                                <tr>
+                                    <td class="small text-muted">@pr.Date.ToString("dd MMM yyyy")</td>
+                                    <td class="fw-bold text-dark">@(pr.Patient?.FullName ?? pr.Patient?.UserName ?? "Patient")</td>
+                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">@pr.RecordType</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-medium text-dark">@pr.Title</div>
+                                        <small class="text-muted text-truncate d-block" style="max-width: 320px;">@pr.Description</small>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(pr.FileUrl))
+                                        {
+                                            <a href="@pr.FileUrl" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill">
+                                                <i class="bi bi-file-earmark-medical me-1"></i> View Record
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Standard Record</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 8. Referral & Escalation Pipeline ──────────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-referrals">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-danger bg-opacity-10 text-danger p-2 rounded-3"><i class="bi bi-arrow-up-right-circle-fill"></i></span>
+                            Referral & Clinical Escalation Pipeline
+                        </h4>
+                        <small class="text-muted">Escalate critical cases from field observation to Doctors, General Hospitals, or ICU Facilities.</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalCreateReferral">
+                            <i class="bi bi-plus-circle me-1"></i> Create Referral
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th>Date & Case</th>
+                                <th>Patient Name</th>
+                                <th>Target Facility</th>
+                                <th>Urgency</th>
+                                <th>Clinical Reason & Notes</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Referrals.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="bi bi-check-circle fs-2 d-block mb-1"></i> No active referrals. All cases stable in community observation.
+                                    </td>
+                                </tr>
+                            }
+                            @foreach (var refItem in Model.Referrals)
+                            {
+                                var urgBadge = refItem.Urgency switch {
+                                    ReferralUrgency.Emergency => "bg-danger text-white",
+                                    ReferralUrgency.Urgent => "bg-warning text-dark",
+                                    _ => "bg-secondary text-white"
+                                };
+
+                                var statBadge = refItem.Status switch {
+                                    ReferralStatus.Completed => "bg-success text-white",
+                                    ReferralStatus.Accepted => "bg-info text-dark",
+                                    ReferralStatus.Cancelled => "bg-secondary text-white",
+                                    _ => "bg-warning text-dark"
+                                };
+
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">@refItem.CreatedAt.ToString("dd MMM yyyy")</div>
+                                        <small class="text-muted">Case: @(refItem.DengueCaseId.HasValue ? "#" + refItem.DengueCaseId.Value : "Direct Walk-in")</small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@refItem.PatientName</div>
+                                        <small class="text-muted"><i class="bi bi-telephone me-1"></i>@(refItem.PatientPhone ?? "N/A")</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">
+                                            <i class="bi bi-hospital me-1"></i>@refItem.Target
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @urgBadge rounded-pill px-2 py-1">@refItem.Urgency</span>
+                                    </td>
+                                    <td style="max-width: 260px;">
+                                        <div class="fw-medium text-dark text-truncate" title="@refItem.Reason">@refItem.Reason</div>
+                                        <small class="text-muted text-truncate d-block" title="@refItem.ClinicalNotes">@refItem.ClinicalNotes</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge @statBadge rounded-pill px-2 py-1">@refItem.Status</span>
+                                    </td>
+                                    <td class="text-end">
+                                        @if (refItem.Status == ReferralStatus.Pending)
+                                        {
+                                            <form asp-action="UpdateReferralStatus" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="referralId" value="@refItem.Id" />
+                                                <input type="hidden" name="status" value="@ReferralStatus.Accepted" />
+                                                <button type="submit" class="btn btn-outline-info btn-sm rounded-pill">Accept</button>
+                                            </form>
+                                        }
+                                        @if (refItem.Status != ReferralStatus.Completed && refItem.Status != ReferralStatus.Cancelled)
+                                        {
+                                            <form asp-action="UpdateReferralStatus" method="post" class="d-inline ms-1">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="referralId" value="@refItem.Id" />
+                                                <input type="hidden" name="status" value="@ReferralStatus.Completed" />
+                                                <button type="submit" class="btn btn-outline-success btn-sm rounded-pill">Complete</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 9. Blood Donor / Resource Search Section ───────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-donors">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-danger bg-opacity-10 text-danger p-2 rounded-3"><i class="bi bi-droplet-fill"></i></span>
+                            Emergency Blood Donor Network Search
+                        </h4>
+                        <small class="text-muted">Coordinate blood units and platelets for severe dengue cases with freshness timestamps.</small>
+                    </div>
+                    <a asp-controller="Donors" asp-action="Index" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Full Donor Directory
+                    </a>
+                </div>
+
+                <div class="p-3 bg-light border-bottom">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="donorSearchInput" class="form-control" placeholder="Search by location, donor name..." onkeyup="filterDonors()" />
+                            </div>
+                        </div>
+                        <div class="col-md-8 d-flex justify-content-md-end gap-1 flex-wrap">
+                            <button class="btn btn-outline-secondary btn-sm active rounded-pill filter-donor-btn" onclick="filterDonorBg('ALL', this)">All</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-donor-btn" onclick="filterDonorBg('A_Positive', this)">A+</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-donor-btn" onclick="filterDonorBg('A_Negative', this)">A-</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-donor-btn" onclick="filterDonorBg('B_Positive', this)">B+</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-donor-btn" onclick="filterDonorBg('B_Negative', this)">B-</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-donor-btn" onclick="filterDonorBg('O_Positive', this)">O+</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-donor-btn" onclick="filterDonorBg('O_Negative', this)">O-</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-donor-btn" onclick="filterDonorBg('AB_Positive', this)">AB+</button>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill filter-donor-btn" onclick="filterDonorBg('AB_Negative', this)">AB-</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3">
+                    <div class="row g-3" id="donorListGrid">
+                        @if (!Model.AvailableDonors.Any())
+                        {
+                            <div class="col-12 text-center py-4 text-muted">
+                                <i class="bi bi-droplet-slash fs-2 d-block mb-1"></i> No blood donors currently registered.
+                            </div>
+                        }
+                        @foreach (var d in Model.AvailableDonors)
+                        {
+                            var label = Model.DonorFreshnessLabels.ContainsKey(d.Id) ? Model.DonorFreshnessLabels[d.Id] : "Recent";
+                            var isFresh = Model.DonorFreshnessFlags.ContainsKey(d.Id) ? Model.DonorFreshnessFlags[d.Id] : true;
+                            var bgDisplay = d.BloodGroup.ToString().Replace("_Positive", "+").Replace("_Negative", "-");
+
+                            <div class="col-md-6 col-xl-3 donor-card-item" data-bg="@d.BloodGroup">
+                                <div class="donor-card h-100">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-danger fs-6 fw-bold px-3 py-1 rounded-pill">@bgDisplay</span>
+                                        <span class="badge @(isFresh ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning") rounded-pill px-2 py-1 small">
+                                            <i class="bi bi-clock-history me-1"></i>@label
+                                        </span>
+                                    </div>
+                                    <h6 class="fw-bold mb-1 text-dark">@(d.User?.FullName ?? "Anonymous Donor")</h6>
+                                    <p class="small text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i>@(d.Location ?? "Dhaka Metro")</p>
+                                    @if (!string.IsNullOrWhiteSpace(d.ContactNumber))
+                                    {
+                                        <a href="tel:@d.ContactNumber" class="btn btn-outline-danger btn-sm w-100 rounded-pill">
+                                            <i class="bi bi-telephone-fill me-1"></i> @d.ContactNumber
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 10. Health Education & Field Awareness ─────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-education">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-success bg-opacity-10 text-success p-2 rounded-3"><i class="bi bi-book-half"></i></span>
+                            Community Health Education & Clinical Guides
+                        </h4>
+                        <small class="text-muted">Field worker guidance on dengue disease phases, warning signs, and community talking points.</small>
+                    </div>
+                    <a asp-controller="Education" asp-action="Index" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                        <i class="bi bi-arrow-right me-1"></i> View All Education Materials
+                    </a>
+                </div>
+
+                <div class="p-3">
+                    <div class="row g-3 mb-3">
+                        <!-- Phase 1: Febrile Phase -->
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-4 border bg-white h-100 shadow-sm">
+                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1 mb-2">Stage 1: Day 1 - 3</span>
+                                <h6 class="fw-bold text-dark">Febrile Phase</h6>
+                                <p class="small text-muted mb-2">High grade sudden fever (39-40°C), severe headache, retro-orbital pain, myalgia, arthralgia.</p>
+                                <div class="small fw-semibold text-primary"><i class="bi bi-check-circle-fill me-1 text-success"></i> Action: Oral hydration (ORS), paracetamol only. Avoid NSAIDs!</div>
+                            </div>
+                        </div>
+
+                        <!-- Phase 2: Critical Phase -->
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-4 border bg-danger bg-opacity-10 h-100 shadow-sm border-danger border-opacity-25">
+                                <span class="badge bg-danger text-white rounded-pill px-2 py-1 mb-2">Stage 2: Day 3 - 7 (CRITICAL)</span>
+                                <h6 class="fw-bold text-danger">Critical Plasma Leakage Phase</h6>
+                                <p class="small text-dark mb-2">Fever may drop, but plasma leakage occurs. Watch for hemoconcentration (rising HCT >20%) and thrombocytopenia.</p>
+                                <div class="small fw-semibold text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Action: Immediate IV fluid calculation and hospital admission referral!</div>
+                            </div>
+                        </div>
+
+                        <!-- Phase 3: Recovery Phase -->
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-4 border bg-white h-100 shadow-sm">
+                                <span class="badge bg-success text-white rounded-pill px-2 py-1 mb-2">Stage 3: Day 7 - 10</span>
+                                <h6 class="fw-bold text-success">Convalescent Recovery Phase</h6>
+                                <p class="small text-muted mb-2">Plasma reabsorption occurs, appetite returns, rash ("islands of white in a sea of red") and generalized itching may develop.</p>
+                                <div class="small fw-semibold text-success"><i class="bi bi-check2-circle me-1"></i> Action: Restrict IV fluids to prevent fluid overload; monitor urine output.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Signs Box -->
+                    <div class="p-3 rounded-4 bg-warning bg-opacity-10 border border-warning border-opacity-50 mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="bi bi-exclamation-diamond-fill text-warning fs-5"></i>
+                            <strong class="text-dark">WHO Dengue Warning Signs Checklist (Immediate Escalation Required):</strong>
+                        </div>
+                        <div class="row g-2 mt-1 small text-dark">
+                            <div class="col-md-3">• Severe abdominal pain or tenderness</div>
+                            <div class="col-md-3">• Persistent vomiting (&ge;3 times/day)</div>
+                            <div class="col-md-3">• Clinical fluid accumulation (ascites, pleural effusion)</div>
+                            <div class="col-md-3">• Mucosal bleeding (gums, epistaxis, hematuria)</div>
+                            <div class="col-md-3">• Lethargy, restlessness, confusion</div>
+                            <div class="col-md-3">• Liver enlargement &gt; 2 cm</div>
+                            <div class="col-md-3">• Progressive increase in hematocrit</div>
+                            <div class="col-md-3">• Rapid drop in platelet count (&lt;50k)</div>
+                        </div>
+                    </div>
+
+                    <!-- Links to Education Modules -->
+                    @if (Model.EducationArticles.Any())
+                    {
+                        <div class="row g-2">
+                            <div class="col-12"><small class="text-muted fw-bold text-uppercase">Community Articles & Leaflets:</small></div>
+                            @foreach (var art in Model.EducationArticles.Take(3))
+                            {
+                                <div class="col-md-4">
+                                    <div class="p-2 rounded-3 border bg-white d-flex align-items-center justify-content-between">
+                                        <span class="small fw-bold text-truncate" style="max-width: 220px;">@art.Title</span>
+                                        <a asp-controller="Education" asp-action="Article" asp-route-id="@art.Id" class="btn btn-link btn-sm p-0 text-success">
+                                            Read <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 11. Task / Field Activity Management ───────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-tasks">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-dark bg-opacity-10 text-dark p-2 rounded-3"><i class="bi bi-check2-square"></i></span>
+                            Today's Assigned Field Activities & Tasks
+                        </h4>
+                        <small class="text-muted">Daily checklist for community visits, citizen report follow-ups, larvicide inspections, and inventory audits.</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-dark btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAddTask">
+                            <i class="bi bi-plus-circle me-1"></i> Add New Task
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="badge bg-dark text-white rounded-pill px-3 py-1 me-2">@Model.PendingTasksCount Pending</span>
+                        <span class="badge bg-success rounded-pill px-3 py-1">@Model.CompletedTasksCount Completed</span>
+                    </div>
+                    <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Check the box to toggle completion</span>
+                </div>
+
+                <div>
+                    @if (!Model.Tasks.Any())
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-card-checklist fs-2 d-block mb-1"></i> No field tasks assigned. Click "Add New Task" to log your field activities.
+                        </div>
+                    }
+                    @foreach (var t in Model.Tasks)
+                    {
+                        var prioBadge = t.Priority switch {
+                            TaskPriority.Urgent => "bg-danger text-white",
+                            TaskPriority.High => "bg-warning text-dark",
+                            TaskPriority.Medium => "bg-info text-dark",
+                            _ => "bg-secondary text-white"
+                        };
+
+                        <div class="task-item @(t.IsCompleted ? "completed" : "")">
+                            <div class="d-flex align-items-center gap-3">
+                                <form asp-action="ToggleTask" method="post" class="d-inline m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@t.Id" />
+                                    <button type="submit" class="btn btn-link p-0 text-decoration-none">
+                                        @if (t.IsCompleted)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-circle text-muted fs-4"></i>
+                                        }
+                                    </button>
+                                </form>
+                                <div>
+                                    <div class="fw-bold @(t.IsCompleted ? "text-muted" : "text-dark")">
+                                        @t.Title
+                                        <span class="badge @prioBadge rounded-pill ms-2 small">@t.Priority</span>
+                                        <span class="badge bg-light text-secondary border rounded-pill ms-1 small">@t.Category</span>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(t.Description))
+                                    {
+                                        <small class="text-muted d-block">@t.Description</small>
+                                    }
+                                    @if (t.DueDate.HasValue)
+                                    {
+                                        <small class="text-danger"><i class="bi bi-clock me-1"></i>Due: @t.DueDate.Value.ToString("dd MMM, hh:mm tt")</small>
+                                    }
+                                </div>
+                            </div>
+                            <div>
+                                <form asp-action="DeleteTask" method="post" class="d-inline m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@t.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle p-1" title="Delete Task" onclick="return confirm('Delete this task?');">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- ── 13. Profile & Language Settings ────────────────────────── -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <div class="hw-section" id="section-profile">
+                <div class="hw-section-header">
+                    <div>
+                        <h4 class="hw-section-title">
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary p-2 rounded-3"><i class="bi bi-gear-fill"></i></span>
+                            Health Worker Profile & Language Preferences
+                        </h4>
+                        <small class="text-muted">Manage your profile information and toggle language (English / বাংলা).</small>
+                    </div>
+                </div>
+
+                <div class="p-4">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-4 text-center border-end">
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 80px; height: 80px; font-size: 2rem;">
+                                <i class="bi bi-person-badge-fill"></i>
+                            </div>
+                            <h5 class="fw-bold mb-1 text-dark">@workerName</h5>
+                            <span class="badge bg-primary rounded-pill px-3 py-1 mb-2">Health Worker</span>
+                            <p class="small text-muted mb-0"><i class="bi bi-envelope me-1"></i>@Model.Worker.Email</p>
+                            <p class="small text-muted"><i class="bi bi-telephone me-1"></i>@(Model.Worker.PhoneNumber ?? "No phone set")</p>
+                        </div>
+                        <div class="col-md-8">
+                            <form asp-action="UpdateProfile" method="post">
+                                @Html.AntiForgeryToken()
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Full Name</label>
+                                        <input type="text" name="fullName" class="form-control rounded-3" value="@Model.Worker.FullName" required />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Contact Phone Number</label>
+                                        <input type="text" name="phoneNumber" class="form-control rounded-3" value="@Model.Worker.PhoneNumber" placeholder="+8801700000000" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Preferred Language</label>
+                                        <select name="preferredLanguage" class="form-select rounded-3">
+                                            <option value="en" selected="@(Model.Worker.PreferredLanguage == "en")">🇬🇧 English</option>
+                                            <option value="bn" selected="@(Model.Worker.PreferredLanguage == "bn")">🇧🇩 বাংলা (Bangla)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary rounded-pill px-4 w-100">
+                                            <i class="bi bi-save me-1"></i> Save Profile Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- ── MODALS ─────────────────────────────────────────────────────────────── -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Modal: Register Dengue Case -->
+<div class="modal fade" id="modalAddCase" tabindex="-1" aria-labelledby="modalAddCaseLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold" id="modalAddCaseLabel"><i class="bi bi-person-plus-fill me-2"></i> Register Dengue Case</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="AddCase" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Patient Name <span class="text-danger">*</span></label>
+                            <input type="text" name="PatientName" class="form-control rounded-3" placeholder="Full Name" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Patient Phone Number</label>
+                            <input type="text" name="PatientPhone" class="form-control rounded-3" placeholder="+8801..." />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Patient Address</label>
+                            <input type="text" name="PatientAddress" class="form-control rounded-3" placeholder="House, Road, Area, City" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Age</label>
+                            <input type="number" name="Age" class="form-control rounded-3" value="25" min="1" max="120" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Gender</label>
+                            <select name="Gender" class="form-select rounded-3">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Case Status</label>
+                            <select name="Status" class="form-select rounded-3">
+                                <option value="@CaseStatus.Suspected">Suspected</option>
+                                <option value="@CaseStatus.UnderObservation">Under Observation</option>
+                                <option value="@CaseStatus.Confirmed">Confirmed</option>
+                                <option value="@CaseStatus.Recovering">Recovering</option>
+                                <option value="@CaseStatus.Closed">Closed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Clinical Severity</label>
+                            <select name="Severity" class="form-select rounded-3">
+                                <option value="@CaseSeverity.Mild">Mild (Non-severe dengue without warning signs)</option>
+                                <option value="@CaseSeverity.Moderate">Moderate (Dengue with warning signs)</option>
+                                <option value="@CaseSeverity.Severe">Severe (Severe plasma leakage / bleeding)</option>
+                                <option value="@CaseSeverity.Critical">Critical (Dengue Shock Syndrome / Multi-organ)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Platelet Count (/μL)</label>
+                            <input type="number" name="PlateletCount" class="form-control rounded-3" placeholder="e.g. 95000" />
+                            <small class="text-muted">Thresholds: Normal &gt;150k, Warning &lt;100k, Severe &lt;50k</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Hematocrit (HCT %)</label>
+                            <input type="number" step="0.1" name="Hematocrit" class="form-control rounded-3" placeholder="e.g. 42.5" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Latitude (GPS)</label>
+                            <input type="number" step="0.0001" name="Latitude" class="form-control rounded-3" value="23.7500" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Longitude (GPS)</label>
+                            <input type="number" step="0.0001" name="Longitude" class="form-control rounded-3" value="90.3800" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Reported Symptoms</label>
+                            <textarea name="Symptoms" class="form-control rounded-3" rows="2" placeholder="High fever, retro-orbital pain, body rash, vomiting..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Field Observations & Actions Taken</label>
+                            <textarea name="FieldNotes" class="form-control rounded-3" rows="2" placeholder="Visited on site. Advised oral rehydration salts, mosquito netting, paracetamol only."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Next Follow-Up Date & Time</label>
+                            <input type="datetime-local" name="NextFollowUpDate" class="form-control rounded-3" />
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center pt-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="IsEscalated" value="true" id="checkEscalate">
+                                <label class="form-check-label fw-bold text-danger" for="checkEscalate">Escalate to Doctor / Hospital Referral</label>
+                            </div>
+                        </div>
+                        <div class="col-12" id="escalationReasonBox" style="display:none;">
+                            <label class="form-label small fw-bold text-danger">Escalation Reason</label>
+                            <input type="text" name="EscalationReason" class="form-control rounded-3" placeholder="Critically low platelet, severe vomiting, persistent warning signs" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Register Case</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Update Case Status & Record Follow-up -->
+<div class="modal fade" id="modalUpdateCase" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Update Case & Record Follow-up</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="UpdateCaseStatus" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="CaseId" id="updateCaseId" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Patient</label>
+                        <input type="text" id="updateCasePatientName" class="form-control rounded-3 bg-light" readonly />
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Case Status</label>
+                            <select name="Status" id="updateCaseStatus" class="form-select rounded-3">
+                                <option value="@CaseStatus.Suspected">Suspected</option>
+                                <option value="@CaseStatus.UnderObservation">Under Observation</option>
+                                <option value="@CaseStatus.Confirmed">Confirmed</option>
+                                <option value="@CaseStatus.Recovering">Recovering</option>
+                                <option value="@CaseStatus.Closed">Closed</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Severity</label>
+                            <select name="Severity" id="updateCaseSeverity" class="form-select rounded-3">
+                                <option value="@CaseSeverity.Mild">Mild</option>
+                                <option value="@CaseSeverity.Moderate">Moderate</option>
+                                <option value="@CaseSeverity.Severe">Severe</option>
+                                <option value="@CaseSeverity.Critical">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Platelet Count (/μL)</label>
+                            <input type="number" name="PlateletCount" id="updateCasePlatelet" class="form-control rounded-3" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Hematocrit (%)</label>
+                            <input type="number" step="0.1" name="Hematocrit" id="updateCaseHematocrit" class="form-control rounded-3" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Next Follow-up Scheduled</label>
+                        <input type="datetime-local" name="NextFollowUpDate" id="updateCaseFollowUpDate" class="form-control rounded-3" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Field Follow-up Notes</label>
+                        <textarea name="FollowUpNotes" class="form-control rounded-3" rows="3" placeholder="Enter today's field observation, fluid intake monitoring, fever trend..."></textarea>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="IsEscalated" value="true" id="updateCheckEscalate">
+                        <label class="form-check-label fw-bold text-danger" for="updateCheckEscalate">Mark as Escalated</label>
+                    </div>
+                    <div id="updateEscalationReasonBox" style="display:none;">
+                        <input type="text" name="EscalationReason" class="form-control rounded-3" placeholder="Escalation clinical reason" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Review Citizen Report -->
+<div class="modal fade" id="modalUpdateReport" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-warning text-dark rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-card-checklist me-2"></i> Review Citizen Hazard Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="UpdateCitizenReport" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ReportId" id="updateReportId" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Report Status</label>
+                        <select name="Status" id="updateReportStatus" class="form-select rounded-3">
+                            <option value="@ReportStatus.Received">New / Received</option>
+                            <option value="@ReportStatus.UnderReview">Under Review</option>
+                            <option value="@ReportStatus.Assigned">Assigned</option>
+                            <option value="@ReportStatus.Investigating">Investigating</option>
+                            <option value="@ReportStatus.Resolved">Resolved</option>
+                            <option value="@ReportStatus.Escalated">Escalated</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Verification Decision</label>
+                        <select name="Verification" id="updateReportVerification" class="form-select rounded-3">
+                            <option value="@ReportVerification.Pending">Pending Verification</option>
+                            <option value="@ReportVerification.Verified">Verified (Active hazard / larva found)</option>
+                            <option value="@ReportVerification.Invalid">Invalid / False Alarm</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Field Worker Investigation Notes</label>
+                        <textarea name="FieldNotes" id="updateReportNotes" class="form-control rounded-3" rows="3" placeholder="Visited site. Larvicide granules applied. Water drained."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Rejection Reason (if invalid)</label>
+                        <input type="text" name="RejectionReason" class="form-control rounded-3" placeholder="Optional explanation" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4 text-dark fw-bold">Update Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Dispense / Restock Inventory -->
+<div class="modal fade" id="modalAdjustInventory" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-info text-dark rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-box-seam me-2"></i> Dispense / Restock Supplies</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="AdjustInventory" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Select Supply Item</label>
+                        <select name="ItemId" id="adjustItemId" class="form-select rounded-3" required>
+                            @foreach (var itm in Model.InventoryItems)
+                            {
+                                <option value="@itm.Id">@itm.Name (Available: @itm.Quantity units)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Quantity Change</label>
+                        <input type="number" name="QuantityChange" id="adjustQtyChange" class="form-control rounded-3" placeholder="Positive to restock (+20), Negative to dispense (-5)" required />
+                        <small class="text-muted">Use <strong>+10</strong> when receiving stock; use <strong>-5</strong> when dispensing to field clinics or patients.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Reason / Destination</label>
+                        <input type="text" name="Reason" class="form-control rounded-3" placeholder="e.g. Dispensed to Dhanmondi Clinic / Received from Central Depot" required />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info rounded-pill px-4 fw-bold">Record Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add New Inventory Item -->
+<div class="modal fade" id="modalAddInventoryItem" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i> Add Healthcare Resource</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="AddInventoryItem" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Resource / Item Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control rounded-3" placeholder="e.g. Dengue IgG/IgM Combo Kits" required />
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Initial Quantity</label>
+                            <input type="number" name="quantity" class="form-control rounded-3" value="50" min="0" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Low Stock Warning Threshold</label>
+                            <input type="number" name="threshold" class="form-control rounded-3" value="15" min="1" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Storage Location</label>
+                        <input type="text" name="location" class="form-control rounded-3" value="Community Health Post A" required />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Create Clinical Referral -->
+<div class="modal fade" id="modalCreateReferral" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-danger text-white rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-arrow-up-right-circle-fill me-2"></i> Clinical Referral / Escalation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="CreateReferral" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="DengueCaseId" id="referralCaseId" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Patient Name <span class="text-danger">*</span></label>
+                        <input type="text" name="PatientName" id="referralPatientName" class="form-control rounded-3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Patient Phone</label>
+                        <input type="text" name="PatientPhone" id="referralPatientPhone" class="form-control rounded-3" />
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Referral Target</label>
+                            <select name="Target" class="form-select rounded-3">
+                                <option value="@ReferralTarget.Doctor">Doctor (Consultation / Telemedicine)</option>
+                                <option value="@ReferralTarget.Hospital" selected>General Hospital Admission</option>
+                                <option value="@ReferralTarget.IcuFacility">ICU / High Dependency Unit</option>
+                                <option value="@ReferralTarget.Laboratory">Diagnostic Laboratory</option>
+                                <option value="@ReferralTarget.Specialist">Infectious Disease Specialist</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Urgency</label>
+                            <select name="Urgency" class="form-select rounded-3">
+                                <option value="@ReferralUrgency.Emergency" selected>Emergency (&lt; 2 Hours)</option>
+                                <option value="@ReferralUrgency.Urgent">Urgent (&lt; 12 Hours)</option>
+                                <option value="@ReferralUrgency.Routine">Routine Follow-up</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Referral Reason <span class="text-danger">*</span></label>
+                        <input type="text" name="Reason" class="form-control rounded-3" placeholder="e.g. Platelet drop below 40k, persistent abdominal pain" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Clinical Notes for Receiving Doctor / Facility</label>
+                        <textarea name="ClinicalNotes" class="form-control rounded-3" rows="3" placeholder="Include known vital signs, hematocrit trend, fluid administered..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Submit Referral</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Task -->
+<div class="modal fade" id="modalAddTask" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-dark text-white rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-check2-square me-2"></i> Add Field Task</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="AddTask" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Task Title <span class="text-danger">*</span></label>
+                        <input type="text" name="Title" class="form-control rounded-3" placeholder="e.g. Follow up Patient Nusrat Jahan / Inspect Lake Area" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Task Description</label>
+                        <textarea name="Description" class="form-control rounded-3" rows="2" placeholder="Details of the field activity..."></textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Category</label>
+                            <select name="Category" class="form-select rounded-3">
+                                <option value="ReportInvestigation">Citizen Report Investigation</option>
+                                <option value="PatientFollowUp">Patient Follow-up</option>
+                                <option value="AreaVisit">High Risk Area Visit</option>
+                                <option value="InventoryCheck">Inventory Audit</option>
+                                <option value="CommunityAwareness">Community Awareness</option>
+                                <option value="ReferralCoordination">Referral Coordination</option>
+                                <option value="General">General Field Work</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Priority</label>
+                            <select name="Priority" class="form-select rounded-3">
+                                <option value="@TaskPriority.Urgent">Urgent</option>
+                                <option value="@TaskPriority.High">High</option>
+                                <option value="@TaskPriority.Medium" selected>Medium</option>
+                                <option value="@TaskPriority.Low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Due Date & Time</label>
+                        <input type="datetime-local" name="DueDate" class="form-control rounded-3" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Broadcast Sentinel Alert -->
+<div class="modal fade" id="modalBroadcastAlert" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-warning text-dark rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-megaphone-fill me-2"></i> Trigger Real-Time Field Alert</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="BroadcastAlert" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="p-3 bg-light rounded-3 border mb-3 small text-muted">
+                        <i class="bi bi-broadcast text-danger me-1"></i>
+                        This alert will be instantly pushed to connected field workers, clinics, and citizens in the designated radius via SignalR.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Alert Message <span class="text-danger">*</span></label>
+                        <textarea name="Message" class="form-control rounded-3" rows="3" placeholder="High dengue-risk activity detected in Dhanmondi. 3 suspected cases reported within the last 24 hours." required></textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Target Zone (Optional)</label>
+                            <select name="ZoneId" class="form-select rounded-3">
+                                <option value="">District-wide Broadcast</option>
+                                @foreach (var z in Model.RiskZones)
+                                {
+                                    <option value="@z.Id">@z.Region (@z.RiskLevel Risk)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Coverage Radius (km)</label>
+                            <input type="number" step="0.5" name="RadiusKm" class="form-control rounded-3" value="3.0" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Language</label>
+                        <select name="Language" class="form-select rounded-3">
+                            <option value="en">English</option>
+                            <option value="bn">বাংলা (Bangla)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4 text-dark fw-bold">Broadcast Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        var healthWorkerMap = null;
+        var mapBounds = [];
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initLeafletMap();
+
+            // Setup escalation checkbox toggle
+            const checkEsc = document.getElementById("checkEscalate");
+            if (checkEsc) {
+                checkEsc.addEventListener("change", function () {
+                    document.getElementById("escalationReasonBox").style.display = this.checked ? "block" : "none";
+                });
+            }
+
+            const updateCheckEsc = document.getElementById("updateCheckEscalate");
+            if (updateCheckEsc) {
+                updateCheckEsc.addEventListener("change", function () {
+                    document.getElementById("updateEscalationReasonBox").style.display = this.checked ? "block" : "none";
+                });
+            }
+        });
+
+        function initLeafletMap() {
+            var defaultLat = 23.777176;
+            var defaultLng = 90.399452;
+            healthWorkerMap = L.map('healthWorkerMap').setView([defaultLat, defaultLng], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(healthWorkerMap);
+
+            mapBounds = [];
+
+            // 1. Plot Risk Zones (Circles)
+            var riskZones = [
+                @foreach (var z in Model.RiskZones)
+                {
+                    var col = z.RiskLevel == RiskLevel.High ? "#ef4444" : (z.RiskLevel == RiskLevel.Medium ? "#f59e0b" : "#10b981");
+                    @:{ name: "@z.Region", level: "@z.RiskLevel", score: @z.ConfidenceScore, lat: @z.Latitude, lng: @z.Longitude, rad: @z.RadiusMetres, color: "@col" },
+                }
+            ];
+
+            riskZones.forEach(function (z) {
+                if (z.lat && z.lng) {
+                    var circle = L.circle([z.lat, z.lng], {
+                        color: z.color,
+                        fillColor: z.color,
+                        fillOpacity: 0.18,
+                        weight: 2,
+                        radius: z.rad || 1800
+                    }).addTo(healthWorkerMap);
+
+                    circle.bindPopup(`
+                        <div style="font-family: sans-serif; font-size: 13px;">
+                            <strong style="color: ${z.color}; font-size: 14px;">${z.name}</strong><br/>
+                            Risk Level: <b>${z.level}</b><br/>
+                            Confidence Score: <b>${Math.round(z.score * 100)}%</b>
+                        </div>
+                    `);
+                    mapBounds.push([z.lat, z.lng]);
+                }
+            });
+
+            // 2. Plot Dengue Cases
+            var cases = [
+                @foreach (var c in Model.DengueCases)
+                {
+                    var cCol = c.Status == CaseStatus.Confirmed ? "#b91c1c" : (c.Status == CaseStatus.Suspected ? "#d97706" : "#0284c7");
+                    @:{ id: @c.Id, name: "@c.PatientName", status: "@c.Status", severity: "@c.Severity", lat: @c.Latitude, lng: @c.Longitude, color: "@cCol", platelet: @(c.PlateletCount ?? 0) },
+                }
+            ];
+
+            cases.forEach(function (c) {
+                if (c.lat && c.lng) {
+                    var caseHtml = `<div style="background-color: ${c.color}; width: 14px; height: 14px; border-radius: 3px; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>`;
+                    var icon = L.divIcon({ html: caseHtml, className: 'custom-case-icon', iconSize: [14, 14], iconAnchor: [7, 7] });
+                    var marker = L.marker([c.lat, c.lng], { icon: icon }).addTo(healthWorkerMap);
+                    marker.bindPopup(`
+                        <div style="font-family: sans-serif; font-size: 13px;">
+                            <strong style="color: ${c.color}; font-size: 14px;">Case #${c.id}: ${c.name}</strong><br/>
+                            Status: <b>${c.status}</b> (${c.severity})<br/>
+                            Platelet: <b>${c.platelet ? c.platelet.toLocaleString() : 'N/A'} /μL</b>
+                        </div>
+                    `);
+                    mapBounds.push([c.lat, c.lng]);
+                }
+            });
+
+            // 3. Plot Citizen Reports
+            var reports = [
+                @foreach (var r in Model.CitizenReports)
+                {
+                    @:{ id: @r.Id, disease: "@r.DiseaseType", status: "@r.Status", ver: "@r.Verification", lat: @r.Latitude, lng: @r.Longitude },
+                }
+            ];
+
+            reports.forEach(function (r) {
+                if (r.lat && r.lng) {
+                    var repHtml = `<div style="background-color: #0284c7; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`;
+                    var icon = L.divIcon({ html: repHtml, className: 'custom-rep-icon', iconSize: [12, 12], iconAnchor: [6, 6] });
+                    var marker = L.marker([r.lat, r.lng], { icon: icon }).addTo(healthWorkerMap);
+                    marker.bindPopup(`
+                        <div style="font-family: sans-serif; font-size: 13px;">
+                            <strong>Citizen Report #${r.id}</strong><br/>
+                            Hazard: ${r.disease}<br/>
+                            Status: <b>${r.status}</b> (${r.ver})
+                        </div>
+                    `);
+                    mapBounds.push([r.lat, r.lng]);
+                }
+            });
+
+            if (mapBounds.length > 0) {
+                healthWorkerMap.fitBounds(mapBounds, { padding: [30, 30] });
+            }
+        }
+
+        function zoomMapTo(lat, lng, popupText) {
+            if (healthWorkerMap) {
+                healthWorkerMap.setView([lat, lng], 15);
+                L.popup().setLatLng([lat, lng]).setContent(`<b>${popupText}</b>`).openOn(healthWorkerMap);
+            }
+        }
+
+        function resetMapView() {
+            if (healthWorkerMap && mapBounds.length > 0) {
+                healthWorkerMap.fitBounds(mapBounds, { padding: [30, 30] });
+            }
+        }
+
+        // ── Client-side Filter Functions ────────────────────────────────────
+        function filterCasesTable() {
+            var q = document.getElementById("caseSearchInput").value.toLowerCase();
+            var rows = document.querySelectorAll("#casesTable tbody .case-row");
+            rows.forEach(function (r) {
+                r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
+            });
+        }
+
+        function filterCaseStatus(status, btn) {
+            document.querySelectorAll(".filter-case-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            var rows = document.querySelectorAll("#casesTable tbody .case-row");
+            rows.forEach(function (r) {
+                if (status === 'ALL') {
+                    r.style.display = "";
+                } else if (status === 'Escalated') {
+                    r.style.display = r.getAttribute("data-escalated") === "true" ? "" : "none";
+                } else {
+                    r.style.display = r.getAttribute("data-status") === status ? "" : "none";
+                }
+            });
+        }
+
+        function filterReportsTable() {
+            var q = document.getElementById("reportSearchInput").value.toLowerCase();
+            var rows = document.querySelectorAll("#reportsTable tbody .report-row");
+            rows.forEach(function (r) {
+                r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
+            });
+        }
+
+        function filterReportStatus(status, btn) {
+            document.querySelectorAll(".filter-report-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            var rows = document.querySelectorAll("#reportsTable tbody .report-row");
+            rows.forEach(function (r) {
+                if (status === 'ALL') {
+                    r.style.display = "";
+                } else {
+                    r.style.display = r.getAttribute("data-status") === status ? "" : "none";
+                }
+            });
+        }
+
+        function filterDonors() {
+            var q = document.getElementById("donorSearchInput").value.toLowerCase();
+            var items = document.querySelectorAll("#donorListGrid .donor-card-item");
+            items.forEach(function (i) {
+                i.style.display = i.textContent.toLowerCase().includes(q) ? "" : "none";
+            });
+        }
+
+        function filterDonorBg(bg, btn) {
+            document.querySelectorAll(".filter-donor-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            var items = document.querySelectorAll("#donorListGrid .donor-card-item");
+            items.forEach(function (i) {
+                if (bg === 'ALL') {
+                    i.style.display = "";
+                } else {
+                    i.style.display = i.getAttribute("data-bg") === bg ? "" : "none";
+                }
+            });
+        }
+
+        // ── Modal Helper Openers ─────────────────────────────────────────────
+        function openUpdateCaseModal(id, name, status, severity, platelet, hematocrit, followUpDate, isEscalated) {
+            document.getElementById("updateCaseId").value = id;
+            document.getElementById("updateCasePatientName").value = "#" + id + " - " + name;
+            document.getElementById("updateCaseStatus").value = status;
+            document.getElementById("updateCaseSeverity").value = severity;
+            document.getElementById("updateCasePlatelet").value = platelet > 0 ? platelet : "";
+            document.getElementById("updateCaseHematocrit").value = hematocrit > 0 ? hematocrit : "";
+            document.getElementById("updateCaseFollowUpDate").value = followUpDate || "";
+            document.getElementById("updateCheckEscalate").checked = isEscalated;
+            document.getElementById("updateEscalationReasonBox").style.display = isEscalated ? "block" : "none";
+            var modal = new bootstrap.Modal(document.getElementById("modalUpdateCase"));
+            modal.show();
+        }
+
+        function openUpdateReportModal(id, status, verification, notes) {
+            document.getElementById("updateReportId").value = id;
+            document.getElementById("updateReportStatus").value = status;
+            document.getElementById("updateReportVerification").value = verification;
+            document.getElementById("updateReportNotes").value = notes;
+            var modal = new bootstrap.Modal(document.getElementById("modalUpdateReport"));
+            modal.show();
+        }
+
+        function openDispenseModal(itemId, itemName, currentQty) {
+            document.getElementById("adjustItemId").value = itemId;
+            document.getElementById("adjustQtyChange").value = -1;
+            var modal = new bootstrap.Modal(document.getElementById("modalAdjustInventory"));
+            modal.show();
+        }
+
+        function openReferralModal(caseId, patientName, patientPhone) {
+            document.getElementById("referralCaseId").value = caseId;
+            document.getElementById("referralPatientName").value = patientName;
+            document.getElementById("referralPatientPhone").value = patientPhone;
+            var modal = new bootstrap.Modal(document.getElementById("modalCreateReferral"));
+            modal.show();
+        }
+    </script>
+}

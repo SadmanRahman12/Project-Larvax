@@ -1,102 +1,856 @@
+@using LarvaX.Core.Entities
 @{
-    ViewData["Title"] = "Government Dashboard";
+    ViewData["Title"] = "Government Authority Dashboard – LarvaX";
     var isBn = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("bn");
-    var abandonmentStats = ViewBag.AbandonmentStats as Dictionary<string, double> ?? new();
-    var flowStats = ViewBag.FlowStats as Dictionary<string, Dictionary<string, int>> ?? new();
-    var defaultStart = ViewBag.DefaultStart as string ?? "";
-    var defaultEnd = ViewBag.DefaultEnd as string ?? "";
+
+    var totalCases        = (int)(ViewBag.TotalCases ?? 0);
+    var confirmedCases    = (int)(ViewBag.ConfirmedCases ?? 0);
+    var suspectedCases    = (int)(ViewBag.SuspectedCases ?? 0);
+    var activeCases       = (int)(ViewBag.ActiveCases ?? 0);
+    var recoveringCases   = (int)(ViewBag.RecoveringCases ?? 0);
+    var deceasedCases     = (int)(ViewBag.DeceasedCases ?? 0);
+    var cfr               = totalCases > 0 ? ((double)deceasedCases / totalCases * 100).ToString("F2") : "0.00";
+
+    var highRisk          = (int)(ViewBag.HighRiskZonesCount ?? 0);
+    var mediumRisk        = (int)(ViewBag.MediumRiskZonesCount ?? 0);
+    var overallRisk       = (string)(ViewBag.OverallRisk ?? "Low");
+    var sufficientZ       = (int)(ViewBag.SufficientZones ?? 0);
+    var partialZ          = (int)(ViewBag.PartialZones ?? 0);
+    var insufficientZ     = (int)(ViewBag.InsufficientZones ?? 0);
+    var totalZones        = (int)(ViewBag.TotalZones ?? 0);
+    var lastModelRun      = (string)(ViewBag.LastModelRun ?? "Never");
+
+    var totalReports      = (int)(ViewBag.TotalReports ?? 0);
+    var verifiedReports   = (int)(ViewBag.VerifiedReports ?? 0);
+    var pendingReports    = (int)(ViewBag.PendingReports ?? 0);
+
+    var thisWeek          = (int)(ViewBag.ThisWeekCases ?? 0);
+    var prevWeek          = (int)(ViewBag.PrevWeekCases ?? 0);
+    var weeklyChange      = (double)(ViewBag.WeeklyChange ?? 0.0);
+    var thisMonth         = (int)(ViewBag.ThisMonthCases ?? 0);
+    var prevMonth         = (int)(ViewBag.PrevMonthCases ?? 0);
+
+    var lowStockCount     = (int)(ViewBag.LowStockCount ?? 0);
+    var activeDonors      = (int)(ViewBag.ActiveDonors ?? 0);
+
+    var caseTrendLabels   = (string)(ViewBag.CaseTrendLabels ?? "[]");
+    var caseTrendData     = (string)(ViewBag.CaseTrendData ?? "[]");
+    var mapZones          = (string)(ViewBag.MapZones ?? "[]");
+    var mapCases          = (string)(ViewBag.MapCases ?? "[]");
+    var mapReports        = (string)(ViewBag.MapReports ?? "[]");
+    var regionalCases     = (string)(ViewBag.RegionalCases ?? "[]");
+
+    var defaultStart      = (string)(ViewBag.DefaultStart ?? "");
+    var defaultEnd        = (string)(ViewBag.DefaultEnd ?? "");
+    var divisions         = ViewBag.Divisions as List<string> ?? new();
+    var caseStatuses      = ViewBag.CaseStatuses as List<string> ?? new();
+    var riskLevels        = ViewBag.RiskLevels as List<string> ?? new();
+
+    var recentAlerts      = ViewBag.RecentAlerts as List<LarvaX.Core.Entities.Alert> ?? new();
+
+    var overallRiskColor  = overallRisk == "High" ? "#dc2626" : overallRisk == "Medium" ? "#d97706" : "#16a34a";
+    var overallRiskBg     = overallRisk == "High" ? "#fef2f2" : overallRisk == "Medium" ? "#fffbeb" : "#f0fdf4";
+    var overallRiskBadge  = overallRisk == "High" ? "danger" : overallRisk == "Medium" ? "warning" : "success";
+
+    var t = isBn ? new Func<string, string, string>((bn, en) => bn) : new Func<string, string, string>((bn, en) => en);
 }
 
-<div class="container-fluid py-4" style="max-width:1200px">
-    <!-- Header -->
-    <div class="rounded-4 p-4 p-md-5 mb-5 text-white"
-         style="background: linear-gradient(135deg, #1a237e 0%, #283593 60%, #3949ab 100%);">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <span class="badge bg-warning text-dark mb-3 px-3 py-2 fw-semibold">
-                    <i class="bi bi-shield-check me-1"></i>@(isBn ? "সরকারি ড্যাশবোর্ড" : "Government Authority Dashboard")
+@* Leaflet + Chart.js *@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+<style>
+:root {
+    --gov-blue:      #1e3a5f;
+    --gov-green:     #047857;
+    --gov-gold:      #d97706;
+    --gov-red:       #dc2626;
+    --gov-surface:   #f8fafc;
+    --gov-card:      #ffffff;
+    --gov-border:    #e2e8f0;
+    --gov-text:      #0f172a;
+    --gov-muted:     #64748b;
+}
+
+body { background: var(--gov-surface); color: var(--gov-text); font-family: 'Inter', system-ui, sans-serif; }
+
+.gov-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #0c4a6e 70%, #065f46 100%);
+    position: relative; overflow: hidden;
+}
+.gov-hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+}
+
+.stat-card {
+    background: var(--gov-card);
+    border: 1px solid var(--gov-border);
+    border-radius: 16px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.10); }
+.stat-card .card-accent { position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gov-text);
+    display: flex; align-items: center; gap: .5rem;
+    border-bottom: 2px solid var(--gov-border);
+    padding-bottom: .5rem;
+    margin-bottom: 1rem;
+}
+.section-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem;
+}
+
+.risk-badge {
+    padding: 2px 10px; border-radius: 999px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .5px;
+    text-transform: uppercase;
+}
+.risk-High { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.risk-Medium { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.risk-Low { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+.suff-Sufficient { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.suff-PartiallySufficient { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.suff-Insufficient { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.sufficiency-dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px;
+}
+
+.gov-map { height: 420px; border-radius: 14px; z-index: 1; }
+
+.chart-card {
+    background: var(--gov-card);
+    border: 1px solid var(--gov-border);
+    border-radius: 14px;
+    padding: 1.25rem;
+}
+
+.alert-item {
+    padding: .6rem .8rem;
+    border-left: 3px solid var(--gov-red);
+    background: #fffbeb;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: .5rem;
+    transition: background .2s;
+}
+.alert-item:hover { background: #fef3c7; }
+
+.filter-form-card {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 1px solid var(--gov-border);
+    border-radius: 16px; padding: 1.5rem;
+}
+
+.comparison-badge {
+    font-size: .75rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px;
+}
+.trend-up { background: #fef2f2; color: #b91c1c; }
+.trend-down { background: #f0fdf4; color: #166534; }
+.trend-neutral { background: #f1f5f9; color: #475569; }
+
+.pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #22c55e; display: inline-block;
+    animation: pulse-anim 2s infinite;
+}
+@@keyframes pulse-anim {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: .6; }
+}
+
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: .75rem; }
+.legend-swatch { width: 12px; height: 12px; border-radius: 50%; }
+
+.tabbed-section .nav-pills .nav-link {
+    font-size: .8rem; font-weight: 600; padding: .35rem .85rem;
+    color: var(--gov-muted); border-radius: 8px;
+    transition: all .2s;
+}
+.tabbed-section .nav-pills .nav-link.active {
+    background: var(--gov-blue); color: #fff;
+}
+
+.export-bar {
+    background: linear-gradient(135deg, #0f172a, #1e3a5f);
+    border-radius: 16px; padding: 1.2rem 1.5rem;
+}
+
+@@media (max-width: 768px) {
+    .gov-map { height: 280px; }
+}
+</style>
+
+@* ─── HERO BANNER ─────────────────────────────────────────── *@
+<div class="gov-hero text-white py-4 px-3 px-md-5 mb-4 position-relative">
+    <div class="row align-items-center g-3">
+        <div class="col-md-8" style="position:relative;z-index:2;">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <span class="badge bg-warning text-dark fw-bold px-3 py-2" style="font-size:.75rem;letter-spacing:.5px;">
+                    <i class="bi bi-shield-check me-1"></i>@(isBn ? "DGHS অনুমোদিত" : "DGHS AUTHORIZED")
                 </span>
-                <h1 class="fw-bold display-6 mb-2">@(isBn ? "ডেঙ্গু নজরদারি পরিসংখ্যান" : "Dengue Surveillance Statistics")</h1>
-                <p class="lead mb-0 opacity-90">@(isBn ? "প্ল্যাটফর্ম অ্যানালিটিক্স, ডেটা পর্যাপ্ততা এবং PDF রিপোর্ট রপ্তানি করুন।" : "Platform analytics, data sufficiency overview, and PDF report export.")</p>
+                <span class="d-flex align-items-center gap-1 small">
+                    <span class="pulse-dot"></span>
+                    <span style="font-size:.75rem;opacity:.8;">@(isBn ? "রিয়েল-টাইম লাইভ" : "Live Surveillance")</span>
+                </span>
             </div>
-            <div class="col-md-4 mt-3 mt-md-0 text-md-end">
-                <i class="bi bi-graph-up-arrow opacity-25 d-none d-md-block" style="font-size:7rem;line-height:1;margin-top:-2rem;"></i>
-            </div>
+            <h1 class="fw-bold mb-1" style="font-size:clamp(1.4rem,3vw,2rem);">
+                <i class="bi bi-shield-fill-check me-2 text-warning"></i>
+                @(isBn ? "সরকারি স্বাস্থ্য কর্তৃপক্ষ ড্যাশবোর্ড" : "Government Health Authority Dashboard")
+            </h1>
+            <p class="mb-0" style="opacity:.8; font-size:.9rem;">
+                @(isBn
+                    ? "জাতীয় ডেঙ্গু নজরদারি, ঝুঁকি বিশ্লেষণ, ডেটা পর্যাপ্ততা পর্যালোচনা এবং আনুষ্ঠানিক রিপোর্ট তৈরি।"
+                    : "National dengue surveillance · Risk analysis · Data sufficiency monitoring · Official PDF report generation")
+            </p>
         </div>
-    </div>
-
-    <!-- Flow Abandonment Analytics -->
-    <div class="mb-5">
-        <h2 class="h4 fw-bold mb-3"><i class="bi bi-funnel me-2 text-warning"></i>@(isBn ? "ব্যবহারকারী প্রবাহ পরিত্যাগ বিশ্লেষণ" : "User Flow Abandonment Analytics")</h2>
-        <p class="text-muted mb-4">@(isBn ? "ব্যবহারকারীরা কোন ধাপে ফর্ম ছেড়ে যান তার পরিসংখ্যান।" : "Track where users drop off during key platform flows.")</p>
-        <div class="row g-3">
-            @foreach (var kv in abandonmentStats)
-            {
-                var pct = kv.Value;
-                var badgeClass = pct > 70 ? "danger" : pct > 40 ? "warning" : "success";
-                var barClass = pct > 70 ? "bg-danger" : pct > 40 ? "bg-warning" : "bg-success";
-                flowStats.TryGetValue(kv.Key, out var steps);
-                var started = steps?.GetValueOrDefault("Started", 0) ?? 0;
-                var completed = steps?.GetValueOrDefault("Completed", 0) ?? 0;
-                <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
-                        <p class="text-muted small mb-1 text-uppercase fw-semibold letter-spacing-1">@kv.Key</p>
-                        <div class="display-6 fw-bold text-@badgeClass mb-1">@pct<small class="fs-6 fw-normal">%</small></div>
-                        <p class="small text-muted mb-2">@(isBn ? "পরিত্যাগের হার" : "abandonment rate")</p>
-                        <div class="progress mb-2" style="height:6px;border-radius:4px;">
-                            <div class="progress-bar @barClass" style="width:@pct.ToString("F0")%"></div>
-                        </div>
-                        <div class="row g-0 mt-2 text-center">
-                            <div class="col border-end">
-                                <div class="fw-bold">@started</div>
-                                <div class="text-muted" style="font-size:.7rem;">@(isBn ? "শুরু" : "STARTED")</div>
-                            </div>
-                            <div class="col">
-                                <div class="fw-bold text-success">@completed</div>
-                                <div class="text-muted" style="font-size:.7rem;">@(isBn ? "সম্পন্ন" : "COMPLETED")</div>
-                            </div>
-                        </div>
-                    </div>
+        <div class="col-md-4 text-md-end" style="position:relative;z-index:2;">
+            <div class="d-flex flex-column align-items-md-end gap-1">
+                <div class="small" style="opacity:.7;">
+                    <i class="bi bi-clock me-1"></i>@DateTime.UtcNow.ToString("ddd, dd MMM yyyy HH:mm") UTC
                 </div>
-            }
-            @if (!abandonmentStats.Any())
-            {
-                <div class="col-12">
-                    <div class="alert alert-info border-0 rounded-4">
-                        <i class="bi bi-info-circle me-2"></i>@(isBn ? "এখনো কোনো অ্যানালিটিক্স ডেটা সংগ্রহ হয়নি।" : "No analytics data collected yet. Data will appear as users interact with the platform.")
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- PDF Export -->
-    <div class="mb-4">
-        <h2 class="h4 fw-bold mb-3"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i>@(isBn ? "অফিশিয়াল PDF রিপোর্ট রপ্তানি করুন" : "Export Official PDF Report")</h2>
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-4">
-                <p class="text-muted mb-4">@(isBn ? "তারিখ পরিসীমা নির্বাচন করুন এবং একটি পেশাদার PDF রিপোর্ট ডাউনলোড করুন।" : "Select a date range and download a professionally formatted PDF report.")</p>
-                <form asp-action="ExportPdf" method="get" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">@(isBn ? "শুরুর তারিখ" : "Start Date")</label>
-                        <input type="date" name="startDate" class="form-control rounded-3" value="@defaultStart" id="reportStartDate" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">@(isBn ? "শেষের তারিখ" : "End Date")</label>
-                        <input type="date" name="endDate" class="form-control rounded-3" value="@defaultEnd" id="reportEndDate" />
-                    </div>
-                    <div class="col-md-4">
-                        <button type="submit" id="exportPdfBtn" class="btn btn-danger w-100 rounded-3 fw-semibold">
-                            <i class="bi bi-download me-2"></i>@(isBn ? "PDF ডাউনলোড করুন" : "Download PDF Report")
-                        </button>
-                    </div>
-                </form>
-                <div class="mt-3 p-3 bg-light rounded-3">
-                    <p class="mb-0 small text-muted"><i class="bi bi-info-circle me-1"></i>
-                    @(isBn ? "রিপোর্টে রিপোর্ট সারাংশ, রোগ অনুযায়ী বিভাজন, এবং ঝুঁকি অঞ্চলের বিবরণ থাকবে।" : "The report includes executive summary, disease-type breakdown, and risk zone overview.")
-                    </p>
+                <div class="d-flex align-items-center gap-2 flex-wrap justify-content-md-end">
+                    <span class="badge rounded-pill px-3 py-2 fw-bold"
+                          style="background:@overallRiskBg;color:@overallRiskColor;font-size:.75rem;border:1px solid @overallRiskColor;">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        @(isBn ? "জাতীয় ঝুঁকি:" : "National Risk:")&nbsp;@overallRisk
+                    </span>
+                    <span class="badge bg-white text-dark px-3 py-2" style="font-size:.75rem;">
+                        <i class="bi bi-fire text-danger me-1"></i>
+                        @highRisk @(isBn ? "উচ্চ-ঝুঁকি এলাকা" : "High-Risk Zones")
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="container-fluid px-3 px-md-4" style="max-width:1400px;">
+
+    @* ─── ROW 1: KPI STAT CARDS ───────────────────────────── *@
+    <div class="row g-3 mb-4">
+        @{
+            var stats = new[] {
+                new { Label = isBn ? "মোট সন্দেহভাজন" : "Total Suspected",  Value = suspectedCases.ToString("N0"), Icon = "bi-question-circle-fill",  Color = "#d97706", Bg = "#fffbeb" },
+                new { Label = isBn ? "নিশ্চিত কেস"   : "Confirmed Cases",    Value = confirmedCases.ToString("N0"), Icon = "bi-virus",                   Color = "#dc2626", Bg = "#fef2f2" },
+                new { Label = isBn ? "সক্রিয় কেস"   : "Active Cases",       Value = activeCases.ToString("N0"),    Icon = "bi-activity",                Color = "#2563eb", Bg = "#eff6ff" },
+                new { Label = isBn ? "মৃত্যু (CFR)"  : "Deaths (CFR)",       Value = $"{deceasedCases} ({cfr}%)",   Icon = "bi-heart-pulse",             Color = "#7c3aed", Bg = "#f5f3ff" },
+                new { Label = isBn ? "উচ্চ-ঝুঁকি এলাকা" : "High-Risk Areas", Value = highRisk.ToString(),          Icon = "bi-geo-alt-fill",            Color = "#dc2626", Bg = "#fef2f2" },
+                new { Label = isBn ? "নাগরিক রিপোর্ট" : "Citizen Reports",  Value = totalReports.ToString("N0"),  Icon = "bi-people-fill",             Color = "#0d9488", Bg = "#f0fdfa" },
+            };
+        }
+        @foreach (var s in stats)
+        {
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-card p-3 h-100">
+                    <div class="card-accent" style="background:@s.Color;"></div>
+                    <div class="ps-2">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="small fw-semibold" style="color:var(--gov-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;">@s.Label</span>
+                            <div class="section-icon" style="background:@s.Bg;">
+                                <i class="bi @s.Icon" style="color:@s.Color;"></i>
+                            </div>
+                        </div>
+                        <div class="fw-bold" style="font-size:1.35rem;color:@s.Color;">@s.Value</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ─── ROW 2: MAP + ALERTS ─────────────────────────────── *@
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-xl-8">
+            <div class="chart-card p-0 overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
+                    <div class="section-title mb-0 border-0 pb-0">
+                        <div class="section-icon" style="background:#eff6ff;"><i class="bi bi-map-fill text-primary"></i></div>
+                        @(isBn ? "ডেঙ্গু ঝুঁকি মানচিত্র" : "Dengue Surveillance Risk Map")
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <div class="legend-item"><div class="legend-swatch" style="background:#dc2626;"></div>@(isBn ? "উচ্চ" : "High")</div>
+                        <div class="legend-item"><div class="legend-swatch" style="background:#d97706;"></div>@(isBn ? "মাঝারি" : "Medium")</div>
+                        <div class="legend-item"><div class="legend-swatch" style="background:#16a34a;"></div>@(isBn ? "নিম্ন" : "Low")</div>
+                        <div class="legend-item"><div class="legend-swatch" style="background:#2563eb;"></div>@(isBn ? "কেস" : "Case")</div>
+                        <div class="legend-item"><div class="legend-swatch" style="background:#0d9488;"></div>@(isBn ? "রিপোর্ট" : "Report")</div>
+                    </div>
+                </div>
+                <div id="govMap" class="gov-map" style="border-radius:0;"></div>
+                <div class="px-3 py-2 d-flex align-items-center gap-3" style="background:#f8fafc;border-top:1px solid var(--gov-border);">
+                    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>@(isBn ? "সর্বশেষ মডেল আপডেট:" : "Last model run:") <strong>@lastModelRun</strong></small>
+                    <small class="text-muted ms-auto"><i class="bi bi-broadcast-pin text-danger me-1"></i>@(isBn ? "রিয়েল-টাইম SignalR সতর্কতা সক্রিয়" : "Real-time SignalR alerts active")</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="chart-card h-100 d-flex flex-column">
+                <div class="section-title">
+                    <div class="section-icon" style="background:#fef2f2;"><i class="bi bi-bell-fill text-danger"></i></div>
+                    @(isBn ? "সক্রিয় সতর্কতা ও প্রাদুর্ভাব" : "Active Alerts & Outbreak Monitor")
+                    <span class="badge bg-danger ms-auto">@recentAlerts.Count</span>
+                </div>
+                @if (recentAlerts.Any())
+                {
+                    <div style="overflow-y:auto; max-height:340px;" class="flex-grow-1">
+                        @foreach (var alert in recentAlerts)
+                        {
+                            var alertAge = (DateTime.UtcNow - alert.SentAt).TotalHours;
+                            var freshClass = alertAge < 1 ? "border-danger" : alertAge < 6 ? "border-warning" : "border-secondary";
+                            <div class="alert-item mb-2" style="border-left-color:@(alertAge < 6 ? "#dc2626" : "#94a3b8");">
+                                <div class="d-flex align-items-start justify-content-between gap-2">
+                                    <div class="small fw-semibold" style="color:var(--gov-text);line-height:1.4;">
+                                        @alert.Message
+                                    </div>
+                                    @if (alertAge < 1)
+                                    {
+                                        <span class="badge bg-danger" style="font-size:.65rem;white-space:nowrap;">NEW</span>
+                                    }
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    @if (alert.Zone != null)
+                                    {
+                                        <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:.65rem;">
+                                            <i class="bi bi-geo me-1"></i>@alert.Zone.Region
+                                        </span>
+                                    }
+                                    <small style="color:var(--gov-muted);font-size:.68rem;">@alert.SentAt.ToString("dd MMM HH:mm") UTC</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="flex-grow-1 d-flex align-items-center justify-content-center">
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size:2rem;"></i>
+                            <p class="mt-2 small">@(isBn ? "কোনো সক্রিয় সতর্কতা নেই" : "No active alerts at this time")</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ─── ROW 3: TREND CHARTS ─────────────────────────────── *@
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-7">
+            <div class="chart-card">
+                <div class="section-title">
+                    <div class="section-icon" style="background:#eff6ff;"><i class="bi bi-graph-up text-primary"></i></div>
+                    @(isBn ? "১৪-দিনের কেস প্রবণতা" : "14-Day Case Trend")
+                    <div class="ms-auto d-flex align-items-center gap-2">
+                        @{
+                            var wClass = weeklyChange > 0 ? "trend-up" : weeklyChange < 0 ? "trend-down" : "trend-neutral";
+                            var wIcon  = weeklyChange > 0 ? "bi-arrow-up-right" : weeklyChange < 0 ? "bi-arrow-down-right" : "bi-dash";
+                        }
+                        <span class="comparison-badge @wClass">
+                            <i class="bi @wIcon"></i> @(weeklyChange > 0 ? "+" : "")@weeklyChange% @(isBn ? "সাপ্তাহিক" : "vs last week")
+                        </span>
+                    </div>
+                </div>
+                <canvas id="caseTrendChart" height="160"></canvas>
+            </div>
+        </div>
+        <div class="col-12 col-lg-5">
+            <div class="chart-card h-100">
+                <div class="section-title">
+                    <div class="section-icon" style="background:#f0fdfa;"><i class="bi bi-bar-chart-fill text-teal" style="color:#0d9488;"></i></div>
+                    @(isBn ? "ঐতিহাসিক তুলনা" : "Historical Comparison")
+                </div>
+                <canvas id="comparisonChart" height="160"></canvas>
+                <div class="row g-2 mt-2 text-center">
+                    <div class="col-6">
+                        <div class="p-2 rounded-3" style="background:#f8fafc;">
+                            <div class="fw-bold">@thisWeek</div>
+                            <div class="small text-muted">@(isBn ? "এই সপ্তাহ" : "This Week")</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-3" style="background:#f8fafc;">
+                            <div class="fw-bold">@prevWeek</div>
+                            <div class="small text-muted">@(isBn ? "গত সপ্তাহ" : "Last Week")</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-3" style="background:#f8fafc;">
+                            <div class="fw-bold">@thisMonth</div>
+                            <div class="small text-muted">@(isBn ? "এই মাস" : "This Month")</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-3" style="background:#f8fafc;">
+                            <div class="fw-bold">@prevMonth</div>
+                            <div class="small text-muted">@(isBn ? "গত মাস" : "Last Month")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ─── ROW 4: DATA SUFFICIENCY + CITIZEN REPORTS + RESOURCES *@
+    <div class="row g-3 mb-4">
+        @* Data Sufficiency Panel *@
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="chart-card h-100">
+                <div class="section-title">
+                    <div class="section-icon" style="background:#f0fdf4;"><i class="bi bi-database-check text-success"></i></div>
+                    @(isBn ? "ডেটা পর্যাপ্ততা স্ট্যাটাস" : "Data Sufficiency Status")
+                </div>
+                @if (totalZones == 0)
+                {
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-database-slash" style="font-size:2rem;"></i>
+                        <p class="mt-2 small">@(isBn ? "কোনো ঝুঁকি অঞ্চল নেই। আওয়ারলি জব চালু হলে ডেটা দেখা যাবে।" : "No risk zones yet. The hourly job will populate data.")</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        @{
+                            double sufPct = totalZones > 0 ? sufficientZ * 100.0 / totalZones : 0;
+                            double partPct = totalZones > 0 ? partialZ * 100.0 / totalZones : 0;
+                            double insPct = totalZones > 0 ? insufficientZ * 100.0 / totalZones : 0;
+                        }
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span><span class="sufficiency-dot" style="background:#16a34a;"></span>@(isBn ? "পর্যাপ্ত" : "Sufficient")</span>
+                            <span class="fw-bold">@sufficientZ / @totalZones</span>
+                        </div>
+                        <div class="progress mb-2" style="height:8px;border-radius:4px;">
+                            <div class="progress-bar" style="width:@sufPct.ToString("F0")%;background:#16a34a;border-radius:4px;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span><span class="sufficiency-dot" style="background:#d97706;"></span>@(isBn ? "আংশিক" : "Partial")</span>
+                            <span class="fw-bold">@partialZ / @totalZones</span>
+                        </div>
+                        <div class="progress mb-2" style="height:8px;border-radius:4px;">
+                            <div class="progress-bar" style="width:@partPct.ToString("F0")%;background:#d97706;border-radius:4px;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span><span class="sufficiency-dot" style="background:#dc2626;"></span>@(isBn ? "অপর্যাপ্ত" : "Insufficient")</span>
+                            <span class="fw-bold">@insufficientZ / @totalZones</span>
+                        </div>
+                        <div class="progress mb-3" style="height:8px;border-radius:4px;">
+                            <div class="progress-bar" style="width:@insPct.ToString("F0")%;background:#dc2626;border-radius:4px;"></div>
+                        </div>
+                    </div>
+                    <div class="p-2 rounded-3 d-flex align-items-center gap-2" style="background:@(insufficientZ > 0 ? "#fef2f2" : "#f0fdf4");">
+                        <i class="bi @(insufficientZ > 0 ? "bi-exclamation-triangle-fill text-danger" : "bi-check-circle-fill text-success")"></i>
+                        <small>
+                            @if (insufficientZ > 0)
+                            {
+                                @(isBn ? $"{insufficientZ}টি অঞ্চলে নজরদারি তথ্য অপর্যাপ্ত।" : $"{insufficientZ} zone(s) have insufficient surveillance data.")
+                            }
+                            else
+                            {
+                                @(isBn ? "সব অঞ্চলের তথ্য পর্যাপ্ত।" : "All zones have sufficient data coverage.")
+                            }
+                        </small>
+                    </div>
+                }
+                <div class="mt-3 pt-2 border-top">
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>
+                        @(isBn ? "শেষ মডেল আপডেট: " : "Last model run: ")<strong>@lastModelRun</strong>
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        @* Citizen Report Monitoring *@
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="chart-card h-100">
+                <div class="section-title">
+                    <div class="section-icon" style="background:#f0fdfa;"><i class="bi bi-people-fill" style="color:#0d9488;"></i></div>
+                    @(isBn ? "নাগরিক রিপোর্ট মনিটরিং" : "Citizen Report Monitoring")
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-4 text-center">
+                        <div class="p-2 rounded-3" style="background:#f0fdfa;">
+                            <div class="fw-bold fs-5 text-teal" style="color:#0d9488;">@totalReports</div>
+                            <div class="small text-muted" style="font-size:.7rem;">@(isBn ? "মোট" : "Total")</div>
+                        </div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="p-2 rounded-3" style="background:#f0fdf4;">
+                            <div class="fw-bold fs-5 text-success">@verifiedReports</div>
+                            <div class="small text-muted" style="font-size:.7rem;">@(isBn ? "যাচাইকৃত" : "Verified")</div>
+                        </div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="p-2 rounded-3" style="background:#fffbeb;">
+                            <div class="fw-bold fs-5" style="color:#d97706;">@pendingReports</div>
+                            <div class="small text-muted" style="font-size:.7rem;">@(isBn ? "পেন্ডিং" : "Pending")</div>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="reportDonut" height="150"></canvas>
+                <div class="mt-3 pt-2 border-top">
+                    <div class="d-flex align-items-center gap-2">
+                        <a asp-controller="Reports" asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="font-size:.75rem;">
+                            <i class="bi bi-list-ul me-1"></i>@(isBn ? "সব রিপোর্ট দেখুন" : "View All Reports")
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Resource Overview *@
+        <div class="col-12 col-xl-4">
+            <div class="chart-card h-100">
+                <div class="section-title">
+                    <div class="section-icon" style="background:#eff6ff;"><i class="bi bi-hospital-fill text-primary"></i></div>
+                    @(isBn ? "স্বাস্থ্য সম্পদ সারসংক্ষেপ" : "Health Resource Overview")
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 h-100" style="background:#eff6ff;border:1px solid #bfdbfe;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-droplet-fill text-primary"></i>
+                                <span class="small fw-semibold text-primary">@(isBn ? "রক্তদাতা" : "Blood Donors")</span>
+                            </div>
+                            <div class="fw-bold fs-4 text-primary">@activeDonors</div>
+                            <div class="small text-muted">@(isBn ? "সক্রিয় ও উপলব্ধ" : "Active & Available")</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 h-100" style="background:@(lowStockCount > 0 ? "#fef2f2" : "#f0fdf4");border:1px solid @(lowStockCount > 0 ? "#fecaca" : "#bbf7d0");">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-box-seam-fill @(lowStockCount > 0 ? "text-danger" : "text-success")"></i>
+                                <span class="small fw-semibold @(lowStockCount > 0 ? "text-danger" : "text-success")">@(isBn ? "ইনভেন্টরি" : "Inventory")</span>
+                            </div>
+                            <div class="fw-bold fs-4 @(lowStockCount > 0 ? "text-danger" : "text-success")">
+                                @lowStockCount <small style="font-size:.7rem;">@(isBn ? "কম স্টক" : "low stock")</small>
+                            </div>
+                            <div class="small text-muted">@(isBn ? "সরবরাহ সতর্কতা" : "Supply warnings")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted fw-semibold mb-2">@(isBn ? "দ্রুত অ্যাক্সেস লিঙ্ক" : "Quick Access Links")</div>
+                    <div class="d-flex flex-column gap-1">
+                        <a asp-controller="IcuBeds" asp-action="Index" class="btn btn-sm btn-outline-primary text-start rounded-3" style="font-size:.78rem;">
+                            <i class="bi bi-hospital me-2"></i>@(isBn ? "আইসিইউ বেড ফাইন্ডার" : "ICU Bed Finder")
+                        </a>
+                        <a asp-controller="Donors" asp-action="Index" class="btn btn-sm btn-outline-danger text-start rounded-3" style="font-size:.78rem;">
+                            <i class="bi bi-droplet me-2"></i>@(isBn ? "রক্তদাতা অনুসন্ধান" : "Blood Donor Search")
+                        </a>
+                        <a asp-controller="Inventory" asp-action="Index" class="btn btn-sm btn-outline-success text-start rounded-3" style="font-size:.78rem;">
+                            <i class="bi bi-box-seam me-2"></i>@(isBn ? "ইনভেন্টরি ব্যবস্থাপনা" : "Inventory Management")
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ─── ROW 5: PDF REPORT GENERATOR ────────────────────── *@
+    <div class="export-bar mb-4">
+        <div class="row align-items-center g-3">
+            <div class="col-md-3">
+                <div class="text-white">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi bi-file-earmark-pdf-fill text-warning fs-4"></i>
+                        <span class="fw-bold">@(isBn ? "আনুষ্ঠানিক রিপোর্ট জেনারেটর" : "Official Report Generator")</span>
+                    </div>
+                    <p class="mb-0 small" style="opacity:.7;">
+                        @(isBn ? "DGHS ফরম্যাটে PDF ডাউনলোড করুন" : "Download DGHS-formatted PDF or export CSV data")
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <form asp-action="ExportPdf" method="get" id="pdfExportForm">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-sm-6 col-md-2">
+                            <label class="text-white small fw-semibold">@(isBn ? "শুরু" : "From")</label>
+                            <input type="date" name="startDate" class="form-control form-control-sm rounded-3" value="@defaultStart" id="pdfStartDate" style="background:#1e3a5f;border-color:#334155;color:#fff;" />
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <label class="text-white small fw-semibold">@(isBn ? "শেষ" : "To")</label>
+                            <input type="date" name="endDate" class="form-control form-control-sm rounded-3" value="@defaultEnd" id="pdfEndDate" style="background:#1e3a5f;border-color:#334155;color:#fff;" />
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <label class="text-white small fw-semibold">@(isBn ? "বিভাগ" : "Division")</label>
+                            <select name="division" class="form-select form-select-sm rounded-3" style="background:#1e3a5f;border-color:#334155;color:#fff;">
+                                @foreach (var d in divisions)
+                                {
+                                    <option value="@d">@d</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <label class="text-white small fw-semibold">@(isBn ? "ঝুঁকি স্তর" : "Risk Level")</label>
+                            <select name="riskLevel" class="form-select form-select-sm rounded-3" style="background:#1e3a5f;border-color:#334155;color:#fff;">
+                                <option value="">@(isBn ? "সব" : "All")</option>
+                                @foreach (var r in riskLevels)
+                                {
+                                    <option value="@r">@r</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <label class="text-white small fw-semibold">@(isBn ? "কেস স্ট্যাটাস" : "Case Status")</label>
+                            <select name="caseStatus" class="form-select form-select-sm rounded-3" style="background:#1e3a5f;border-color:#334155;color:#fff;">
+                                <option value="">@(isBn ? "সব" : "All")</option>
+                                @foreach (var cs in caseStatuses)
+                                {
+                                    <option value="@cs">@cs</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex gap-2">
+                            <button type="submit" id="exportPdfBtn" class="btn btn-warning fw-bold flex-grow-1 btn-sm rounded-3">
+                                <i class="bi bi-download me-1"></i>PDF
+                            </button>
+                            <a asp-action="ExportCsv" id="exportCsvBtn"
+                               asp-route-startDate="@defaultStart" asp-route-endDate="@defaultEnd"
+                               class="btn btn-outline-light fw-bold btn-sm rounded-3">
+                                <i class="bi bi-filetype-csv"></i>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @* ─── ROW 6: REGIONAL RISK TABLE ─────────────────────── *@
+    <div class="row g-3 mb-5">
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="section-title">
+                    <div class="section-icon" style="background:#fff7ed;"><i class="bi bi-table text-warning"></i></div>
+                    @(isBn ? "আঞ্চলিক ঝুঁকি তালিকা" : "Regional Surveillance & Risk Registry")
+                    <a asp-controller="Reports" asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill px-3 ms-auto" style="font-size:.75rem;">
+                        <i class="bi bi-arrow-right-circle me-1"></i>@(isBn ? "সব রিপোর্ট" : "All Reports")
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" style="font-size:.85rem;">
+                        <thead>
+                            <tr style="background:#f8fafc;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:var(--gov-muted);">
+                                <th class="px-3 py-2">@(isBn ? "অঞ্চল" : "Surveillance Zone")</th>
+                                <th class="py-2">@(isBn ? "রোগের ধরন" : "Disease")</th>
+                                <th class="py-2">@(isBn ? "ঝুঁকির স্তর" : "Risk Level")</th>
+                                <th class="py-2">@(isBn ? "ডেটা পর্যাপ্ততা" : "Data Sufficiency")</th>
+                                <th class="py-2">@(isBn ? "আস্থার মাত্রা" : "Confidence")</th>
+                                <th class="py-2">@(isBn ? "শেষ আপডেট" : "Last Model Run")</th>
+                            </tr>
+                        </thead>
+                        <tbody id="riskZoneTable">
+                            @if (ViewBag.MapZones != null)
+                            {
+                                @* Zones rendered client-side via JS *@
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noZoneMsg" class="text-center text-muted py-4 d-none">
+                    <i class="bi bi-database-slash" style="font-size:2rem;"></i>
+                    <p class="mt-2">@(isBn ? "কোনো ঝুঁকি অঞ্চল নেই। আওয়ারলি জব ডেটা পপুলেট করবে।" : "No risk zones yet. The hourly Hangfire job will populate data.")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@* ─── SCRIPTS ─────────────────────────────────────────────────── *@
+<script>
+(function () {
+    'use strict';
+
+    // ── 1. Leaflet Map ───────────────────────────────────────────
+    var zones   = @Html.Raw(mapZones);
+    var cases   = @Html.Raw(mapCases);
+    var reports = @Html.Raw(mapReports);
+
+    var mapCenter = [23.8103, 90.4125];
+    var map = L.map('govMap', { scrollWheelZoom: false }).setView(mapCenter, 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 18
+    }).addTo(map);
+
+    // Risk zone circles
+    zones.forEach(function (z) {
+        if (!z.lat || !z.lng) return;
+        var color = z.riskLevel === 'High' ? '#dc2626' : z.riskLevel === 'Medium' ? '#d97706' : '#16a34a';
+        L.circle([z.lat, z.lng], {
+            radius: z.radius || 5000,
+            color: color, fillColor: color, fillOpacity: 0.15, weight: 2
+        }).bindPopup(
+            '<strong>' + z.region + '</strong><br>' +
+            '<span class="risk-badge risk-' + z.riskLevel + '">' + z.riskLevel + '</span><br>' +
+            'Confidence: ' + z.confidence + '%<br>Sufficiency: ' + z.sufficiency
+        ).addTo(map);
+    });
+
+    // Case markers
+    cases.forEach(function (c) {
+        if (!c.lat || !c.lng) return;
+        var col = c.status === 'Confirmed' ? '#dc2626' : c.status === 'Suspected' ? '#d97706' : '#2563eb';
+        var icon = L.divIcon({
+            html: '<div style="width:10px;height:10px;border-radius:50%;background:' + col + ';border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.4);"></div>',
+            className: '', iconSize: [10,10], iconAnchor: [5,5]
+        });
+        L.marker([c.lat, c.lng], { icon: icon })
+            .bindPopup('<strong>' + (c.name || 'Case') + '</strong><br>Status: ' + c.status + '<br>Severity: ' + c.severity + '<br>' + c.address)
+            .addTo(map);
+    });
+
+    // Citizen report markers (smaller teal dots)
+    reports.forEach(function (r) {
+        if (!r.lat || !r.lng) return;
+        var icon = L.divIcon({
+            html: '<div style="width:7px;height:7px;border-radius:50%;background:#0d9488;border:1px solid #fff;opacity:.8;"></div>',
+            className: '', iconSize: [7,7], iconAnchor: [3,3]
+        });
+        L.marker([r.lat, r.lng], { icon: icon })
+            .bindPopup('Hazard Report: ' + r.diseaseType + '<br>Status: ' + r.verification)
+            .addTo(map);
+    });
+
+    // ── 2. Case Trend Chart ──────────────────────────────────────
+    var trendLabels = @Html.Raw(caseTrendLabels);
+    var trendData   = @Html.Raw(caseTrendData);
+
+    var trendCtx = document.getElementById('caseTrendChart');
+    if (trendCtx) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Cases Reported',
+                    data: trendData,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37,99,235,0.08)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#2563eb',
+                    pointRadius: 3,
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: { beginAtZero: true, ticks: { font: { size: 10 }, precision: 0 }, grid: { color: '#f1f5f9' } }
+                }
+            }
+        });
+    }
+
+    // ── 3. Historical Comparison Chart ─────────────────────────
+    var compCtx = document.getElementById('comparisonChart');
+    if (compCtx) {
+        new Chart(compCtx, {
+            type: 'bar',
+            data: {
+                labels: ['This Week', 'Last Week', 'This Month', 'Last Month'],
+                datasets: [{
+                    label: 'Cases',
+                    data: [@thisWeek, @prevWeek, @thisMonth, @prevMonth],
+                    backgroundColor: ['#2563eb','#93c5fd','#047857','#6ee7b7'],
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: { beginAtZero: true, ticks: { font: { size: 10 }, precision: 0 }, grid: { color: '#f1f5f9' } }
+                }
+            }
+        });
+    }
+
+    // ── 4. Report Donut Chart ────────────────────────────────────
+    var donutCtx = document.getElementById('reportDonut');
+    if (donutCtx) {
+        var verified = @verifiedReports;
+        var pending  = @pendingReports;
+        var other    = Math.max(0, @totalReports - verified - pending);
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Verified', 'Pending', 'Other'],
+                datasets: [{
+                    data: [verified, pending, other],
+                    backgroundColor: ['#16a34a','#d97706','#94a3b8'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '68%',
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } } }
+            }
+        });
+    }
+
+    // ── 5. Risk Zone Table (client-side render) ──────────────────
+    var allZones = @Html.Raw(mapZones);
+    var tbody = document.getElementById('riskZoneTable');
+    var noMsg = document.getElementById('noZoneMsg');
+
+    if (allZones && allZones.length > 0 && tbody) {
+        allZones.forEach(function (z) {
+            var riskClass = 'risk-' + z.riskLevel;
+            var suffClass = 'suff-' + z.sufficiency.replace(/ /g,'');
+            var tr = '<tr>' +
+                '<td class="px-3 fw-semibold">' + z.region + '</td>' +
+                '<td>Dengue</td>' +
+                '<td><span class="risk-badge ' + riskClass + '">' + z.riskLevel + '</span></td>' +
+                '<td><span class="risk-badge ' + suffClass + '">' + z.sufficiency + '</span></td>' +
+                '<td>' +
+                    '<div class="d-flex align-items-center gap-2">' +
+                    '<div class="progress flex-grow-1" style="height:5px;">' +
+                    '<div class="progress-bar" style="width:' + z.confidence + '%;background:#2563eb;"></div>' +
+                    '</div>' +
+                    '<small>' + z.confidence + '%</small>' +
+                    '</div>' +
+                '</td>' +
+                '<td class="text-muted" style="font-size:.75rem;">Real-time</td>' +
+                '</tr>';
+            tbody.insertAdjacentHTML('beforeend', tr);
+        });
+    } else {
+        if (noMsg) noMsg.classList.remove('d-none');
+    }
+
+    // ── 6. CSV export — update links dynamically ──────────────────
+    var csvBtn = document.getElementById('exportCsvBtn');
+    var startInput = document.getElementById('pdfStartDate');
+    var endInput   = document.getElementById('pdfEndDate');
+    function updateCsvHref() {
+        if (csvBtn && startInput && endInput) {
+            var base = '@Url.Action("ExportCsv", "Government")';
+            csvBtn.href = base + '?startDate=' + startInput.value + '&endDate=' + endInput.value;
+        }
+    }
+    if (startInput) startInput.addEventListener('change', updateCsvHref);
+    if (endInput)   endInput.addEventListener('change', updateCsvHref);
+    updateCsvHref();
+
+})();
+</script>

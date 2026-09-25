@@ -34,6 +34,19 @@ namespace LarvaX.Web.Controllers
             var userId = user.Id;
             var roles = await _userManager.GetRolesAsync(user);
 
+            if (roles.Contains("HealthWorker") && !roles.Contains("Doctor") && !roles.Contains("Administrator"))
+            {
+                return RedirectToAction("Index", "HealthWorkerDashboard");
+            }
+            if (roles.Contains("Doctor") && !roles.Contains("Administrator"))
+            {
+                return RedirectToAction("Index", "DoctorDashboard");
+            }
+            if (roles.Contains("LabStaff") && !roles.Contains("Administrator"))
+            {
+                return RedirectToAction("Index", "LabStaffDashboard");
+            }
+
             var recentReports = await _context.Reports
                 .Where(r => r.UserId == userId)
                 .OrderByDescending(r => r.CreatedAt)

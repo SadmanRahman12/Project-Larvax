@@ -22,6 +22,10 @@ namespace LarvaX.Infrastructure.Data
         public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
         public DbSet<FlowAnalytics> FlowAnalytics { get; set; } = null!;
         public DbSet<SmsCommand> SmsCommands { get; set; } = null!;
+        public DbSet<DoctorSchedule> DoctorSchedules { get; set; } = null!;
+        public DbSet<DengueCase> DengueCases { get; set; } = null!;
+        public DbSet<HealthWorkerTask> HealthWorkerTasks { get; set; } = null!;
+        public DbSet<CaseReferral> CaseReferrals { get; set; } = null!;
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -71,6 +75,43 @@ namespace LarvaX.Infrastructure.Data
                 .HasConversion<string>();
             builder.Entity<Appointment>()
                 .HasIndex(a => a.ScheduledAt);
+
+            // DoctorSchedule configuration
+            builder.Entity<DoctorSchedule>()
+                .Property(s => s.DayOfWeek)
+                .HasConversion<string>();
+            builder.Entity<DoctorSchedule>()
+                .HasIndex(s => s.DoctorId);
+            builder.Entity<DoctorSchedule>()
+                .HasIndex(s => new { s.DoctorId, s.DayOfWeek });
+
+            // DengueCase configuration
+            builder.Entity<DengueCase>()
+                .Property(c => c.Status)
+                .HasConversion<string>();
+            builder.Entity<DengueCase>()
+                .Property(c => c.Severity)
+                .HasConversion<string>();
+            builder.Entity<DengueCase>()
+                .HasIndex(c => c.Status);
+
+            // HealthWorkerTask configuration
+            builder.Entity<HealthWorkerTask>()
+                .Property(t => t.Priority)
+                .HasConversion<string>();
+            builder.Entity<HealthWorkerTask>()
+                .HasIndex(t => t.IsCompleted);
+
+            // CaseReferral configuration
+            builder.Entity<CaseReferral>()
+                .Property(r => r.Target)
+                .HasConversion<string>();
+            builder.Entity<CaseReferral>()
+                .Property(r => r.Urgency)
+                .HasConversion<string>();
+            builder.Entity<CaseReferral>()
+                .Property(r => r.Status)
+                .HasConversion<string>();
         }
     }
 }

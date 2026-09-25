@@ -1,16 +1,31 @@
 @model IEnumerable<LarvaX.Core.Entities.ApplicationUser>
+@using LarvaX.Application.Models
 @{
     ViewData["Title"] = "Telemedicine - Find a Doctor";
+    var scheduleSummaries = ViewBag.ScheduleSummaries as Dictionary<string, DoctorScheduleSummaryDto> ?? new();
 }
 
 <div class="mb-4">
-    <h2 class="fw-bold"><i class="bi bi-person-badge"></i> Find a Doctor</h2>
-    <p class="text-muted">Browse available doctors and book a video consultation.</p>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-person-badge text-primary me-2"></i>Find a Doctor</h2>
+            <p class="text-muted mb-0">Browse certified medical specialists and book video consultations during their fixed available hours.</p>
+        </div>
+        @if (User.IsInRole("Doctor") || User.IsInRole("Administrator"))
+        {
+            <a asp-controller="DoctorDashboard" asp-action="Index" class="btn btn-outline-primary rounded-pill px-3 shadow-sm align-self-start align-self-md-center">
+                <i class="bi bi-calendar-check me-1"></i>Manage My Doctor Schedule
+            </a>
+        }
+    </div>
 </div>
 
-<form method="get" class="mb-4 d-flex gap-2 w-50">
-    <input type="text" name="specialty" class="form-control" placeholder="Filter by Specialty (e.g. Cardiologist)" value="@Context.Request.Query["specialty"]" />
-    <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i> Search</button>
+<form method="get" class="mb-4 d-flex gap-2 w-100 w-md-50">
+    <div class="input-group">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="specialty" class="form-control border-start-0" placeholder="Filter by Specialty (e.g. Dengue Specialist, Cardiologist, Pediatrician)" value="@Context.Request.Query["specialty"]" />
+        <button type="submit" class="btn btn-primary px-4">Search</button>
+    </div>
     @if (!string.IsNullOrEmpty(Context.Request.Query["specialty"]))
     {
         <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
@@ -19,26 +34,92 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">No doctors registered yet.</div>
+    <div class="alert alert-info rounded-3 p-4 shadow-sm text-center">
+        <i class="bi bi-info-circle fs-3 d-block mb-2 text-primary"></i>
+        @if (User.IsInRole("Doctor"))
+        {
+            <h5 class="fw-bold mb-1">No other doctors available</h5>
+            <p class="text-muted small mb-3">You are logged in as a doctor. Your own profile is excluded from this patient booking directory.</p>
+            <a asp-controller="DoctorDashboard" asp-action="Index" class="btn btn-sm btn-primary rounded-pill px-3">
+                <i class="bi bi-grid-3x3-gap-fill me-1"></i>Go to Doctor Dashboard
+            </a>
+        }
+        else
+        {
+            <h5 class="fw-bold mb-1">No doctors found</h5>
+            <p class="text-muted small mb-0">No registered doctors match your criteria. Try clearing the specialty filter.</p>
+        }
+    </div>
 }
 else
 {
     <div class="row row-cols-1 row-cols-md-2 g-4">
         @foreach (var d in Model)
         {
+            var hasSummary = scheduleSummaries.TryGetValue(d.Id, out var summary) && summary.HasSchedule;
+            var docName = d.FullName ?? d.UserName ?? "Doctor";
+            var initial = docName.Length >= 2 ? docName.Substring(0, 2).ToUpper() : "DR";
+
             <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body d-flex justify-content-between align-items-start">
+                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden" style="background:#fff;border:1px solid rgba(15,111,173,0.12)!important;">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
                         <div>
-                            <h5 class="fw-bold mb-1">@d.FullName</h5>
-                            @if (!string.IsNullOrEmpty(d.Specialty))
-                            {
-                                <span class="badge bg-info text-dark mb-2">@d.Specialty</span>
-                            }
-                            <p class="text-muted small mb-0">@d.Email</p>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white fs-4"
+                                     style="width:54px;height:54px;background:linear-gradient(135deg,#0f6fad,#00c6a2);flex-shrink:0;">
+                                    @initial
+                                </div>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <h5 class="fw-bold mb-0 text-truncate">Dr. @docName</h5>
+                                    @if (!string.IsNullOrEmpty(d.Specialty))
+                                    {
+                                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1 mt-1 small">
+                                            <i class="bi bi-award me-1"></i>@d.Specialty
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            @* Schedule Status Indicator *@
+                            <div class="p-3 rounded-3 mb-3" style="background:rgba(15,111,173,0.04);border:1px solid rgba(15,111,173,0.08);">
+                                @if (hasSummary && summary != null)
+                                {
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge bg-success rounded-pill px-2 py-1 small">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Schedule Fixed
+                                        </span>
+                                        <span class="small text-muted">Fixed Consultation Hours:</span>
+                                    </div>
+                                    <div class="small fw-semibold text-dark">
+                                        <i class="bi bi-clock me-1 text-primary"></i>@summary.SummaryText
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary rounded-pill px-2 py-1 small">
+                                            <i class="bi bi-dash-circle me-1"></i>Schedule Pending
+                                        </span>
+                                        <span class="small text-muted">Doctor has not set available hours yet</span>
+                                    </div>
+                                }
+                            </div>
                         </div>
-                        <div class="text-end">
-                            <a asp-action="Book" asp-route-doctorId="@d.Id" class="btn btn-primary">Book</a>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <span class="text-muted small"><i class="bi bi-camera-video me-1"></i>Video Consultation</span>
+                            @if (hasSummary)
+                            {
+                                <a asp-action="Book" asp-route-doctorId="@d.Id" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                                    <i class="bi bi-calendar-plus me-1"></i>Book Slot
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Book" asp-route-doctorId="@d.Id" class="btn btn-outline-secondary rounded-pill px-3">
+                                    <i class="bi bi-calendar-event me-1"></i>Check Availability
+                                </a>
+                            }
                         </div>
                     </div>
                 </div>

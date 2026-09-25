@@ -65,6 +65,7 @@ builder.Services.AddScoped<IEducationService, EducationService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IPdfReportService, PdfReportService>();
+builder.Services.AddSingleton<LarvaX.Web.Services.IAdminSettingsService, LarvaX.Web.Services.AdminSettingsService>();
 
 // Localization Support (English & Bangla)
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

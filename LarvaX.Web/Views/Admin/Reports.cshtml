@@ -1,47 +1,98 @@
 @model IEnumerable<LarvaX.Core.Entities.Report>
 @{
-    ViewData["Title"] = "Report Management - LarvaX Admin";
+    ViewData["Title"] = "Report Verification Queue - LarvaX Admin";
     string activeTab = ViewBag.ActiveTab as string ?? "pending";
+    string selectedDisease = ViewBag.SelectedDisease as string ?? "";
+    string searchTerm = ViewBag.SearchTerm as string ?? "";
 }
 
-<div class="mb-4">
-    <h2 class="fw-bold"><i class="bi bi-shield-check text-primary me-2"></i>Report Lifecycle Management</h2>
-    <p class="text-muted">Review citizen-submitted breeding sites, verify reports, and track them through resolution.</p>
-</div>
+<partial name="_AdminNav" />
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 
-<ul class="nav nav-pills mb-4 gap-2">
-    <li class="nav-item">
-        <a class="nav-link @(activeTab == "pending" ? "active" : "")" asp-action="Reports" asp-route-tab="pending">
-            <i class="bi bi-hourglass-split me-1"></i>Pending Verification
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link @(activeTab == "under_review" ? "active" : "")" asp-action="Reports" asp-route-tab="under_review">
-            <i class="bi bi-tools me-1"></i>Under Review / Active
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link @(activeTab == "resolved" ? "active" : "")" asp-action="Reports" asp-route-tab="resolved">
-            <i class="bi bi-check2-all me-1"></i>Resolved
-        </a>
-    </li>
-</ul>
+<!-- HEADER -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+                <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-shield-check text-primary me-2"></i>Admin Verification Queue</h4>
+                <p class="text-muted small mb-0">Inspect citizen-submitted mosquito breeding sites and suspected fever clusters. Validate reports to feed into the active surveillance risk model.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-action="RiskMonitoring" class="btn btn-sm btn-outline-danger"><i class="bi bi-geo-alt me-1"></i>View on Risk Map</a>
+                <a asp-action="ExportReportsCsv" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download me-1"></i>Export CSV</a>
+            </div>
+        </div>
 
-<div class="row row-cols-1 row-cols-md-2 g-4">
+        <!-- LIFECYCLE TABS -->
+        <ul class="nav nav-pills gap-2 mb-3">
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3 py-2 @(activeTab == "pending" ? "active bg-primary text-white shadow-sm" : "bg-light text-dark border")" asp-action="Reports" asp-route-tab="pending" asp-route-disease="@selectedDisease" asp-route-search="@searchTerm">
+                    <i class="bi bi-hourglass-split me-1"></i>Pending Verification
+                    <span class="badge @(activeTab == "pending" ? "bg-white text-primary" : "bg-primary text-white") rounded-pill ms-1">@ViewBag.PendingCount</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3 py-2 @(activeTab == "under_review" ? "active bg-warning text-dark shadow-sm" : "bg-light text-dark border")" asp-action="Reports" asp-route-tab="under_review" asp-route-disease="@selectedDisease" asp-route-search="@searchTerm">
+                    <i class="bi bi-tools me-1"></i>Under Review
+                    <span class="badge @(activeTab == "under_review" ? "bg-dark text-white" : "bg-secondary text-white") rounded-pill ms-1">@ViewBag.UnderReviewCount</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3 py-2 @(activeTab == "verified" ? "active bg-success text-white shadow-sm" : "bg-light text-dark border")" asp-action="Reports" asp-route-tab="verified" asp-route-disease="@selectedDisease" asp-route-search="@searchTerm">
+                    <i class="bi bi-check2-all me-1"></i>Verified Reports
+                    <span class="badge @(activeTab == "verified" ? "bg-white text-success" : "bg-success text-white") rounded-pill ms-1">@ViewBag.VerifiedCount</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3 py-2 @(activeTab == "invalid" ? "active bg-danger text-white shadow-sm" : "bg-light text-dark border")" asp-action="Reports" asp-route-tab="invalid" asp-route-disease="@selectedDisease" asp-route-search="@searchTerm">
+                    <i class="bi bi-x-octagon me-1"></i>Invalid / Rejected
+                    <span class="badge @(activeTab == "invalid" ? "bg-white text-danger" : "bg-danger text-white") rounded-pill ms-1">@ViewBag.InvalidCount</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- FILTER BY DISEASE & SEARCH -->
+        <form method="get" asp-action="Reports" class="row g-2 align-items-center">
+            <input type="hidden" name="tab" value="@activeTab" />
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by description, notes, or submitter..." value="@searchTerm" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="disease" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="" selected="@(string.IsNullOrEmpty(selectedDisease))">All Vector-Borne Diseases</option>
+                    <option value="Dengue" selected="@(selectedDisease == "Dengue")">Dengue</option>
+                    <option value="Chikungunya" selected="@(selectedDisease == "Chikungunya")">Chikungunya</option>
+                    <option value="Malaria" selected="@(selectedDisease == "Malaria")">Malaria</option>
+                    <option value="Zika" selected="@(selectedDisease == "Zika")">Zika</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-funnel me-1"></i>Apply Filter</button>
+                <a asp-action="Reports" asp-route-tab="@activeTab" class="btn btn-sm btn-outline-secondary" title="Reset filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- REPORTS GRID -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
     @if (!Model.Any())
     {
         <div class="col-12 text-center py-5">
-            <div class="card p-5 border-0 shadow-sm bg-light">
+            <div class="card p-5 border-0 shadow-sm bg-white rounded-3">
                 <i class="bi bi-inbox fs-1 text-muted mb-2"></i>
-                <h5 class="text-muted mb-0">No reports found in this queue.</h5>
+                <h5 class="fw-bold text-muted mb-1">No reports in this queue</h5>
+                <p class="text-muted small mb-0">No matching reports found for the selected tab and filter criteria.</p>
             </div>
         </div>
     }
@@ -50,91 +101,156 @@
         @foreach (var report in Model)
         {
             <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    @if (!string.IsNullOrEmpty(report.PhotoUrl))
-                    {
-                        <img src="@report.PhotoUrl" class="card-img-top" alt="Report Photo" style="height: 200px; object-fit: cover;">
-                    }
-                    else
-                    {
-                        <div class="bg-light text-center py-5">
-                            <i class="bi bi-camera-slash display-4 text-secondary"></i>
-                            <p class="text-muted mt-2 mb-0">No Photo Provided</p>
-                        </div>
-                    }
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title fw-bold mb-0">@report.DiseaseType</h5>
-                            <div class="d-flex gap-1">
-                                <span class="badge bg-secondary">#@report.Id</span>
-                                <span class="badge @(report.Status == LarvaX.Core.Entities.ReportStatus.Resolved ? "bg-success" : report.Status == LarvaX.Core.Entities.ReportStatus.UnderReview ? "bg-primary" : "bg-warning text-dark")">
-                                    @report.Status
-                                </span>
-                            </div>
-                        </div>
-                        <p class="card-text text-muted small mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i>@report.Latitude.ToString("F6"), @report.Longitude.ToString("F6")</p>
-                        <p class="card-text">@(report.Description ?? "No description provided.")</p>
-                        <hr />
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">By: @report.User?.FullName</small>
-                            <small class="text-muted">@report.CreatedAt.ToLocalTime().ToString("MMM dd, HH:mm")</small>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-white border-top-0 d-flex gap-2 pb-3">
-                        @if (activeTab == "pending")
+                <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden d-flex flex-column">
+                    <!-- Photo Header -->
+                    <div class="position-relative bg-light" style="height: 190px;">
+                        @if (!string.IsNullOrEmpty(report.PhotoUrl))
                         {
-                            <form asp-action="VerifyReport" method="post" class="flex-grow-1">
-                                <input type="hidden" name="id" value="@report.Id" />
-                                <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-circle me-1"></i>Verify</button>
-                            </form>
-                            <button type="button" class="btn btn-outline-danger flex-grow-1" data-bs-toggle="modal" data-bs-target="#rejectReportModal-@report.Id">
-                                <i class="bi bi-x-circle me-1"></i>Invalid
-                            </button>
-                        }
-                        else if (activeTab == "under_review")
-                        {
-                            <form asp-action="ResolveReport" method="post" class="w-100">
-                                <input type="hidden" name="id" value="@report.Id" />
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="bi bi-check2-circle me-1"></i>Mark as Resolved
-                                </button>
-                            </form>
+                            <img src="@report.PhotoUrl" class="w-100 h-100" style="object-fit: cover;" alt="Hazard Photo" />
                         }
                         else
                         {
-                            <div class="w-100 text-center text-success py-1 fw-semibold">
-                                <i class="bi bi-check-circle-fill me-1"></i>Hazard Cleared & Resolved
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                                <i class="bi bi-camera-slash fs-1 text-secondary"></i>
+                                <span class="small mt-1">No Photo Provided</span>
+                            </div>
+                        }
+                        <!-- Floating badges -->
+                        <div class="position-absolute top-0 start-0 m-2">
+                            <span class="badge bg-dark bg-opacity-75 rounded-pill px-2 py-1">#@report.Id</span>
+                            <span class="badge bg-danger rounded-pill px-2 py-1">@report.DiseaseType</span>
+                        </div>
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge @(report.Verification == LarvaX.Core.Entities.ReportVerification.Verified ? "bg-success" : report.Verification == LarvaX.Core.Entities.ReportVerification.Invalid ? "bg-danger" : "bg-warning text-dark") rounded-pill px-2 py-1">
+                                @report.Verification
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="card-body p-3 flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge @(report.Status == LarvaX.Core.Entities.ReportStatus.Resolved ? "bg-success" : report.Status == LarvaX.Core.Entities.ReportStatus.UnderReview ? "bg-warning text-dark" : "bg-primary") rounded-pill">
+                                Status: @report.Status
+                            </span>
+                            <small class="text-muted"><i class="bi bi-clock me-1"></i>@report.CreatedAt.ToString("MMM dd, HH:mm")</small>
+                        </div>
+
+                        <!-- Location Coordinates -->
+                        <div class="mb-2">
+                            <a href="https://www.google.com/maps?q=@report.Latitude,@report.Longitude" target="_blank" class="text-decoration-none small text-danger fw-semibold d-inline-flex align-items-center" title="Open GPS in Google Maps">
+                                <i class="bi bi-geo-alt-fill me-1"></i>@report.Latitude.ToString("F5"), @report.Longitude.ToString("F5")
+                                <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.75rem;"></i>
+                            </a>
+                        </div>
+
+                        <p class="card-text small text-dark mb-2">
+                            @(report.Description ?? "No description submitted by citizen.")
+                        </p>
+
+                        @if (!string.IsNullOrEmpty(report.FieldNotes))
+                        {
+                            <div class="p-2 bg-light rounded-2 small text-muted mb-2">
+                                <strong class="d-block text-secondary" style="font-size: 0.75rem;">Field Notes:</strong>
+                                @report.FieldNotes
+                            </div>
+                        }
+
+                        @if (report.Verification == LarvaX.Core.Entities.ReportVerification.Invalid && !string.IsNullOrEmpty(report.RejectionReason))
+                        {
+                            <div class="p-2 bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-2 small text-danger mb-2">
+                                <strong>Rejection Reason:</strong> @report.RejectionReason
+                            </div>
+                        }
+
+                        <hr class="my-2" />
+                        <div class="d-flex justify-content-between align-items-center small text-muted">
+                            <span><i class="bi bi-person me-1"></i>@(report.User?.FullName ?? "Citizen")</span>
+                            <span>Updated: @report.UpdatedAt.ToString("dd MMM")</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Actions Footer -->
+                    <div class="card-footer bg-white border-top p-3 pt-2">
+                        @if (activeTab == "pending")
+                        {
+                            <div class="d-flex gap-2">
+                                <form asp-action="VerifyReport" method="post" class="flex-grow-1">
+                                    <input type="hidden" name="id" value="@report.Id" />
+                                    <button type="submit" class="btn btn-success btn-sm w-100 shadow-sm">
+                                        <i class="bi bi-check-circle me-1"></i>Verify
+                                    </button>
+                                </form>
+                                <form asp-action="MarkUnderReview" method="post">
+                                    <input type="hidden" name="id" value="@report.Id" />
+                                    <button type="submit" class="btn btn-outline-warning btn-sm" title="Mark under review">
+                                        <i class="bi bi-hourglass-split"></i>
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal-@report.Id" title="Invalidate report">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        }
+                        else if (activeTab == "under_review")
+                        {
+                            <div class="d-flex gap-2">
+                                <form asp-action="ResolveReport" method="post" class="flex-grow-1">
+                                    <input type="hidden" name="id" value="@report.Id" />
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 shadow-sm">
+                                        <i class="bi bi-check2-circle me-1"></i>Mark Resolved
+                                    </button>
+                                </form>
+                                <form asp-action="VerifyReport" method="post">
+                                    <input type="hidden" name="id" value="@report.Id" />
+                                    <button type="submit" class="btn btn-outline-success btn-sm" title="Confirm Verification">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                        else if (activeTab == "verified")
+                        {
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-success bg-opacity-10 text-success fw-semibold"><i class="bi bi-shield-check me-1"></i>Surveillance Active</span>
+                                <form asp-action="ResolveReport" method="post">
+                                    <input type="hidden" name="id" value="@report.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary py-0">Mark Resolved</button>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted small py-1">
+                                <i class="bi bi-slash-circle me-1 text-danger"></i>Report marked invalid & archived
                             </div>
                         }
                     </div>
 
-                    @if (activeTab == "pending")
-                    {
-                        <!-- Reject Modal -->
-                        <div class="modal fade" id="rejectReportModal-@report.Id" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form asp-action="RejectReport" method="post">
-                                        <input type="hidden" name="id" value="@report.Id" />
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Mark Report #@report.Id as Invalid</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <!-- Invalidation Modal -->
+                    <div class="modal fade text-start" id="rejectModal-@report.Id" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <form asp-action="RejectReport" method="post">
+                                    <input type="hidden" name="id" value="@report.Id" />
+                                    <div class="modal-header">
+                                        <h5 class="modal-title fw-bold">Invalidate Report #@report.Id</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-semibold">Reason for invalidation:</label>
+                                            <textarea name="reason" class="form-control" rows="3" required placeholder="e.g. Photo unclear, duplicate hazard, outside municipal scope, spam"></textarea>
                                         </div>
-                                        <div class="modal-body">
-                                            <div class="mb-3">
-                                                <label class="form-label">Reason for invalidation:</label>
-                                                <textarea name="reason" class="form-control" required rows="3" placeholder="e.g. Photo unclear, location inaccurate, spam"></textarea>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="submit" class="btn btn-danger">Confirm Invalid</button>
-                                        </div>
-                                    </form>
-                                </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-danger btn-sm">Confirm Invalidate</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
-                    }
+                    </div>
                 </div>
             </div>
         }

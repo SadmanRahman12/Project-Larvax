@@ -1,0 +1,207 @@
+@model LarvaX.Web.Models.AdminAlertManagementViewModel
+@{
+    ViewData["Title"] = "Alert Management - LarvaX Admin";
+}
+
+<partial name="_AdminNav" />
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- HEADER -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-bell-fill text-danger me-2"></i>Emergency Alert Dispatch & Management</h4>
+                <p class="text-muted small mb-0">Broadcast real-time push alerts via SignalR to mobile and web sentinel users, and monitor automated delivery metrics.</p>
+            </div>
+            <button type="button" class="btn btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#broadcastAlertModal">
+                <i class="bi bi-broadcast me-1"></i>Broadcast New Alert
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- METRICS CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 border-start border-danger border-4">
+            <div class="card-body">
+                <span class="text-muted small fw-semibold text-uppercase">Total Alerts Broadcasted</span>
+                <h3 class="fw-bold mb-1 text-dark">@Model.TotalAlertsCount</h3>
+                <small class="text-muted">Lifetime platform alerts</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 border-start border-primary border-4">
+            <div class="card-body">
+                <span class="text-muted small fw-semibold text-uppercase">Delivered Count</span>
+                <h3 class="fw-bold mb-1 text-primary">@Model.TotalDeliveredCount</h3>
+                <small class="text-muted">SignalR client receptions</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 border-start border-success border-4">
+            <div class="card-body">
+                <span class="text-muted small fw-semibold text-uppercase">Opened / Read</span>
+                <h3 class="fw-bold mb-1 text-success">@Model.TotalOpenedCount</h3>
+                <small class="text-muted">Interacted by citizens</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 border-start border-warning border-4">
+            <div class="card-body">
+                <span class="text-muted small fw-semibold text-uppercase">Sent Today</span>
+                <h3 class="fw-bold mb-1 text-warning">@Model.ActiveTodayCount</h3>
+                <small class="text-muted">Last 24 hours</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ALERT LOG TABLE -->
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+    <div class="card-header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history text-secondary me-2"></i>Alert Dispatch Registry & History</h5>
+        <a asp-action="ExportAlertsCsv" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download me-1"></i>Export Alerts CSV</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-uppercase">
+                <tr>
+                    <th>Alert ID</th>
+                    <th>Message Content</th>
+                    <th>Target Zone / Region</th>
+                    <th>Radius</th>
+                    <th>Dispatched (UTC)</th>
+                    <th>Delivery Stats</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Alerts.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-bell-slash fs-1 mb-2 d-block"></i>
+                            <p class="mb-0">No alerts have been recorded yet.</p>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var alert in Model.Alerts)
+                    {
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary">#@alert.Id</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">@alert.Message</div>
+                                <small class="text-muted">Language: @alert.Language.ToUpper()</small>
+                            </td>
+                            <td>
+                                @if (alert.Zone != null)
+                                {
+                                    <span class="badge bg-danger rounded-pill"><i class="bi bi-geo-alt-fill me-1"></i>@alert.Zone.Region</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-dark rounded-pill"><i class="bi bi-globe me-1"></i>Nationwide / All Zones</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="small text-muted">@(alert.RadiusKm.HasValue ? $"{alert.RadiusKm:F1} km" : "Global")</span>
+                            </td>
+                            <td class="small text-muted">
+                                @alert.SentAt.ToString("dd MMM yyyy, HH:mm")
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <span class="text-primary me-2"><i class="bi bi-check2"></i> @alert.DeliveredCount</span>
+                                    <span class="text-success me-2"><i class="bi bi-eye"></i> @alert.OpenedCount</span>
+                                    <span class="text-danger"><i class="bi bi-x"></i> @alert.FailedCount</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Broadcasted
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- BROADCAST NEW ALERT MODAL -->
+<div class="modal fade" id="broadcastAlertModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="BroadcastAlert" method="post">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-broadcast me-2"></i>Broadcast Emergency Dengue Alert</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Target Risk Zone:</label>
+                        <select name="ZoneId" class="form-select">
+                            <option value="">-- Nationwide / All Monitored Regions --</option>
+                            @foreach (var z in Model.RiskZones)
+                            {
+                                <option value="@z.Id">@z.Region (Risk: @z.RiskLevel)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Alert Radius (Kilometers):</label>
+                        <input type="number" name="RadiusKm" class="form-control" value="5" min="1" max="100" step="0.5" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Alert Message (English):</label>
+                        <textarea name="Message" class="form-control" rows="3" required placeholder="e.g. URGENT: Spike in Dengue cases detected in Mirpur-10. Clear stagnant water containers and inspect homes immediately."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Alert Message (বাংলা - Bengali Translation):</label>
+                        <textarea name="MessageBn" class="form-control" rows="2" placeholder="e.g. জরুরি সতর্কতা: মিরপুর এলাকায় ডেঙ্গুর প্রকোপ বৃদ্ধি পেয়েছে। জমা পানি পরিষ্কার করুন এবং মশার কামড় থেকে সুরক্ষিত থাকুন।"></textarea>
+                    </div>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="signalRImmediate" checked disabled>
+                        <label class="form-check-label small fw-semibold" for="signalRImmediate">
+                            Push immediately via SignalR to connected citizens & staff
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm shadow-sm">
+                        <i class="bi bi-broadcast me-1"></i>Confirm & Broadcast Alert
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

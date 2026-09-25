@@ -83,6 +83,7 @@
   <data name="Tele_AllSpecialties" xml:space="preserve"><value>All Specialties</value></data>
 
   <!-- Lab -->
+  <data name="Lab_Dashboard" xml:space="preserve"><value>Lab Staff Dashboard</value></data>
   <data name="Lab_AvailableTests" xml:space="preserve"><value>Available Lab Tests</value></data>
   <data name="Lab_BookTest" xml:space="preserve"><value>Book Test</value></data>
   <data name="Lab_MyBookings" xml:space="preserve"><value>My Lab Bookings</value></data>
@@ -93,6 +94,18 @@
   <data name="Lab_Status_Completed" xml:space="preserve"><value>Completed</value></data>
   <data name="Lab_ViewResult" xml:space="preserve"><value>View Result</value></data>
   <data name="Lab_NotAvailable" xml:space="preserve"><value>Not available yet</value></data>
+  <data name="Lab_TodayTests" xml:space="preserve"><value>Today's Tests</value></data>
+  <data name="Lab_PendingTests" xml:space="preserve"><value>Pending Tests</value></data>
+  <data name="Lab_WaitingUpload" xml:space="preserve"><value>Results Waiting Upload</value></data>
+  <data name="Lab_SampleManagement" xml:space="preserve"><value>Sample Management</value></data>
+  <data name="Lab_EnterValues" xml:space="preserve"><value>Enter Test Values</value></data>
+  <data name="Lab_PatientRecords" xml:space="preserve"><value>Patient Records</value></data>
+  <data name="Lab_CompletedTests" xml:space="preserve"><value>Completed Tests</value></data>
+  <data name="Lab_CriticalAlert" xml:space="preserve"><value>Critical Platelet Alert</value></data>
+  <data name="Lab_Profile" xml:space="preserve"><value>Lab Profile</value></data>
+  <data name="Lab_Workflow" xml:space="preserve"><value>Lab Test Workflow</value></data>
+  <data name="Lab_PrintReport" xml:space="preserve"><value>Print Diagnostic Report</value></data>
+  <data name="Lab_VerifyResult" xml:space="preserve"><value>Verify &amp; Notify Patient</value></data>
 
   <!-- Reports / Risk -->
   <data name="Risk_HighAlert" xml:space="preserve"><value>HIGH ALERT</value></data>
