@@ -1,0 +1,328 @@
+@model LarvaX.Web.Models.CheckoutViewModel
+@{
+    ViewData["Title"] = Model.CurrentLanguage == "bn" ? "নিরাপদ চেকআউট" : "Secure Checkout";
+    var isBn = Model.CurrentLanguage == "bn";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <!-- Breadcrumb / Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <a asp-action="Index" class="text-decoration-none text-muted small">
+                        <i class="bi bi-arrow-left me-1"></i>@(isBn ? "প্ল্যান তালিকায় ফিরুন" : "Back to Plans")
+                    </a>
+                    <h2 class="fw-bold mt-1 mb-0">@(isBn ? "নিরাপদ চেকআউট" : "Complete Your Subscription")</h2>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">
+                        <i class="bi bi-shield-lock-fill me-1"></i>256-Bit SSL Encrypted
+                    </span>
+                </div>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger rounded-4 shadow-sm mb-4">
+                    <div asp-validation-summary="All" class="text-danger mb-0"></div>
+                </div>
+            }
+
+            <form asp-action="ProcessCheckout" method="post" id="checkoutForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="PlanId" />
+                <input type="hidden" asp-for="Cycle" />
+                <input type="hidden" asp-for="BasePrice" id="hiddenBasePrice" />
+                <input type="hidden" asp-for="FinalPrice" id="hiddenFinalPrice" />
+
+                <div class="row g-4">
+                    <!-- Left Column: Payment Methods -->
+                    <div class="col-lg-7">
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="bi bi-credit-card-2-front text-primary me-2"></i>
+                                    @(isBn ? "পেমেন্ট মাধ্যম নির্বাচন করুন" : "Select Payment Method")
+                                </h5>
+                            </div>
+                            <div class="card-body px-4 pb-4">
+                                <!-- Gateway Option Radio Pills -->
+                                <div class="row g-2 mb-4">
+                                    <div class="col-6 col-sm-3">
+                                        <input type="radio" class="btn-check" name="PaymentMethod" id="payBkash" value="Bkash" checked autocomplete="off">
+                                        <label class="btn btn-outline-danger w-100 py-3 rounded-3 text-center d-flex flex-column align-items-center justify-content-center h-100" for="payBkash" style="border-color: #e2136e;">
+                                            <span class="fw-bold fs-6" style="color: #e2136e;">bKash</span>
+                                            <small class="text-muted small">বিকাশ</small>
+                                        </label>
+                                    </div>
+                                    <div class="col-6 col-sm-3">
+                                        <input type="radio" class="btn-check" name="PaymentMethod" id="payNagad" value="Nagad" autocomplete="off">
+                                        <label class="btn btn-outline-warning w-100 py-3 rounded-3 text-center d-flex flex-column align-items-center justify-content-center h-100" for="payNagad" style="border-color: #f7941d;">
+                                            <span class="fw-bold fs-6" style="color: #f7941d;">Nagad</span>
+                                            <small class="text-muted small">নগদ</small>
+                                        </label>
+                                    </div>
+                                    <div class="col-6 col-sm-3">
+                                        <input type="radio" class="btn-check" name="PaymentMethod" id="payCard" value="Card" autocomplete="off">
+                                        <label class="btn btn-outline-primary w-100 py-3 rounded-3 text-center d-flex flex-column align-items-center justify-content-center h-100" for="payCard">
+                                            <span class="fw-bold fs-6"><i class="bi bi-credit-card me-1"></i>Cards</span>
+                                            <small class="text-muted small">Visa / Master</small>
+                                        </label>
+                                    </div>
+                                    <div class="col-6 col-sm-3">
+                                        <input type="radio" class="btn-check" name="PaymentMethod" id="payInstant" value="MockInstant" autocomplete="off">
+                                        <label class="btn btn-outline-success w-100 py-3 rounded-3 text-center d-flex flex-column align-items-center justify-content-center h-100" for="payInstant">
+                                            <span class="fw-bold fs-6"><i class="bi bi-lightning-charge-fill me-1"></i>Demo</span>
+                                            <small class="text-muted small">1-Click Test</small>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- bKash / Nagad Container -->
+                                <div id="walletDetailsContainer" class="p-3 bg-light rounded-3 mb-3 border">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="badge rounded-circle p-2 me-2" id="walletBadge" style="background-color: #e2136e; color: white;">
+                                            <i class="bi bi-phone"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-0" id="walletTitle">bKash Mobile Payment</h6>
+                                            <small class="text-muted" id="walletSubtitle">Enter your 11-digit personal bKash wallet number</small>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold text-muted">@(isBn ? "মোবাইল অ্যাকাউন্ট নম্বর" : "Account Mobile Number")</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span>
+                                            <input asp-for="MobileNumber" class="form-control" placeholder="017XXXXXXXX" value="01712345678" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-semibold text-muted">@(isBn ? "পিন / ওটিপি ভেরিফিকেশন" : "PIN / Simulation OTP")</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-shield-lock"></i></span>
+                                            <input asp-for="PinOrOtp" type="password" class="form-control" placeholder="••••" value="1234" maxlength="5" />
+                                        </div>
+                                        <small class="text-muted">@(isBn ? "ডেমো টেস্টের জন্য যেকোনো পিন বা 1234 ব্যবহার করুন।" : "For testing in sandbox mode, use any 4-digit PIN like 1234.")</small>
+                                    </div>
+                                </div>
+
+                                <!-- Card Details Container -->
+                                <div id="cardDetailsContainer" class="p-3 bg-light rounded-3 mb-3 border d-none">
+                                    <h6 class="fw-bold mb-3"><i class="bi bi-credit-card me-1"></i>Credit or Debit Card</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold text-muted">Cardholder Name</label>
+                                        <input asp-for="CardHolderName" class="form-control" placeholder="Name on card" value="Rahim Chowdhury" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold text-muted">Card Number</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-credit-card-2-back"></i></span>
+                                            <input asp-for="CardNumber" class="form-control" placeholder="4242 4242 4242 4242" value="4242424242424242" />
+                                        </div>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small fw-semibold text-muted">Expiration Date</label>
+                                            <input asp-for="CardExpiry" class="form-control" placeholder="MM/YY" value="12/28" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small fw-semibold text-muted">CVV</label>
+                                            <input asp-for="CardCvv" class="form-control" placeholder="123" value="123" maxlength="4" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Instant Sandbox Container -->
+                                <div id="instantContainer" class="p-3 bg-success-subtle rounded-3 mb-3 border border-success-subtle d-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-lightning-charge-fill text-success fs-3 me-3"></i>
+                                        <div>
+                                            <h6 class="fw-bold text-success-emphasis mb-1">Instant Sandbox Evaluation</h6>
+                                            <small class="text-success-emphasis">
+                                                One-click simulation mode. Approves instantly without prompting for payment gateway credentials.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Order Summary & Coupon -->
+                    <div class="col-lg-5">
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                                <h5 class="fw-bold mb-0">@(isBn ? "অর্ডার সারাংশ" : "Order Summary")</h5>
+                            </div>
+                            <div class="card-body px-4 pb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h6 class="fw-bold mb-0">@(isBn ? Model.Plan?.NameBn : Model.Plan?.Name)</h6>
+                                        <small class="text-muted">
+                                            @(Model.Cycle == LarvaX.Core.Entities.BillingCycle.Yearly ? (isBn ? "বার্ষিক বিলিং" : "Annual Billing") : (isBn ? "মাসিক বিলিং" : "Monthly Billing"))
+                                        </small>
+                                    </div>
+                                    <span class="fs-5 fw-bold text-dark">৳@Model.BasePrice.ToString("N0")</span>
+                                </div>
+
+                                <hr class="text-muted opacity-25">
+
+                                <!-- Coupon Code Section -->
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-muted">
+                                        <i class="bi bi-tag-fill text-warning me-1"></i>@(isBn ? "প্রোমো কোড / কুপন" : "Promo or Coupon Code")
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" asp-for="CouponCode" id="inputCouponCode" class="form-control text-uppercase" placeholder="e.g. LARVAXFREE, HEALTH20" />
+                                        <button type="button" class="btn btn-outline-dark" id="btnApplyCoupon">
+                                            @(isBn ? "প্রয়োগ" : "Apply")
+                                        </button>
+                                    </div>
+                                    <div id="couponFeedback" class="small mt-1 d-none"></div>
+                                    <div class="form-text small text-muted">
+                                        Try <code>LARVAXFREE</code> (100% off) or <code>HEALTH20</code> (20% off)
+                                    </div>
+                                </div>
+
+                                <hr class="text-muted opacity-25">
+
+                                <!-- Line Items -->
+                                <div class="d-flex justify-content-between text-muted small mb-2">
+                                    <span>@(isBn ? "মূল মূল্য" : "Base Subtotal")</span>
+                                    <span>৳@Model.BasePrice.ToString("N0")</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-success small mb-2 d-none" id="discountRow">
+                                    <span><i class="bi bi-patch-check-fill me-1"></i>@(isBn ? "কুপন ডিসকাউন্ট" : "Discount Applied")</span>
+                                    <span id="discountValueDisplay">-৳0</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small mb-3">
+                                    <span>@(isBn ? "ভ্যাট ও ট্যাক্স" : "VAT / Tax (Govt. Public Health Exemption)")</span>
+                                    <span>৳0</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                    <span class="fs-6 fw-bold text-dark">@(isBn ? "মোট প্রদেয়" : "Total Payable")</span>
+                                    <span class="fs-4 fw-bold text-success" id="finalPriceDisplay">৳@Model.FinalPrice.ToString("N0")</span>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold shadow-sm" id="btnCompletePayment">
+                                        <i class="bi bi-lock-fill me-2"></i>@(isBn ? "পেমেন্ট নিশ্চিত করুন" : "Confirm & Pay Now")
+                                    </button>
+                                    <small class="text-muted text-center d-block mt-2" style="font-size: 0.75rem;">
+                                        By confirming, you agree to LarvaX Terms of Service. Automatic renewals can be disabled at any time.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const radBkash = document.getElementById('payBkash');
+        const radNagad = document.getElementById('payNagad');
+        const radCard = document.getElementById('payCard');
+        const radInstant = document.getElementById('payInstant');
+
+        const walletContainer = document.getElementById('walletDetailsContainer');
+        const walletBadge = document.getElementById('walletBadge');
+        const walletTitle = document.getElementById('walletTitle');
+        const walletSubtitle = document.getElementById('walletSubtitle');
+        const cardContainer = document.getElementById('cardDetailsContainer');
+        const instantContainer = document.getElementById('instantContainer');
+
+        function updatePaymentUI() {
+            if (radBkash.checked) {
+                walletContainer.classList.remove('d-none');
+                cardContainer.classList.add('d-none');
+                instantContainer.classList.add('d-none');
+                walletBadge.style.backgroundColor = '#e2136e';
+                walletTitle.innerText = 'bKash Mobile Payment';
+                walletSubtitle.innerText = 'Enter your 11-digit personal bKash wallet number';
+            } else if (radNagad.checked) {
+                walletContainer.classList.remove('d-none');
+                cardContainer.classList.add('d-none');
+                instantContainer.classList.add('d-none');
+                walletBadge.style.backgroundColor = '#f7941d';
+                walletTitle.innerText = 'Nagad Mobile Payment';
+                walletSubtitle.innerText = 'Enter your 11-digit personal Nagad wallet number';
+            } else if (radCard.checked) {
+                walletContainer.classList.add('d-none');
+                cardContainer.classList.remove('d-none');
+                instantContainer.classList.add('d-none');
+            } else if (radInstant.checked) {
+                walletContainer.classList.add('d-none');
+                cardContainer.classList.add('d-none');
+                instantContainer.classList.remove('d-none');
+            }
+        }
+
+        document.querySelectorAll('input[name="PaymentMethod"]').forEach(el => {
+            el.addEventListener('change', updatePaymentUI);
+        });
+
+        // Coupon AJAX Validation
+        const btnApply = document.getElementById('btnApplyCoupon');
+        const inputCoupon = document.getElementById('inputCouponCode');
+        const couponFeedback = document.getElementById('couponFeedback');
+        const discountRow = document.getElementById('discountRow');
+        const discountValueDisplay = document.getElementById('discountValueDisplay');
+        const finalPriceDisplay = document.getElementById('finalPriceDisplay');
+        const hiddenFinalPrice = document.getElementById('hiddenFinalPrice');
+        const basePrice = parseFloat(document.getElementById('hiddenBasePrice').value);
+
+        btnApply.addEventListener('click', async () => {
+            const code = inputCoupon.value.trim();
+            if (!code) {
+                couponFeedback.className = 'small mt-1 text-danger';
+                couponFeedback.innerText = 'Please enter a coupon code.';
+                couponFeedback.classList.remove('d-none');
+                return;
+            }
+
+            try {
+                btnApply.disabled = true;
+                btnApply.innerText = 'Checking...';
+
+                const response = await fetch('/Subscription/ValidateCoupon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code, baseAmount: basePrice })
+                });
+
+                const data = await response.json();
+                couponFeedback.classList.remove('d-none');
+
+                if (data.isValid) {
+                    couponFeedback.className = 'small mt-1 text-success fw-semibold';
+                    couponFeedback.innerText = data.message;
+                    discountRow.classList.remove('d-none');
+                    discountValueDisplay.innerText = `-৳${data.discountAmount.toLocaleString()}`;
+                    finalPriceDisplay.innerText = `৳${data.finalAmount.toLocaleString()}`;
+                    hiddenFinalPrice.value = data.finalAmount;
+                } else {
+                    couponFeedback.className = 'small mt-1 text-danger';
+                    couponFeedback.innerText = data.message;
+                    discountRow.classList.add('d-none');
+                    finalPriceDisplay.innerText = `৳${basePrice.toLocaleString()}`;
+                    hiddenFinalPrice.value = basePrice;
+                }
+            } catch (err) {
+                couponFeedback.className = 'small mt-1 text-danger';
+                couponFeedback.innerText = 'Failed to validate coupon. Please check connection.';
+                couponFeedback.classList.remove('d-none');
+            } finally {
+                btnApply.disabled = false;
+                btnApply.innerText = 'Apply';
+            }
+        });
+    </script>
+}

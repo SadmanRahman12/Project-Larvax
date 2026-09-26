@@ -26,6 +26,16 @@ namespace LarvaX.Infrastructure.Data
         public DbSet<DengueCase> DengueCases { get; set; } = null!;
         public DbSet<HealthWorkerTask> HealthWorkerTasks { get; set; } = null!;
         public DbSet<CaseReferral> CaseReferrals { get; set; } = null!;
+
+        // Phase 5: Paid Subscription & Monetization DbSets
+        public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; } = null!;
+        public DbSet<SubscriptionFeature> SubscriptionFeatures { get; set; } = null!;
+        public DbSet<UserSubscription> UserSubscriptions { get; set; } = null!;
+        public DbSet<PaymentTransaction> PaymentTransactions { get; set; } = null!;
+        public DbSet<Invoice> Invoices { get; set; } = null!;
+        public DbSet<Coupon> Coupons { get; set; } = null!;
+        public DbSet<SubscriptionUsage> SubscriptionUsages { get; set; } = null!;
+        public DbSet<FamilyProfile> FamilyProfiles { get; set; } = null!;
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -112,6 +122,69 @@ namespace LarvaX.Infrastructure.Data
             builder.Entity<CaseReferral>()
                 .Property(r => r.Status)
                 .HasConversion<string>();
+
+            // Phase 5: Subscription Model Configurations
+            builder.Entity<SubscriptionPlan>()
+                .Property(p => p.Tier)
+                .HasConversion<string>();
+            builder.Entity<SubscriptionPlan>()
+                .Property(p => p.PriceMonthly)
+                .HasPrecision(18, 2);
+            builder.Entity<SubscriptionPlan>()
+                .Property(p => p.PriceYearly)
+                .HasPrecision(18, 2);
+
+            builder.Entity<UserSubscription>()
+                .Property(s => s.Status)
+                .HasConversion<string>();
+            builder.Entity<UserSubscription>()
+                .Property(s => s.BillingCycle)
+                .HasConversion<string>();
+            builder.Entity<UserSubscription>()
+                .HasIndex(s => new { s.UserId, s.Status });
+
+            builder.Entity<PaymentTransaction>()
+                .Property(t => t.Method)
+                .HasConversion<string>();
+            builder.Entity<PaymentTransaction>()
+                .Property(t => t.Status)
+                .HasConversion<string>();
+            builder.Entity<PaymentTransaction>()
+                .Property(t => t.Amount)
+                .HasPrecision(18, 2);
+            builder.Entity<PaymentTransaction>()
+                .HasIndex(t => t.TransactionReference)
+                .IsUnique();
+            builder.Entity<PaymentTransaction>()
+                .HasIndex(t => t.UserId);
+
+            builder.Entity<Invoice>()
+                .Property(i => i.Status)
+                .HasConversion<string>();
+            builder.Entity<Invoice>()
+                .Property(i => i.Amount)
+                .HasPrecision(18, 2);
+            builder.Entity<Invoice>()
+                .HasIndex(i => i.InvoiceNumber)
+                .IsUnique();
+            builder.Entity<Invoice>()
+                .HasIndex(i => i.UserId);
+
+            builder.Entity<Coupon>()
+                .Property(c => c.DiscountPercent)
+                .HasPrecision(18, 2);
+            builder.Entity<Coupon>()
+                .Property(c => c.FixedDiscountAmount)
+                .HasPrecision(18, 2);
+            builder.Entity<Coupon>()
+                .HasIndex(c => c.Code)
+                .IsUnique();
+
+            builder.Entity<SubscriptionUsage>()
+                .HasIndex(u => new { u.UserId, u.FeatureKey, u.UsageDate });
+
+            builder.Entity<FamilyProfile>()
+                .HasIndex(f => f.UserId);
         }
     }
 }

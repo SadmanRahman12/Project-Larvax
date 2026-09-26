@@ -18,5 +18,12 @@ namespace LarvaX.Core.Entities
 
         public string? Specialty { get; set; }
         public string? Address { get; set; }
+
+        // Monetization & Subscription relations
+        public virtual ICollection<UserSubscription> Subscriptions { get; set; } = new List<UserSubscription>();
+        public virtual ICollection<PaymentTransaction> PaymentTransactions { get; set; } = new List<PaymentTransaction>();
+        public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+        public virtual ICollection<SubscriptionUsage> SubscriptionUsages { get; set; } = new List<SubscriptionUsage>();
+        public virtual ICollection<FamilyProfile> FamilyProfiles { get; set; } = new List<FamilyProfile>();
     }
 }

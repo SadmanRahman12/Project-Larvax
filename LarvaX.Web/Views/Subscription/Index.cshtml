@@ -1,0 +1,346 @@
+@model LarvaX.Web.Models.PricingViewModel
+@{
+    ViewData["Title"] = Model.CurrentLanguage == "bn" ? "সাবস্ক্রিপশন ও প্ল্যান" : "Plans & Pricing";
+    var isBn = Model.CurrentLanguage == "bn";
+}
+
+<div class="container py-4">
+    <!-- Hero Header -->
+    <div class="text-center mb-5">
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 mb-3 fw-semibold">
+            <i class="bi bi-shield-check me-1"></i>@(isBn ? "স্বচ্ছ ও সাশ্রয়ী প্যাকেজ" : "Transparent, Impact-Driven Pricing")
+        </span>
+        <h1 class="display-5 fw-bold text-dark mb-3">
+            @(isBn ? "সঠিক সুরক্ষা বেছে নিন আপনার ও পরিবারের জন্য" : "Invest in Safety for You, Your Family & Community")
+        </h1>
+        <p class="lead text-muted mx-auto" style="max-width: 720px;">
+            @(isBn 
+                ? "জরুরি চিকিৎসা নির্দেশিকা ও পাবলিক অ্যালার্ট সর্বদা বিনামূল্যে। উন্নত এআই সেবা, পারিবারিক ট্র্যাকিং ও পেশাদার ক্লিনিকাল স্যুটের জন্য প্রিমিয়াম গ্রহণ করুন।"
+                : "Emergency triage, public hazard reporting, and outbreak alerts remain 100% free forever. Upgrade for unlimited AI consultations, multi-member family health monitoring, and professional clinician suites.")
+        </p>
+
+        <!-- Billing Period Toggle -->
+        <div class="d-inline-flex align-items-center bg-light p-2 rounded-pill border shadow-sm mt-3">
+            <span class="fw-semibold px-3 py-1 cursor-pointer" id="btnMonthly">
+                @(isBn ? "মাসিক বিলিং" : "Monthly Billing")
+            </span>
+            <div class="form-check form-switch mb-0 fs-5 px-3">
+                <input class="form-check-input" type="checkbox" role="switch" id="billingToggle" style="cursor: pointer;">
+            </div>
+            <span class="fw-semibold px-3 py-1 text-muted cursor-pointer" id="btnYearly">
+                @(isBn ? "বার্ষিক বিলিং" : "Yearly Billing") 
+                <span class="badge bg-danger rounded-pill ms-1 small">@(isBn ? "১৬% ছাড়" : "Save ~16%")</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Pricing Cards Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-5">
+        @foreach (var plan in Model.Plans)
+        {
+            var isCurrent = Model.CurrentSubscription?.SubscriptionPlanId == plan.Id;
+            var isPopular = plan.Tier == LarvaX.Core.Entities.PlanTier.CitizenPremium;
+            var isPro = plan.Tier == LarvaX.Core.Entities.PlanTier.Professional;
+            var isOrg = plan.Tier == LarvaX.Core.Entities.PlanTier.Institutional;
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border @(isPopular ? "border-success border-2 shadow" : isPro ? "border-primary-subtle" : isOrg ? "border-warning-subtle" : "") position-relative rounded-4 overflow-hidden d-flex flex-column">
+                    @if (isPopular)
+                    {
+                        <div class="position-absolute top-0 end-0 bg-success text-white px-3 py-1 rounded-bottom-start small fw-bold shadow-sm">
+                            <i class="bi bi-star-fill me-1"></i>@(isBn ? "সবচেয়ে জনপ্রিয়" : "Most Popular")
+                        </div>
+                    }
+                    else if (isPro)
+                    {
+                        <div class="position-absolute top-0 end-0 bg-primary text-white px-3 py-1 rounded-bottom-start small fw-bold shadow-sm">
+                            <i class="bi bi-heart-pulse-fill me-1"></i>@(isBn ? "ক্লিনিকাল" : "Clinicians")
+                        </div>
+                    }
+
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="mb-3">
+                            <h4 class="card-title fw-bold text-dark mb-1">
+                                @(isBn ? plan.NameBn : plan.Name)
+                            </h4>
+                            <p class="text-muted small mb-0" style="min-height: 48px;">
+                                @(isBn ? plan.DescriptionBn : plan.Description)
+                            </p>
+                        </div>
+
+                        <!-- Price Section -->
+                        <div class="my-3 py-3 border-top border-bottom bg-light bg-opacity-50 rounded-3 text-center">
+                            @if (plan.PriceMonthly == 0)
+                            {
+                                <div class="display-6 fw-bold text-success">@(isBn ? "ফ্রি" : "Free")</div>
+                                <small class="text-muted">@(isBn ? "আজীবন কোনো চার্জ নেই" : "Forever zero charges")</small>
+                            }
+                            else
+                            {
+                                <div class="price-monthly-view">
+                                    <span class="fs-4 fw-semibold text-muted">৳</span>
+                                    <span class="display-6 fw-bold text-dark">@plan.PriceMonthly.ToString("N0")</span>
+                                    <span class="text-muted small">/@(isBn ? "মাস" : "mo")</span>
+                                </div>
+                                <div class="price-yearly-view d-none">
+                                    <span class="fs-4 fw-semibold text-muted">৳</span>
+                                    <span class="display-6 fw-bold text-dark">@plan.PriceYearly.ToString("N0")</span>
+                                    <span class="text-muted small">/@(isBn ? "বছর" : "yr")</span>
+                                    <div class="small text-success fw-semibold">
+                                        ≈ ৳@((plan.PriceYearly / 12m).ToString("N0"))/@(isBn ? "মাস" : "mo")
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Highlights -->
+                        <ul class="list-unstyled mb-4 small flex-grow-1">
+                            @if (plan.Tier == LarvaX.Core.Entities.PlanTier.CitizenFree)
+                            {
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>5</strong> @(isBn ? "দৈনিক এআই প্রশ্ন" : "DenAI queries / day")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "জরুরি প্রাথমিক চিকিৎসা গাইড" : "Emergency first aid guide")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "নাগরিক মশার উৎস রিপোর্টিং" : "Citizen hazard reporting")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "রক্তদাতা অনুসন্ধান ও আইসিইউ বেড" : "Blood donor & ICU directory")</li>
+                                <li class="mb-2 d-flex align-items-center text-muted"><i class="bi bi-x-circle text-muted me-2"></i> @(isBn ? "পারিবারিক প্রোফাইল সীমাবদ্ধ (১)" : "Family tracking (1 member)")</li>
+                            }
+                            else if (plan.Tier == LarvaX.Core.Entities.PlanTier.CitizenPremium)
+                            {
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>@(isBn ? "সীমাহীন" : "Unlimited")</strong> @(isBn ? "ডেন-এআই পরামর্শ" : "DenAI 24/7 consultations")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>@(isBn ? "৬ জন" : "Up to 6")</strong> @(isBn ? "পারিবারিক স্বাস্থ্য প্রোফাইল" : "family member profiles")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "সুস্থতার ধারা ও রিকভারি চার্ট" : "Longitudinal recovery trends")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "ব্যক্তিগত হাইড্রেশন রিমাইন্ডার" : "Hydration & oral therapy planner")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "ডাউনলোডযোগ্য ক্লিনিকাল রিপোর্ট" : "Downloadable health summaries")</li>
+                            }
+                            else if (plan.Tier == LarvaX.Core.Entities.PlanTier.Professional)
+                            {
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "টেলিমেডিসিন ভিডিও কনসাল্ট হাব" : "HD Telemedicine Video Hub")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "রোগীর হিস্ট্রি ও ডিজিটাল রেকর্ড" : "Integrated patient records")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "জরুরি আইসিইউ রেফারেল সমন্বয়" : "Digital case referrals & triage")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "ডব্লিউএইচও জাতীয় ফ্লুইড ক্যালকুলেটর" : "National IV fluid protocol tools")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "ক্লিনিকাল কেসলোড ইনসাইটস" : "Clinical outcome analytics")</li>
+                            }
+                            else
+                            {
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "মাল্টি-সিট ল্যাব স্টাফ পোর্টাল" : "Enterprise multi-seat portal")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "স্যাম্পল অ্যাকসেশন ও বারকোড ট্র্যাকিং" : "Sample barcode & lab tracking")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "আঞ্চলিক মহামারি নজরদারি এপিআই" : "Regional outbreak API sync")</li>
+                                <li class="mb-2 d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-2"></i> @(isBn ? "২৪/৭ প্রায়োরিটি টেকনিক্যাল সাপোর্ট" : "24/7 dedicated support & SLA")</li>
+                            }
+                        </ul>
+
+                        <!-- CTA Button -->
+                        <div class="mt-auto">
+                            @if (isCurrent)
+                            {
+                                <button class="btn btn-outline-success w-100 py-2 rounded-pill fw-semibold disabled">
+                                    <i class="bi bi-check2-circle me-1"></i>@(isBn ? "বর্তমান প্ল্যান" : "Current Plan")
+                                </button>
+                            }
+                            else if (plan.Tier == LarvaX.Core.Entities.PlanTier.CitizenFree)
+                            {
+                                <a asp-action="Checkout" asp-route-planId="@plan.Id" class="btn btn-outline-dark w-100 py-2 rounded-pill fw-semibold">
+                                    @(isBn ? "ফ্রি ব্যবহার করুন" : "Get Started Free")
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Checkout" asp-route-planId="@plan.Id" asp-route-cycle="Monthly" class="btn btn-plan-select @(isPopular ? "btn-success" : "btn-dark") w-100 py-2 rounded-pill fw-semibold shadow-sm" data-plan-id="@plan.Id">
+                                    @(isBn ? "প্ল্যানটি বেছে নিন" : "Choose Plan") <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Public Health Assurance Banner -->
+    <div class="card bg-success-subtle border-success-subtle rounded-4 p-4 mb-5 shadow-sm">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center text-md-start mb-3 mb-md-0">
+                <i class="bi bi-heart-pulse-fill text-success" style="font-size: 3rem;"></i>
+            </div>
+            <div class="col-md-10">
+                <h4 class="fw-bold text-success-emphasis mb-1">
+                    @(isBn ? "আমাদের জনস্বাস্থ্য প্রতিশ্রুতি" : "Our Public Health Pledge")
+                </h4>
+                <p class="text-success-emphasis mb-0">
+                    @(isBn 
+                        ? "লারভ্যাক্স বিশ্বাস করে যে জীবন রক্ষাকারী ডেঙ্গু তথ্য সবার জন্য সহজলভ্য হওয়া উচিত। জরুরি লক্ষণ নির্দেশনা, হটস্পট ম্যাপ ও কমিউনিটি সতর্কবার্তা সর্বদা কোনো চার্জ ছাড়াই সবার জন্য উন্মুক্ত থাকবে।"
+                        : "LarvaX is committed to universal dengue safety. Emergency warning signs, epidemic hotspot maps, and citizen hazard reporting remain 100% accessible to every citizen, regardless of subscription.")
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Comparison Matrix -->
+    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden">
+        <div class="card-header bg-dark text-white p-4">
+            <h4 class="fw-bold mb-1"><i class="bi bi-table me-2"></i>@(isBn ? "প্ল্যান তুলনা ছক" : "Feature Comparison Matrix")</h4>
+            <small class="text-white-50">@(isBn ? "সকল প্যাকেজের বিস্তারিত সুবিধা দেখুন" : "Compare full capabilities across all tiers")</small>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4" style="width: 40%;">@(isBn ? "ফিচার / সুবিধা" : "Feature / Capability")</th>
+                        <th class="text-center">@(isBn ? "ফ্রি" : "Citizen Free")</th>
+                        <th class="text-center text-success fw-bold">@(isBn ? "প্রিমিয়াম" : "Citizen Premium")</th>
+                        <th class="text-center text-primary">@(isBn ? "ডাক্তার স্যুট" : "Doctor Suite")</th>
+                        <th class="text-center text-warning">@(isBn ? "প্রতিষ্ঠান" : "Organization")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ps-4 fw-semibold"><i class="bi bi-robot me-2 text-primary"></i>@(isBn ? "ডেন-এআই চ্যাটবট লিমিট" : "DenAI Chatbot Queries")</td>
+                        <td class="text-center"><span class="badge bg-secondary">5 / @(isBn ? "দিন" : "day")</span></td>
+                        <td class="text-center"><span class="badge bg-success">@(isBn ? "সীমাহীন" : "Unlimited")</span></td>
+                        <td class="text-center"><span class="badge bg-success">@(isBn ? "সীমাহীন" : "Unlimited")</span></td>
+                        <td class="text-center"><span class="badge bg-success">@(isBn ? "সীমাহীন" : "Unlimited")</span></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4 fw-semibold"><i class="bi bi-people-fill me-2 text-info"></i>@(isBn ? "পারিবারিক প্রোফাইল" : "Family Member Profiles")</td>
+                        <td class="text-center">1</td>
+                        <td class="text-center fw-bold text-success">6</td>
+                        <td class="text-center">10</td>
+                        <td class="text-center">50+</td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4 fw-semibold"><i class="bi bi-graph-up-arrow me-2 text-danger"></i>@(isBn ? "লক্ষণ ও রিকভারি ট্রেন্ড" : "Longitudinal Symptom Tracking")</td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-success"><i class="bi bi-check-circle-fill"></i></td>
+                        <td class="text-center text-success"><i class="bi bi-check-circle-fill"></i></td>
+                        <td class="text-center text-success"><i class="bi bi-check-circle-fill"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4 fw-semibold"><i class="bi bi-bell-fill me-2 text-warning"></i>@(isBn ? "অগ্রাধিকার রক্তদাতা ও ব্লাড অ্যালার্ট" : "Priority Blood Donor Alerts")</td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-success"><i class="bi bi-check-circle-fill"></i></td>
+                        <td class="text-center text-success"><i class="bi bi-check-circle-fill"></i></td>
+                        <td class="text-center text-success"><i class="bi bi-check-circle-fill"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4 fw-semibold"><i class="bi bi-camera-video-fill me-2 text-primary"></i>@(isBn ? "টেলিমেডিসিন ভিডিও হাব" : "Telemedicine Video Hub")</td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-primary"><i class="bi bi-check-circle-fill"></i></td>
+                        <td class="text-center text-primary"><i class="bi bi-check-circle-fill"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4 fw-semibold"><i class="bi bi-folder2-open me-2 text-secondary"></i>@(isBn ? "ডিজিটাল স্বাস্থ্য রেকর্ড ভিউয়ার" : "Integrated Patient Records")</td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-primary"><i class="bi bi-check-circle-fill"></i></td>
+                        <td class="text-center text-primary"><i class="bi bi-check-circle-fill"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4 fw-semibold"><i class="bi bi-building me-2 text-warning"></i>@(isBn ? "প্রতিষ্ঠান ও ল্যাব পোর্টাল" : "Laboratory Portal & Barcodes")</td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-muted"><i class="bi bi-dash-lg"></i></td>
+                        <td class="text-center text-warning"><i class="bi bi-check-circle-fill"></i></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FAQ Accordion -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h3 class="fw-bold text-center mb-4">@(isBn ? "সাধারণ প্রশ্নোত্তর (FAQ)" : "Frequently Asked Questions")</h3>
+            <div class="accordion shadow-sm rounded-4 overflow-hidden" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            @(isBn ? "আমি কি বিকাশ বা নগদ দিয়ে পেমেন্ট করতে পারি?" : "Can I pay using bKash, Nagad or Bangladeshi cards?")
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            @(isBn 
+                                ? "হ্যাঁ! লারভ্যাক্স বিকাশ, নগদ, রকেট, স্থানীয় ভিসা এবং মাস্টারকার্ড সমর্থন করে। পেমেন্ট সম্পূর্ণ করার সাথে সাথে আপনার অ্যাকাউন্টটি প্রিমিয়ামে উন্নীত হয়।"
+                                : "Yes! LarvaX fully integrates with bKash, Nagad, local and international Visa/Mastercard cards. Your account updates to Premium instantaneously upon successful checkout.")
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            @(isBn ? "আমি কি যেকোনো সময় সাবস্ক্রিপশন বাতিল করতে পারি?" : "Can I cancel my subscription at any time?")
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            @(isBn 
+                                ? "অবশ্যই। কোনো লুকানো চার্জ নেই। আপনার 'মাই সাবস্ক্রিপশন' পেজ থেকে এক ক্লিকে যেকোনো সময় অটো-রিনিউ বাতিল করতে পারেন। আপনি বর্তমান বিলিং সাইকেলের শেষ দিন পর্যন্ত সব সুবিধা উপভোগ করতে পারবেন।"
+                                : "Absolutely. You can cancel auto-renewal anytime with one click directly from your 'My Subscription' dashboard. You keep all premium access until the end of your prepaid period.")
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            @(isBn ? "পারিবারিক প্রোফাইল কীভাবে কাজ করে?" : "How do family profiles work?")
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            @(isBn 
+                                ? "সিটিজেন প্রিমিয়াম প্ল্যানে আপনি আপনার সন্তান, বাবা-মা বা পরিবারের অন্যান্য সদস্যদের (সর্বোচ্চ ৬ জন) যুক্ত করে প্রত্যেকের রক্তের গ্রুপ, ডেঙ্গু উপসর্গ ও হাইড্রেশন পৃথকভাবে ট্র্যাক করতে পারেন।"
+                                : "With Citizen Premium, you can add up to 6 family members (children, parents, spouse) and track their individual symptoms, blood groups, and hydration schedules under one single account.")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const billingToggle = document.getElementById('billingToggle');
+        const monthlyViews = document.querySelectorAll('.price-monthly-view');
+        const yearlyViews = document.querySelectorAll('.price-yearly-view');
+        const btnPlanSelects = document.querySelectorAll('.btn-plan-select');
+        const btnMonthly = document.getElementById('btnMonthly');
+        const btnYearly = document.getElementById('btnYearly');
+
+        function updateBillingView(isYearly) {
+            if (isYearly) {
+                monthlyViews.forEach(el => el.classList.add('d-none'));
+                yearlyViews.forEach(el => el.classList.remove('d-none'));
+                btnPlanSelects.forEach(btn => {
+                    const planId = btn.getAttribute('data-plan-id');
+                    btn.href = `/Subscription/Checkout?planId=${planId}&cycle=Yearly`;
+                });
+                btnYearly.classList.remove('text-muted');
+                btnMonthly.classList.add('text-muted');
+            } else {
+                monthlyViews.forEach(el => el.classList.remove('d-none'));
+                yearlyViews.forEach(el => el.classList.add('d-none'));
+                btnPlanSelects.forEach(btn => {
+                    const planId = btn.getAttribute('data-plan-id');
+                    btn.href = `/Subscription/Checkout?planId=${planId}&cycle=Monthly`;
+                });
+                btnMonthly.classList.remove('text-muted');
+                btnYearly.classList.add('text-muted');
+            }
+        }
+
+        billingToggle.addEventListener('change', function () {
+            updateBillingView(this.checked);
+        });
+
+        btnMonthly.addEventListener('click', () => {
+            billingToggle.checked = false;
+            updateBillingView(false);
+        });
+
+        btnYearly.addEventListener('click', () => {
+            billingToggle.checked = true;
+            updateBillingView(true);
+        });
+    </script>
+}

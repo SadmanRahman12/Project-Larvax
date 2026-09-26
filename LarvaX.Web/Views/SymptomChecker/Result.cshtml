@@ -72,6 +72,23 @@
                     }
                 </ul>
 
+                <!-- Premium Family Tracking Callout -->
+                <div class="card bg-success-subtle border-success-subtle rounded-3 p-3 my-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div>
+                            <div class="fw-bold text-success-emphasis small">
+                                <i class="bi bi-star-fill text-warning me-1"></i>Premium Feature: Family Health Timeline
+                            </div>
+                            <small class="text-success-emphasis">
+                                Save this assessment, track fever recovery curves, and monitor family dengue trends.
+                            </small>
+                        </div>
+                        <a asp-controller="Subscription" asp-action="MySubscription" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold">
+                            Save Assessment
+                        </a>
+                    </div>
+                </div>
+
                 <div class="d-flex gap-2 flex-wrap mt-3">
                     <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Retake Checker</a>
                     <a asp-controller="Chatbot" asp-action="Index" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots me-1"></i>Ask DenAI</a>

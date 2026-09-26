@@ -432,9 +432,10 @@
             if (actionButtons && actionButtons.length > 0) {
                 actionsHtml = '<div class="d-flex flex-wrap gap-2 pt-2 mt-2 border-top">';
                 actionButtons.forEach(btn => {
-                    const btnClass = btn.buttonClass || 'btn-outline-primary';
+                    const btnClass = btn.buttonClass || (btn.isPrimary ? 'btn-success' : 'btn-outline-primary');
                     const icon = btn.icon ? `<i class="bi ${escapeHtml(btn.icon)} me-1"></i>` : '';
-                    actionsHtml += `<a href="${escapeHtml(btn.url)}" class="btn btn-sm ${escapeHtml(btnClass)} rounded-pill px-3 shadow-2xs">${icon}${escapeHtml(btn.label)}</a>`;
+                    const label = btn.label || btn.text || 'View';
+                    actionsHtml += `<a href="${escapeHtml(btn.url)}" class="btn btn-sm ${escapeHtml(btnClass)} rounded-pill px-3 shadow-2xs">${icon}${escapeHtml(label)}</a>`;
                 });
                 actionsHtml += '</div>';
             }

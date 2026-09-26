@@ -41,6 +41,11 @@
                     <i class="bi bi-eyedropper me-2 text-danger"></i>My Lab Bookings
                 </a>
             </li>
+            <li>
+                <a class="dropdown-item py-2" asp-controller="Subscription" asp-action="MySubscription">
+                    <i class="bi bi-star-fill me-2 text-warning"></i>My Subscription & Billing
+                </a>
+            </li>
             @if (User.IsInRole("Administrator"))
             {
                 <li><hr class="dropdown-divider"></li>

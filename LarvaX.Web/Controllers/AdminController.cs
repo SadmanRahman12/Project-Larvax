@@ -939,5 +939,49 @@ namespace LarvaX.Web.Controllers
 
             return list.OrderByDescending(a => a.Timestamp).Take(limit).ToList();
         }
+
+        // ==========================================
+        // 11. MONETIZATION & SUBSCRIPTION MANAGEMENT
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> Subscriptions([FromServices] ISubscriptionService subscriptionService)
+        {
+            var (totalSubs, totalRevenue, activePremium, activePro) = await subscriptionService.GetSubscriptionStatsAsync();
+            var recentTxns = await subscriptionService.GetAllRecentTransactionsAsync(30);
+            var coupons = await subscriptionService.GetAllCouponsAsync();
+            var plans = await subscriptionService.GetAllActivePlansAsync();
+
+            ViewBag.TotalSubscribers = totalSubs;
+            ViewBag.TotalRevenue = totalRevenue;
+            ViewBag.ActivePremium = activePremium;
+            ViewBag.ActivePro = activePro;
+            ViewBag.RecentTransactions = recentTxns;
+            ViewBag.Coupons = coupons;
+            ViewBag.Plans = plans;
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateCoupon(
+            [FromServices] ISubscriptionService subscriptionService,
+            string code,
+            decimal discountPercent,
+            int maxUses)
+        {
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                await subscriptionService.CreateCouponAsync(new Coupon
+                {
+                    Code = code.Trim().ToUpperInvariant(),
+                    DiscountPercent = discountPercent,
+                    MaxUses = maxUses > 0 ? maxUses : 100,
+                    IsActive = true
+                });
+                TempData["SuccessMessage"] = $"Coupon '{code.ToUpperInvariant()}' ({discountPercent}% off) created successfully!";
+            }
+            return RedirectToAction(nameof(Subscriptions));
+        }
     }
 }

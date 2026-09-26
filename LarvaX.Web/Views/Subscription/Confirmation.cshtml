@@ -1,0 +1,61 @@
+@model LarvaX.Core.Entities.PaymentTransaction
+@{
+    ViewData["Title"] = "Payment Confirmed";
+    var isBn = (string)ViewBag.CurrentLanguage == "bn";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 text-center">
+            <!-- Celebration Badge -->
+            <div class="mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle shadow-sm" style="width: 90px; height: 90px;">
+                    <i class="bi bi-patch-check-fill" style="font-size: 3.5rem;"></i>
+                </div>
+            </div>
+
+            <h2 class="fw-bold text-dark mb-2">
+                @(isBn ? "পেমেন্ট সফলভাবে সম্পন্ন হয়েছে!" : "Payment Successfully Confirmed!")
+            </h2>
+            <p class="text-muted mb-4">
+                @(isBn 
+                    ? "আপনার সাবস্ক্রিপশন অবিলম্বে সক্রিয় করা হয়েছে। আপনি এখন সমস্ত প্রিমিয়াম সুযোগ-সুবিধা উপভোগ করতে পারবেন।"
+                    : "Your subscription has been activated immediately. You now have full access to your plan's advanced features.")
+            </p>
+
+            <!-- Receipt Card -->
+            <div class="card border-0 shadow-sm rounded-4 text-start p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <span class="text-muted small">Transaction Reference</span>
+                    <span class="font-monospace fw-bold text-dark">@Model.TransactionReference</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2 small">
+                    <span class="text-muted">Subscription Plan</span>
+                    <span class="fw-semibold text-dark">@(Model.UserSubscription?.SubscriptionPlan?.Name ?? "LarvaX Premium")</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2 small">
+                    <span class="text-muted">Payment Method</span>
+                    <span class="badge bg-light text-dark border">@Model.Method</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2 small">
+                    <span class="text-muted">Date & Time</span>
+                    <span class="text-dark">@Model.CreatedAt.ToString("dd MMM yyyy, hh:mm tt") UTC</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-2">
+                    <span class="fw-bold text-dark">Amount Paid</span>
+                    <span class="fs-5 fw-bold text-success">৳@Model.Amount.ToString("N0") @Model.Currency</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+                <a asp-action="MySubscription" class="btn btn-success btn-lg px-4 py-2 rounded-pill fw-semibold shadow-sm">
+                    <i class="bi bi-speedometer2 me-2"></i>@(isBn ? "মাই সাবস্ক্রিপশন দেখুন" : "My Subscription Portal")
+                </a>
+                <a asp-controller="Chatbot" asp-action="Index" class="btn btn-outline-primary btn-lg px-4 py-2 rounded-pill fw-semibold">
+                    <i class="bi bi-robot me-2"></i>@(isBn ? "ডেন-এআই ব্যবহার করুন" : "Launch DenAI Chatbot")
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

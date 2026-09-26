@@ -63,6 +63,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link rounded-pill py-2 px-3 @(currentAction == "Subscriptions" ? "active bg-danger text-white shadow-sm" : "text-dark hover-bg")" asp-action="Subscriptions">
+                    <i class="bi bi-cash-coin me-1"></i>Subscriptions
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link rounded-pill py-2 px-3 @(currentAction == "ActivityLog" ? "active bg-danger text-white shadow-sm" : "text-dark hover-bg")" asp-action="ActivityLog">
                     <i class="bi bi-journal-text me-1"></i>Audit Log
                 </a>

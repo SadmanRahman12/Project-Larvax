@@ -560,6 +560,157 @@ namespace LarvaX.Infrastructure.Data
                 db.FlowAnalytics.AddRange(flowEntries);
                 await db.SaveChangesAsync();
             }
+
+            // Seed Subscription Plans and Features if empty
+            if (!db.SubscriptionPlans.Any())
+            {
+                var freePlan = new Core.Entities.SubscriptionPlan
+                {
+                    Name = "Citizen Free",
+                    NameBn = "নাগরিক ফ্রি",
+                    Description = "Essential community dengue safety, basic triage, and emergency access for all citizens.",
+                    DescriptionBn = "সকল নাগরিকের জন্য প্রয়োজনীয় ডেঙ্গু সুরক্ষা, প্রাথমিক ট্রায়াজ এবং জরুরি সেবা।",
+                    Tier = Core.Entities.PlanTier.CitizenFree,
+                    PriceMonthly = 0m,
+                    PriceYearly = 0m,
+                    Currency = "BDT",
+                    IsActive = true,
+                    MaxFamilyMembers = 1,
+                    DailyDenAiQuota = 5,
+                    AllowSymptomTrends = false,
+                    AllowPriorityConsultation = false,
+                    AllowOrganizationDashboard = false,
+                    AllowAdvancedAnalytics = false,
+                    Features = new List<Core.Entities.SubscriptionFeature>
+                    {
+                        new() { FeatureKey = "DenAiBasic", Name = "5 AI queries/day", NameBn = "দৈনিক ৫টি এআই প্রশ্ন", IsIncluded = true },
+                        new() { FeatureKey = "HazardReport", Name = "Citizen hazard reporting", NameBn = "নাগরিক ঝুঁকি রিপোর্টিং", IsIncluded = true },
+                        new() { FeatureKey = "FirstAid", Name = "Emergency first aid guidance", NameBn = "জরুরি প্রাথমিক চিকিৎসা নির্দেশিকা", IsIncluded = true },
+                        new() { FeatureKey = "RiskAlerts", Name = "Public risk map & zone alerts", NameBn = "পাবলিক রিস্ক ম্যাপ ও জোন সতর্কতা", IsIncluded = true },
+                        new() { FeatureKey = "BloodDonorSearch", Name = "Blood donor directory search", NameBn = "রক্তদাতা ডিরেক্টরি অনুসন্ধান", IsIncluded = true },
+                        new() { FeatureKey = "IcuBedFinder", Name = "Hospital & ICU bed directory", NameBn = "হাসপাতাল ও আইসিইউ বেড ডিরেক্টরি", IsIncluded = true }
+                    }
+                };
+
+                var premiumPlan = new Core.Entities.SubscriptionPlan
+                {
+                    Name = "Citizen Premium",
+                    NameBn = "নাগরিক প্রিমিয়াম",
+                    Description = "Unlimited AI consultations, multi-member family health tracking, recovery trends, and priority donor alerts.",
+                    DescriptionBn = "সীমাহীন এআই পরামর্শ, পরিবারের স্বাস্থ্য ট্র্যাকিং, রিকভারি ট্রেন্ড এবং অগ্রাধিকার রক্তদাতা সতর্কতা।",
+                    Tier = Core.Entities.PlanTier.CitizenPremium,
+                    PriceMonthly = 199m,
+                    PriceYearly = 1999m,
+                    Currency = "BDT",
+                    IsActive = true,
+                    MaxFamilyMembers = 6,
+                    DailyDenAiQuota = -1, // Unlimited
+                    AllowSymptomTrends = true,
+                    AllowPriorityConsultation = true,
+                    AllowOrganizationDashboard = false,
+                    AllowAdvancedAnalytics = false,
+                    Features = new List<Core.Entities.SubscriptionFeature>
+                    {
+                        new() { FeatureKey = "DenAiUnlimited", Name = "Unlimited DenAI consultations", NameBn = "সীমাহীন ডেন-এআই স্বাস্থ্য পরামর্শ", IsIncluded = true },
+                        new() { FeatureKey = "FamilyProfiles", Name = "Up to 6 family member profiles", NameBn = "পরিবারের ৬ জন সদস্যের প্রোফাইল", IsIncluded = true },
+                        new() { FeatureKey = "SymptomTrends", Name = "Longitudinal symptom & recovery trends", NameBn = "লক্ষণ ও সুস্থতার ধারা ট্র্যাকিং", IsIncluded = true },
+                        new() { FeatureKey = "ExportHealthSummary", Name = "Downloadable clinical health summaries", NameBn = "ডাউনলোডযোগ্য ক্লিনিকাল রিপোর্ট", IsIncluded = true },
+                        new() { FeatureKey = "HydrationReminders", Name = "Personalized hydration & medicine schedule", NameBn = "ব্যক্তিগত হাইড্রেশন ও ওষুধ রিমাইন্ডার", IsIncluded = true },
+                        new() { FeatureKey = "PriorityAlerts", Name = "Immediate SMS & push outbreak alerts", NameBn = "তাৎক্ষণিক এসএমএস ও পুশ সতর্কতা", IsIncluded = true }
+                    }
+                };
+
+                var proPlan = new Core.Entities.SubscriptionPlan
+                {
+                    Name = "Doctor & Clinician Suite",
+                    NameBn = "ডাক্তার ও ক্লিনিকাল স্যুট",
+                    Description = "Advanced digital triage, telemedicine consult hub, e-referral workflows, and clinical practice insights.",
+                    DescriptionBn = "উন্নত ডিজিটাল ট্রায়াজ, টেলিমেডিসিন কনসাল্ট হাব, ই-রেফারাল ও প্র্যাকটিস ইনসাইটস।",
+                    Tier = Core.Entities.PlanTier.Professional,
+                    PriceMonthly = 799m,
+                    PriceYearly = 7999m,
+                    Currency = "BDT",
+                    IsActive = true,
+                    MaxFamilyMembers = 10,
+                    DailyDenAiQuota = -1,
+                    AllowSymptomTrends = true,
+                    AllowPriorityConsultation = true,
+                    AllowOrganizationDashboard = false,
+                    AllowAdvancedAnalytics = true,
+                    Features = new List<Core.Entities.SubscriptionFeature>
+                    {
+                        new() { FeatureKey = "DoctorTelemedSuite", Name = "High-definition Telemedicine video hub", NameBn = "টেলিমেডিসিন ভিডিও কনসালটেশন হাব", IsIncluded = true },
+                        new() { FeatureKey = "DoctorAnalytics", Name = "Clinical caseload & outcome analytics", NameBn = "রোগীর ফলাফল ও কেসলোড অ্যানালিটিক্স", IsIncluded = true },
+                        new() { FeatureKey = "PatientRecordsAccess", Name = "Integrated digital health records & lab history", NameBn = "ডিজিটাল স্বাস্থ্য রেকর্ড ও ল্যাব হিস্ট্রি", IsIncluded = true },
+                        new() { FeatureKey = "CaseReferrals", Name = "Emergency hospital bed & ICU referral suite", NameBn = "জরুরি রেফারেল ও আইসিইউ কেস সমন্বয়", IsIncluded = true },
+                        new() { FeatureKey = "FluidCalculator", Name = "WHO / National protocol IV fluid calculator", NameBn = "জাতীয় গাইডলাইন আইভি ফ্লুইড ক্যালকুলেটর", IsIncluded = true }
+                    }
+                };
+
+                var orgPlan = new Core.Entities.SubscriptionPlan
+                {
+                    Name = "Healthcare Organization / Lab",
+                    NameBn = "স্বাস্থ্য সংস্থা ও ল্যাবরেটরি",
+                    Description = "Enterprise multi-seat laboratory management, sample barcodes, outbreak surveillance integration, and priority support.",
+                    DescriptionBn = "মাল্টি-ইউজার ল্যাব ব্যবস্থাপনা, বারকোড ট্র্যাকিং, মহামারি নজরদারি ইন্টিগ্রেশন।",
+                    Tier = Core.Entities.PlanTier.Institutional,
+                    PriceMonthly = 2499m,
+                    PriceYearly = 24999m,
+                    Currency = "BDT",
+                    IsActive = true,
+                    MaxFamilyMembers = 50,
+                    DailyDenAiQuota = -1,
+                    AllowSymptomTrends = true,
+                    AllowPriorityConsultation = true,
+                    AllowOrganizationDashboard = true,
+                    AllowAdvancedAnalytics = true,
+                    Features = new List<Core.Entities.SubscriptionFeature>
+                    {
+                        new() { FeatureKey = "OrgDashboard", Name = "Enterprise multi-seat lab portal", NameBn = "এন্টারপ্রাইজ মাল্টি-সিট ল্যাব পোর্টাল", IsIncluded = true },
+                        new() { FeatureKey = "BarcodeTracking", Name = "Digital sample accession & barcode tracking", NameBn = "ডিজিটাল স্যাম্পল বারকোড ট্র্যাকিং", IsIncluded = true },
+                        new() { FeatureKey = "EpiSurveillance", Name = "Regional outbreak surveillance feed integration", NameBn = "আঞ্চলিক প্রাদুর্ভাব নজরদারি ফিড", IsIncluded = true },
+                        new() { FeatureKey = "PrioritySupport", Name = "24/7 dedicated technical support & SLA", NameBn = "২৪/৭ বিশেষায়িত টেকনিক্যাল সাপোর্ট", IsIncluded = true }
+                    }
+                };
+
+                db.SubscriptionPlans.AddRange(freePlan, premiumPlan, proPlan, orgPlan);
+                await db.SaveChangesAsync();
+            }
+
+            // Seed Promo Coupons if empty
+            if (!db.Coupons.Any())
+            {
+                db.Coupons.AddRange(
+                    new Core.Entities.Coupon
+                    {
+                        Code = "LARVAXFREE",
+                        DiscountPercent = 100m,
+                        ValidUntil = DateTime.UtcNow.AddYears(1),
+                        IsActive = true,
+                        MaxUses = 500,
+                        TimesUsed = 0
+                    },
+                    new Core.Entities.Coupon
+                    {
+                        Code = "HEALTH20",
+                        DiscountPercent = 20m,
+                        ValidUntil = DateTime.UtcNow.AddYears(1),
+                        IsActive = true,
+                        MaxUses = 1000,
+                        TimesUsed = 0
+                    },
+                    new Core.Entities.Coupon
+                    {
+                        Code = "DENGUE50",
+                        DiscountPercent = 50m,
+                        ValidUntil = DateTime.UtcNow.AddYears(1),
+                        IsActive = true,
+                        MaxUses = 500,
+                        TimesUsed = 0
+                    }
+                );
+                await db.SaveChangesAsync();
+            }
         }
     }
 }

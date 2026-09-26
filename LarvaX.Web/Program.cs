@@ -70,6 +70,10 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IPdfReportService, PdfReportService>();
 builder.Services.AddSingleton<LarvaX.Web.Services.IAdminSettingsService, LarvaX.Web.Services.AdminSettingsService>();
 
+// Phase 5: Paid Subscription & Monetization Services
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
 // Localization Support (English & Bangla)
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 

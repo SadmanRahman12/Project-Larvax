@@ -1,0 +1,419 @@
+@model LarvaX.Web.Models.MySubscriptionViewModel
+@{
+    ViewData["Title"] = Model.CurrentLanguage == "bn" ? "আমার সাবস্ক্রিপশন" : "My Subscription";
+    var isBn = Model.CurrentLanguage == "bn";
+    var isPremium = Model.CurrentPlan.Tier >= LarvaX.Core.Entities.PlanTier.CitizenPremium;
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-star-fill text-warning me-2"></i>@(isBn ? "আমার সাবস্ক্রিপশন ও বিলিং" : "Subscription & Billing")</h2>
+            <p class="text-muted small mb-0">@(isBn ? "আপনার বর্তমান প্যাকেজ, সুবিধা এবং বিলিং হিস্ট্রি পরিচালনা করুন।" : "Manage your active plan entitlements, family profiles, quotas, and invoices.")</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a asp-action="Index" class="btn btn-outline-success rounded-pill fw-semibold shadow-sm">
+                <i class="bi bi-arrow-repeat me-1"></i>@(isBn ? "প্ল্যান আপগ্রেড / পরিবর্তন" : "Upgrade or Change Plan")
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4 mb-4">
+        <!-- Active Plan Card -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4 position-relative overflow-hidden">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="badge @(isPremium ? "bg-success" : "bg-secondary") rounded-pill px-3 py-1 mb-2">
+                            @(Model.ActiveSubscription != null ? "ACTIVE SUBSCRIPTION" : "FREE TIER")
+                        </span>
+                        <h3 class="fw-bold text-dark mb-1">
+                            @(isBn ? Model.CurrentPlan.NameBn : Model.CurrentPlan.Name)
+                        </h3>
+                        <p class="text-muted small mb-0">@(isBn ? Model.CurrentPlan.DescriptionBn : Model.CurrentPlan.Description)</p>
+                    </div>
+                    @if (isPremium)
+                    {
+                        <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle">
+                            <i class="bi bi-patch-check-fill fs-2"></i>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bg-secondary bg-opacity-10 text-secondary p-3 rounded-circle">
+                            <i class="bi bi-shield fs-2"></i>
+                        </div>
+                    }
+                </div>
+
+                <div class="bg-light rounded-3 p-3 mb-3">
+                    <div class="row g-2 text-center text-sm-start">
+                        <div class="col-sm-6 border-end-sm">
+                            <small class="text-muted d-block">Billing Frequency</small>
+                            <span class="fw-bold text-dark">
+                                @(Model.ActiveSubscription?.BillingCycle.ToString() ?? "N/A (Free)")
+                            </span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Next Renewal / Expiry</small>
+                            <span class="fw-bold text-dark">
+                                @(Model.ActiveSubscription != null ? Model.ActiveSubscription.EndDate.ToString("dd MMMM yyyy") : "Lifetime Free Access")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mt-auto pt-2">
+                    @if (Model.ActiveSubscription != null && Model.ActiveSubscription.AutoRenew && !Model.ActiveSubscription.CancelAtPeriodEnd)
+                    {
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                            <i class="bi bi-x-circle me-1"></i>Cancel Auto-Renewal
+                        </button>
+                    }
+                    else if (Model.ActiveSubscription?.CancelAtPeriodEnd == true)
+                    {
+                        <span class="badge bg-warning text-dark py-2 px-3 rounded-pill">
+                            <i class="bi bi-info-circle me-1"></i>Cancels at period end (@Model.ActiveSubscription.EndDate.ToString("dd MMM yyyy"))
+                        </span>
+                    }
+                    else if (!isPremium)
+                    {
+                        <a asp-action="Index" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold">
+                            <i class="bi bi-lightning-charge-fill me-1"></i>Upgrade to Premium
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Quota & Entitlements Card -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-speedometer2 text-primary me-2"></i>@(isBn ? "দৈনিক কোটা ও সুবিধা" : "Usage Quotas & Limits")</h5>
+                
+                <!-- DenAI Quota -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-semibold text-dark"><i class="bi bi-robot me-1 text-primary"></i>DenAI Chatbot Queries Today</span>
+                        @if (Model.DenAiIsUnlimited)
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                <i class="bi bi-infinity me-1"></i>Unlimited Access
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-dark border">
+                                @Model.DenAiUsedToday / @Model.DenAiLimit Used (@Model.DenAiRemaining Remaining)
+                            </span>
+                        }
+                    </div>
+                    @if (!Model.DenAiIsUnlimited)
+                    {
+                        var pct = Model.DenAiLimit > 0 ? (int)((double)Model.DenAiUsedToday / Model.DenAiLimit * 100) : 0;
+                        <div class="progress rounded-pill" style="height: 10px;">
+                            <div class="progress-bar @(pct >= 80 ? "bg-danger" : pct >= 50 ? "bg-warning" : "bg-primary")" role="progressbar" style="width: @pct%;" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <small class="text-muted mt-1 d-block">Free tier quota resets every midnight UTC. Need more? <a asp-action="Index" class="text-success fw-semibold">Upgrade for unlimited</a></small>
+                    }
+                    else
+                    {
+                        <small class="text-muted d-block">You enjoy priority ML response latency with zero daily throttling limits.</small>
+                    }
+                </div>
+
+                <!-- Family Monitoring Limit -->
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-semibold text-dark"><i class="bi bi-people-fill me-1 text-info"></i>Family Profiles Allocated</span>
+                        <span class="badge bg-light text-dark border">
+                            @Model.FamilyProfiles.Count / @Model.MaxFamilyAllowed Profiles
+                        </span>
+                    </div>
+                    <small class="text-muted d-block">
+                        @(isPremium ? "Track and coordinate symptoms for up to 6 immediate family members." : "Citizen Free allows 1 personal profile. Upgrade to Citizen Premium for up to 6 profiles.")
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Family Profiles Section (Premium feature) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold mb-1"><i class="bi bi-people-fill text-info me-2"></i>@(isBn ? "পারিবারিক স্বাস্থ্য প্রোফাইল" : "Family Health Monitoring Profiles")</h5>
+                <small class="text-muted">@(isBn ? "পরিবারের সদস্যদের লক্ষণ ও রক্তের গ্রুপ সংরক্ষণ করুন।" : "Manage health data, dengue warning alerts, and blood groups for your family.")</small>
+            </div>
+            <div>
+                @if (isPremium)
+                {
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addFamilyModal">
+                        <i class="bi bi-person-plus-fill me-1"></i>Add Family Member
+                    </button>
+                }
+                else
+                {
+                    <a asp-action="Index" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                        <i class="bi bi-star-fill me-1"></i>Upgrade for Family Tracking
+                    </a>
+                }
+            </div>
+        </div>
+        <div class="card-body px-4 pb-4">
+            @if (Model.FamilyProfiles.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-3 g-3">
+                    @foreach (var member in Model.FamilyProfiles)
+                    {
+                        <div class="col" id="family-card-@member.Id">
+                            <div class="card border rounded-3 p-3 bg-light bg-opacity-50 h-100 position-relative">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-0">@member.FullName</h6>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">@member.Relationship</span>
+                                    </div>
+                                    <button class="btn btn-link text-danger p-0" onclick="deleteFamilyMember(@member.Id)" title="Remove Member">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="small text-muted mb-1">
+                                    <strong>Age:</strong> @(member.Age?.ToString() ?? "N/A") | <strong>Blood:</strong> <span class="badge bg-danger text-white">@(member.BloodGroup ?? "Unknown")</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(member.MedicalNotes))
+                                {
+                                    <div class="small text-muted text-truncate" title="@member.MedicalNotes">
+                                        <i class="bi bi-info-circle me-1"></i>@member.MedicalNotes
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-people fs-1 text-muted opacity-50 mb-2 d-block"></i>
+                    <p class="mb-0">@(isPremium ? "No family profiles added yet. Click 'Add Family Member' above to get started." : "Family member tracking is available on Citizen Premium. Upgrade to add family profiles.")</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Invoices & Billing History -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+            <h5 class="fw-bold mb-0"><i class="bi bi-receipt text-success me-2"></i>@(isBn ? "ইনভয়েস ও বিলিং ইতিহাস" : "Invoices & Billing History")</h5>
+        </div>
+        <div class="card-body px-4 pb-4">
+            @if (Model.Invoices.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var inv in Model.Invoices)
+                            {
+                                <tr>
+                                    <td class="font-monospace fw-bold text-dark">@inv.InvoiceNumber</td>
+                                    <td>@inv.IssueDate.ToString("dd MMM yyyy")</td>
+                                    <td>@(inv.PlanName ?? "LarvaX Subscription")</td>
+                                    <td class="fw-bold text-success">৳@inv.Amount.ToString("N0")</td>
+                                    <td><span class="badge bg-success">@inv.Status</span></td>
+                                    <td class="text-end">
+                                        <a asp-action="Invoice" asp-route-id="@inv.Id" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                                            <i class="bi bi-printer me-1"></i>View / Print
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-receipt fs-1 text-muted opacity-50 mb-2 d-block"></i>
+                    <p class="mb-0">No past invoices available.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cancel Subscription -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger" id="cancelModalLabel">Cancel Subscription Auto-Renewal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="text-muted mb-2">Are you sure you want to disable automatic renewal for your <strong>@Model.CurrentPlan.Name</strong> subscription?</p>
+                <div class="alert alert-warning small rounded-3 mb-0">
+                    <i class="bi bi-info-circle-fill me-1"></i>You will retain all premium features until your current cycle ends on <strong>@(Model.ActiveSubscription?.EndDate.ToString("dd MMMM yyyy") ?? "expiry")</strong>. No further charges will occur.
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Keep Subscription</button>
+                <form asp-action="Cancel" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Confirm Cancellation</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Family Member -->
+<div class="modal fade" id="addFamilyModal" tabindex="-1" aria-labelledby="addFamilyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="addFamilyModalLabel">Add Family Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Full Name *</label>
+                    <input type="text" id="fmName" class="form-control" placeholder="e.g. Farhana Rahman" required />
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold">Relationship</label>
+                        <select id="fmRelation" class="form-select">
+                            <option value="Spouse">Spouse</option>
+                            <option value="Child">Child</option>
+                            <option value="Parent">Parent</option>
+                            <option value="Sibling">Sibling</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold">Age</label>
+                        <input type="number" id="fmAge" class="form-control" placeholder="Years" min="0" max="120" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Blood Group</label>
+                    <select id="fmBlood" class="form-select">
+                        <option value="">Unknown</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Medical / Allergy Notes</label>
+                    <textarea id="fmNotes" class="form-control" rows="2" placeholder="e.g. Asthmatic, allergic to penicillin, previous dengue in 2023"></textarea>
+                </div>
+                <div id="fmAlert" class="small text-danger d-none mt-2"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="btnSaveFamily">Save Member</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const btnSaveFamily = document.getElementById('btnSaveFamily');
+        const fmAlert = document.getElementById('fmAlert');
+
+        btnSaveFamily?.addEventListener('click', async () => {
+            const name = document.getElementById('fmName').value.trim();
+            const rel = document.getElementById('fmRelation').value;
+            const ageVal = document.getElementById('fmAge').value;
+            const blood = document.getElementById('fmBlood').value;
+            const notes = document.getElementById('fmNotes').value.trim();
+
+            if (!name) {
+                fmAlert.innerText = 'Please provide member name.';
+                fmAlert.classList.remove('d-none');
+                return;
+            }
+
+            try {
+                btnSaveFamily.disabled = true;
+                btnSaveFamily.innerText = 'Saving...';
+
+                const res = await fetch('/Subscription/AddFamilyMember', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fullName: name,
+                        relationship: rel,
+                        age: ageVal ? parseInt(ageVal) : null,
+                        bloodGroup: blood,
+                        medicalNotes: notes
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    fmAlert.innerText = data.message;
+                    fmAlert.classList.remove('d-none');
+                }
+            } catch (err) {
+                fmAlert.innerText = 'Network error saving member.';
+                fmAlert.classList.remove('d-none');
+            } finally {
+                btnSaveFamily.disabled = false;
+                btnSaveFamily.innerText = 'Save Member';
+            }
+        });
+
+        async function deleteFamilyMember(id) {
+            if (!confirm('Are you sure you want to remove this family member?')) return;
+
+            try {
+                const res = await fetch(`/Subscription/DeleteFamilyMember/${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById(`family-card-${id}`)?.remove();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Failed to delete member.');
+            }
+        }
+    </script>
+}

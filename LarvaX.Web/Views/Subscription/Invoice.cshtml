@@ -1,0 +1,148 @@
+@model LarvaX.Core.Entities.Invoice
+@{
+    Layout = null;
+    var isBn = (string)ViewBag.CurrentLanguage == "bn";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice @Model.InvoiceNumber - LarvaX Dengue Platform</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        .invoice-card {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 48px;
+        }
+        @@media print {
+            body {
+                background: #ffffff;
+            }
+            .invoice-card {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Action Bar (hidden on print) -->
+        <div class="d-flex justify-content-between align-items-center max-w-800 mx-auto my-3 no-print" style="max-width: 800px;">
+            <a href="/Subscription/MySubscription" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>Back to My Subscription
+            </a>
+            <button onclick="window.print()" class="btn btn-success btn-sm rounded-pill px-4 fw-semibold shadow-sm">
+                <i class="bi bi-printer me-1"></i>Print or Save as PDF
+            </button>
+        </div>
+
+        <div class="invoice-card">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
+                <div>
+                    <h3 class="fw-bold text-success mb-1">
+                        <i class="bi bi-shield-shaded me-1"></i>LarvaX <span class="badge bg-warning text-dark fs-6">Sentinel</span>
+                    </h3>
+                    <p class="text-muted small mb-0">
+                        Dengue Surveillance & Health Sentinel Platform<br>
+                        Dhaka, Bangladesh | support@larvax.gov.bd<br>
+                        BIN / Tax ID: BD-9284-LARVAX
+                    </p>
+                </div>
+                <div class="text-end">
+                    <h4 class="fw-bold text-dark mb-1">INVOICE</h4>
+                    <span class="font-monospace text-muted d-block small">@Model.InvoiceNumber</span>
+                    <span class="badge bg-success mt-2 px-3 py-1">PAID</span>
+                </div>
+            </div>
+
+            <!-- Client & Dates -->
+            <div class="row mb-4">
+                <div class="col-6">
+                    <small class="text-muted fw-semibold text-uppercase d-block mb-1">Billed To</small>
+                    <h6 class="fw-bold text-dark mb-1">@(Model.User?.FullName ?? "Valued Member")</h6>
+                    <small class="text-muted d-block">@Model.User?.Email</small>
+                    @if (!string.IsNullOrEmpty(Model.User?.Address))
+                    {
+                        <small class="text-muted d-block">@Model.User?.Address</small>
+                    }
+                </div>
+                <div class="col-6 text-end">
+                    <small class="text-muted fw-semibold text-uppercase d-block mb-1">Invoice Details</small>
+                    <div class="small text-muted mb-1">
+                        <span class="fw-semibold text-dark">Issue Date:</span> @Model.IssueDate.ToString("dd MMMM yyyy")
+                    </div>
+                    <div class="small text-muted mb-1">
+                        <span class="fw-semibold text-dark">Billing Period:</span> @Model.BillingPeriodStart.ToString("dd MMM yyyy") – @Model.BillingPeriodEnd.ToString("dd MMM yyyy")
+                    </div>
+                    <div class="small text-muted">
+                        <span class="fw-semibold text-dark">Payment Status:</span> Completed
+                    </div>
+                </div>
+            </div>
+
+            <!-- Line Items Table -->
+            <table class="table table-bordered mb-4 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 60%;">Description</th>
+                        <th class="text-center" style="width: 15%;">Period</th>
+                        <th class="text-end" style="width: 25%;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>@(Model.PlanName ?? "LarvaX Premium Subscription")</strong>
+                            <div class="text-muted small">@(Model.Notes ?? "Access to unlimited AI triage, family profiles, recovery analytics, and priority alerts")</div>
+                        </td>
+                        <td class="text-center small">@(Model.UserSubscription?.BillingCycle.ToString() ?? "Recurring")</td>
+                        <td class="text-end fw-bold">৳@Model.Amount.ToString("N0") @Model.Currency</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Calculation Summary -->
+            <div class="row justify-content-end mb-4">
+                <div class="col-6 col-md-5">
+                    <div class="d-flex justify-content-between small text-muted mb-2">
+                        <span>Subtotal:</span>
+                        <span>৳@Model.Amount.ToString("N0")</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-2">
+                        <span>VAT (0% Health Exemption):</span>
+                        <span>৳0</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold fs-5 text-dark border-top pt-2">
+                        <span>Total Paid:</span>
+                        <span class="text-success">৳@Model.Amount.ToString("N0") @Model.Currency</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="border-top pt-4 text-center text-muted small">
+                <p class="mb-1 fw-semibold text-dark">Thank you for supporting vector-borne epidemic surveillance with LarvaX!</p>
+                <p class="mb-0">This is a computer-generated receipt and requires no physical signature. Questions? Contact billing@larvax.gov.bd.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
