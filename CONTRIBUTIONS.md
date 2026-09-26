@@ -35,11 +35,11 @@ Project-Larvax/
 
 | Layer / Subsystem | Total Active Lines | Sadman Rahman Arnab | Nafis Fuad | Md. Adnan |
 | :--- | :---: | :---: | :---: | :---: |
-| [LarvaX.Web](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Web) | **104,775** | 103,736 (99.0%) | 331 (0.3%) | 708 (0.7%) |
-| [LarvaX.Infrastructure](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Infrastructure) | **15,126** | 14,001 (92.6%) | 1,125 (7.4%) | 0 (0.0%) |
-| [LarvaX.Tests](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Tests) | **2,845** | 1,534 (53.9%) | 1,311 (46.1%) | 0 (0.0%) |
-| [LarvaX.Application](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Application) | **1,493** | 1,493 (100.0%) | 0 (0.0%) | 0 (0.0%) |
-| [LarvaX.Core](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Core) | **1,102** | 1,064 (96.6%) | 38 (3.4%) | 0 (0.0%) |
+| [LarvaX.Web](LarvaX.Web) | **104,775** | 103,736 (99.0%) | 331 (0.3%) | 708 (0.7%) |
+| [LarvaX.Infrastructure](LarvaX.Infrastructure) | **15,126** | 14,001 (92.6%) | 1,125 (7.4%) | 0 (0.0%) |
+| [LarvaX.Tests](LarvaX.Tests) | **2,845** | 1,534 (53.9%) | 1,311 (46.1%) | 0 (0.0%) |
+| [LarvaX.Application](LarvaX.Application) | **1,493** | 1,493 (100.0%) | 0 (0.0%) | 0 (0.0%) |
+| [LarvaX.Core](LarvaX.Core) | **1,102** | 1,064 (96.6%) | 38 (3.4%) | 0 (0.0%) |
 | **Root / Docs / Configs** | **1,484** | 502 (33.8%) | 975 (65.7%) | 0 (0.0%) |
 
 ### Code Ownership by File Extension
@@ -65,30 +65,30 @@ Project-Larvax/
 **Metrics:** 6 Commits on `main` (23 Branch Commits) | +9,762 Additions / -10,775 Deletions | 3,780 Active Lines (HEAD)  
 
 #### Key Deliverables & Modules Implemented:
-1. **Telemedicine & Video Consultation Suite ([PR #2](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Web/Controllers/TelemedicineController.cs)):**
+1. **Telemedicine & Video Consultation Suite ([PR #2](LarvaX.Web/Controllers/TelemedicineController.cs)):**
    - **Original Author & Lead:** Developed the entire Telemedicine and Virtual Consultation module (Commit `b7507c1e` and PR #2 `55e0c846`).
-   - Built the real-time [VideoConsultHub.cs](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Web/Hubs/VideoConsultHub.cs) using SignalR and WebRTC signaling for peer-to-peer browser video/audio communication.
-   - Implemented [Appointment.cs](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Core/Entities/Appointment.cs) domain entity, status enums, and database migrations.
-   - Built [TelemedicineController.cs](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Web/Controllers/TelemedicineController.cs) along with Razor views for doctor discovery, appointment booking, and the interactive WebRTC video room ([Room.cshtml](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Web/Views/Telemedicine/Room.cshtml)).
+   - Built the real-time [VideoConsultHub.cs](LarvaX.Web/Hubs/VideoConsultHub.cs) using SignalR and WebRTC signaling for peer-to-peer browser video/audio communication.
+   - Implemented [Appointment.cs](LarvaX.Core/Entities/Appointment.cs) domain entity, status enums, and database migrations.
+   - Built [TelemedicineController.cs](LarvaX.Web/Controllers/TelemedicineController.cs) along with Razor views for doctor discovery, appointment booking, and the interactive WebRTC video room ([Room.cshtml](LarvaX.Web/Views/Telemedicine/Room.cshtml)).
 2. **Cloud Deployment & Production Hosting (Render & Supabase):**
    - **.NET 10 on Render:** Packaged and deployed the full ASP.NET Core web application to **Render** using a high-performance multi-stage Docker build container.
    - **PostgreSQL on Supabase:** Provisioned and configured the cloud **Supabase PostgreSQL** database instance, setting up SSL connection pooling (`pooler.supabase.com`), live schema auto-migrations on container startup, and environment secret injection (`ConnectionStrings__DefaultConnection`).
-3. **Enterprise 4-Stage QA Test Matrix & Test Suite ([PR #9](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Tests)):**
+3. **Enterprise 4-Stage QA Test Matrix & Test Suite ([PR #9](LarvaX.Tests)):**
    - Engineered the comprehensive 4-Stage test architecture across 32 enterprise test scenarios:
-     - **Stage 1 Unit Tests ([Stage1UnitTests.cs](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Tests/Stage1UnitTests.cs)):** Unit tested core services; discovered and fixed a premature state mutation defect in [InventoryService.cs](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Infrastructure/Services/InventoryService.cs).
-     - **Stage 2 Integration Tests ([Stage2IntegrationTests.cs](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Tests/Stage2IntegrationTests.cs)):** Covered SignalR alert dispatching, Twilio SMS fallback, laboratory diagnosis lifecycle, and RBAC authorization barriers.
-     - **Stage 3 System Tests ([Stage3SystemTests.cs](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Tests/Stage3SystemTests.cs)):** Tested Hangfire background worker orchestration, multi-user report concurrency, QuestPDF rendering, and WebRTC signaling idempotency.
-     - **Stage 4 Acceptance Tests ([Stage4AcceptanceTests.cs](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Tests/Stage4AcceptanceTests.cs)):** End-to-end user persona journey validations for all 6 system roles.
-   - Authored the comprehensive [TESTS.md](file:///c:/Users/Fuad/source/repos/Project-Larvax/TESTS.md) and [TEST_REPORT.md](file:///c:/Users/Fuad/source/repos/Project-Larvax/TEST_REPORT.md).
-4. **Database Modernization & PostgreSQL Migration ([PR #6](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Infrastructure)):**
+     - **Stage 1 Unit Tests ([Stage1UnitTests.cs](LarvaX.Tests/Stage1UnitTests.cs)):** Unit tested core services; discovered and fixed a premature state mutation defect in [InventoryService.cs](LarvaX.Infrastructure/Services/InventoryService.cs).
+     - **Stage 2 Integration Tests ([Stage2IntegrationTests.cs](LarvaX.Tests/Stage2IntegrationTests.cs)):** Covered SignalR alert dispatching, Twilio SMS fallback, laboratory diagnosis lifecycle, and RBAC authorization barriers.
+     - **Stage 3 System Tests ([Stage3SystemTests.cs](LarvaX.Tests/Stage3SystemTests.cs)):** Tested Hangfire background worker orchestration, multi-user report concurrency, QuestPDF rendering, and WebRTC signaling idempotency.
+     - **Stage 4 Acceptance Tests ([Stage4AcceptanceTests.cs](LarvaX.Tests/Stage4AcceptanceTests.cs)):** End-to-end user persona journey validations for all 6 system roles.
+   - Authored the comprehensive [TESTS.md](TESTS.md) and [TEST_REPORT.md](TEST_REPORT.md).
+4. **Database Modernization & PostgreSQL Migration ([PR #6](LarvaX.Infrastructure)):**
    - Migrated the application persistence engine from SQL Server / LocalDB to PostgreSQL via `Npgsql.EntityFrameworkCore.PostgreSQL`.
    - Built automatic schema migration on startup and configured Supabase cloud connection pooling using ASP.NET Core User Secrets.
 5. **Containerization & Deployment Configuration:**
-   - Authored the production-ready multi-stage [Dockerfile](file:///c:/Users/Fuad/source/repos/Project-Larvax/Dockerfile) and [.dockerignore](file:///c:/Users/Fuad/source/repos/Project-Larvax/.dockerignore) for .NET 10 deployments.
-6. **GIS Tile Layer Modernization ([PR #8](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Web/Views/Home/Index.cshtml)):**
+   - Authored the production-ready multi-stage [Dockerfile](Dockerfile) and [.dockerignore](.dockerignore) for .NET 10 deployments.
+6. **GIS Tile Layer Modernization ([PR #8](LarvaX.Web/Views/Home/Index.cshtml)):**
    - Replaced deprecated CARTO raster tile providers with OpenStreetMap GIS tiles on the live dashboard.
-7. **Documentation & Developer Experience ([PR #5](file:///c:/Users/Fuad/source/repos/Project-Larvax/README.md), [PR #7](file:///c:/Users/Fuad/source/repos/Project-Larvax/README.md)):**
-   - Authored, maintained, and streamlined technical documentation and quickstart instructions in [README.md](file:///c:/Users/Fuad/source/repos/Project-Larvax/README.md).
+7. **Documentation & Developer Experience ([PR #5](README.md), [PR #7](README.md)):**
+   - Authored, maintained, and streamlined technical documentation and quickstart instructions in [README.md](README.md).
 
 ---
 
@@ -99,7 +99,7 @@ Project-Larvax/
 
 #### Key Deliverables & Modules Implemented:
 1. **Initial Architecture & Scaffolding (Phase 1):**
-   - Established the Clean Architecture solution structure ([LarvaX.Core](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Core), [LarvaX.Application](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Application), [LarvaX.Infrastructure](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Infrastructure), [LarvaX.Web](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Web)).
+   - Established the Clean Architecture solution structure ([LarvaX.Core](LarvaX.Core), [LarvaX.Application](LarvaX.Application), [LarvaX.Infrastructure](LarvaX.Infrastructure), [LarvaX.Web](LarvaX.Web)).
    - Implemented ASP.NET Core Identity authentication and Role-Based Access Control (`RoleSeeder.cs`) across Citizen, Doctor, HealthWorker, LabStaff, Administrator, and GovernmentAuthority personas.
    - Built citizen outbreak reporting, GIS mapping, SignalR notifications, and Hangfire background processing.
 2. **Clinical Intelligence & Support Network (Phase 2):**
@@ -123,7 +123,7 @@ Project-Larvax/
 **Metrics:** 1 Commit on `main` (PR #3) | +964 Additions / 0 Deletions | 708 Active Lines (HEAD)  
 
 #### Key Deliverables & Modules Implemented:
-1. **Clinical Dengue Fluid Management System ([PR #3](file:///c:/Users/Fuad/source/repos/Project-Larvax/LarvaX.Web/Views/Clinical)):**
+1. **Clinical Dengue Fluid Management System ([PR #3](LarvaX.Web/Views/Clinical)):**
    - Engineered the interactive Dengue IV Fluid Calculator implementing Holliday-Segar maintenance fluid calculations and WHO fluid resuscitation rate guidelines.
    - Built the Hematocrit (HCT) monitoring guide and dynamic fluid titration protocol views.
    - Authored patient clinical education guides and scientific medical formula reference sections.

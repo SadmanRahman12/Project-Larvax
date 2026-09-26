@@ -105,10 +105,11 @@ Seeded on first startup via `RoleSeeder.cs`:
 dotnet test
 ```
 
-For the comprehensive test plan, breakdown of completed test suites, task checklists, and future roadmap, see `TESTS.md`.
+For the comprehensive test plan, breakdown of completed test suites, task checklists, and future roadmap, see [TESTS.md](TESTS.md).
 
 ---
 
 ## 👥 Contributors
 
-For complete details on contributions, modules, and Git authorship statistics across the engineering team, see [CONTRIBUTIONS.md](file:///c:/Users/Fuad/source/repos/Project-Larvax/CONTRIBUTIONS.md).
+For complete details on contributions, modules, and Git authorship statistics across the engineering team, see [CONTRIBUTIONS.md](CONTRIBUTIONS.md).
+
