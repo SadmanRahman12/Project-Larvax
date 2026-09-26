@@ -8,6 +8,7 @@ using LarvaX.Web.Jobs;
 using LarvaX.Infrastructure.Data;
 using LarvaX.Core.Entities;
 using LarvaX.Core.Interfaces;
+using LarvaX.Application.ML;
 using LarvaX.Application.Services;
 using LarvaX.Infrastructure.Services;
 using Microsoft.AspNetCore.Localization;
@@ -47,7 +48,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Application Services — bound to Core.Interfaces contracts (Clean Architecture)
 builder.Services.AddScoped<ISymptomCheckerService, SymptomCheckerService>();
-builder.Services.AddScoped<IChatbotService, ChatbotService>();
+// DenAI ML: classifier is a singleton — model trained once at startup, shared across requests.
+builder.Services.AddSingleton<DenAIIntentClassifier>();
+builder.Services.AddSingleton<IChatbotService, ChatbotService>();
 builder.Services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
 builder.Services.AddScoped<IDonorService, DonorService>();
 builder.Services.AddScoped<IReportService, ReportService>();
