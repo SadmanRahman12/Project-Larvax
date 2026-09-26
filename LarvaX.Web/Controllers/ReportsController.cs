@@ -19,6 +19,44 @@ namespace LarvaX.Web.Controllers
             _environment = environment;
         }
 
+        // POST: /api/reports - accepts queued JSON reports from PWA when online
+        [HttpPost]
+        [Route("api/reports")]
+        [Authorize]
+        public async Task<IActionResult> ApiCreate([FromBody] QueuedReportDto dto)
+        {
+            if (dto == null) return BadRequest();
+
+            string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var report = new Report
+            {
+                UserId = userId,
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
+                Description = dto.Description,
+                DiseaseType = Enum.TryParse<DiseaseType>(dto.DiseaseType, out var dt) ? dt : DiseaseType.Dengue,
+                Status = ReportStatus.Received,
+                Verification = ReportVerification.Pending,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Reports.Add(report);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, id = report.Id });
+        }
+
+        public class QueuedReportDto
+        {
+            public string DiseaseType { get; set; } = "Dengue";
+            public double Latitude { get; set; }
+            public double Longitude { get; set; }
+            public string? Description { get; set; }
+        }
+
         // GET: /Reports
         public async Task<IActionResult> Index()
         {

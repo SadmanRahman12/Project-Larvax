@@ -11,11 +11,13 @@ namespace LarvaX.Infrastructure.Services
     {
         private readonly ISubscriptionService _subscriptionService;
         private readonly ApplicationDbContext _db;
+        private readonly LarvaX.Core.Interfaces.IBkashClient? _bkashClient;
 
-        public PaymentService(ISubscriptionService subscriptionService, ApplicationDbContext db)
+        public PaymentService(ISubscriptionService subscriptionService, ApplicationDbContext db, LarvaX.Core.Interfaces.IBkashClient? bkashClient = null)
         {
             _subscriptionService = subscriptionService;
             _db = db;
+            _bkashClient = bkashClient;
         }
 
         public async Task<PaymentProcessResult> ProcessSubscriptionPaymentAsync(PaymentProcessRequest request)
@@ -80,6 +82,24 @@ namespace LarvaX.Infrastructure.Services
 
             try
             {
+                string? gatewayTxnId = null;
+
+                if (request.Method == PaymentMethod.Bkash)
+                {
+                    if (_bkashClient == null)
+                    {
+                        return new PaymentProcessResult { Success = false, Message = "bKash payment method not configured on server." };
+                    }
+
+                    var bkResult = await _bkashClient.InitiatePaymentAsync(request.MobileNumber ?? string.Empty, finalAmount, txnRef);
+                    if (!bkResult.Success)
+                    {
+                        return new PaymentProcessResult { Success = false, Message = bkResult.Message ?? "bKash gateway error" };
+                    }
+
+                    gatewayTxnId = bkResult.GatewayTransactionId;
+                }
+
                 var subscription = await _subscriptionService.SubscribeUserAsync(
                     request.UserId,
                     request.PlanId,
@@ -87,7 +107,8 @@ namespace LarvaX.Infrastructure.Services
                     request.Method,
                     txnRef,
                     finalAmount,
-                    request.CouponCode);
+                    request.CouponCode,
+                    gatewayTxnId);
 
                 var txn = await _db.PaymentTransactions
                     .FirstOrDefaultAsync(t => t.TransactionReference == txnRef);

@@ -74,6 +74,10 @@ builder.Services.AddSingleton<LarvaX.Web.Services.IAdminSettingsService, LarvaX.
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
+// bKash gateway client (optional) - configure Bkash options in appsettings or user-secrets
+builder.Services.Configure<LarvaX.Core.Options.BkashOptions>(builder.Configuration.GetSection("Bkash"));
+builder.Services.AddHttpClient<LarvaX.Core.Interfaces.IBkashClient, LarvaX.Infrastructure.Services.BkashClient>();
+
 // Localization Support (English & Bangla)
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
@@ -168,6 +172,9 @@ app.MapControllerRoute(
 
 app.MapHub<AlertsHub>("/alertshub");
 app.MapHub<VideoConsultHub>("/videoconsulthub");
+
+// Map attribute-routed API controllers (webhooks)
+app.MapControllers();
 
 // Note: MapRazorPages() removed — project uses MVC controllers, not Razor Pages.
 
