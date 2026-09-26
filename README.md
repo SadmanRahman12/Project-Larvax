@@ -104,3 +104,5 @@ Seeded on first startup via `RoleSeeder.cs`:
 ```
 dotnet test
 ```
+
+For the comprehensive test plan, breakdown of completed test suites, task checklists, and future roadmap, see `TESTS.md`.

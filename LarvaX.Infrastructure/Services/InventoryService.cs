@@ -41,9 +41,10 @@ namespace LarvaX.Infrastructure.Services
             var item = await _db.InventoryItems.FindAsync(itemId)
                 ?? throw new InvalidOperationException("Inventory item not found.");
 
-            item.Quantity += quantityChange;
-            if (item.Quantity < 0)
+            if (item.Quantity + quantityChange < 0)
                 throw new InvalidOperationException("Insufficient stock. Cannot reduce below zero.");
+
+            item.Quantity += quantityChange;
 
             var transaction = new InventoryTransaction
             {
