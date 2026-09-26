@@ -30,10 +30,8 @@
         // Initialize map centered on Bangladesh
         var map = L.map('riskMap').setView([23.6850, 90.3563], 7);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-            subdomains: 'abcd',
-            maxZoom: 20
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         // Fetch live data
