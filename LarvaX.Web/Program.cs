@@ -78,6 +78,10 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.Configure<LarvaX.Core.Options.BkashOptions>(builder.Configuration.GetSection("Bkash"));
 builder.Services.AddHttpClient<LarvaX.Core.Interfaces.IBkashClient, LarvaX.Infrastructure.Services.BkashClient>();
 
+// SSLCOMMERZ client (server-side create/verify flow)
+builder.Services.Configure<LarvaX.Core.Options.SslCommerzOptions>(builder.Configuration.GetSection("SslCommerz"));
+builder.Services.AddHttpClient<LarvaX.Core.Interfaces.ISslCommerzClient, LarvaX.Infrastructure.Services.SslCommerzClient>();
+
 // Localization Support (English & Bangla)
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 

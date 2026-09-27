@@ -24,8 +24,8 @@
 
                 <div class="row mt-3">
                     <div class="col-12 d-flex gap-2">
-                        <button type="submit" class="btn btn-success rounded-pill px-4" id="btnProcessCheckout">Pay Now</button>
-                        <button type="submit" formaction="@Url.Action("PayWithSslCommerz", "Subscription")" formmethod="post" class="btn btn-danger rounded-pill px-4" id="btnBkashSsl">Pay with bKash (SSLCOMMERZ)</button>
+                        <button type="submit" form="checkoutForm" class="btn btn-success rounded-pill px-4" id="btnProcessCheckout">Pay Now</button>
+                        <button type="submit" form="checkoutForm" formaction="@Url.Action("PayWithSslCommerz", "Subscription")" formmethod="post" class="btn btn-danger rounded-pill px-4" id="btnBkashSsl">Pay with bKash (SSLCOMMERZ)</button>
                     </div>
                 </div>
 
