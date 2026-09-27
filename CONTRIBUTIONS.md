@@ -10,13 +10,14 @@
 
 ## 1. Executive Summary & Contributor Overview
 
-Project LarvaX was engineered by a 3-member development team with distinct ownership across system architecture, clinical intelligence, enterprise QA/testing, telemedicine, database infrastructure, DevOps, and cloud deployment.
+Project LarvaX was engineered by a 4-member development team with distinct ownership across system architecture, clinical intelligence, enterprise QA/testing, telemedicine, database infrastructure, DevOps, cloud deployment, PWA, and payment integration.
 
 | Contributor | Git Identities / Emails | Primary Specialization | Main Commits | Active Tracked Lines (HEAD) | Code Ownership % |
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **Sadman Rahman Arnab** | `sadmanrahman438@gmail.com`<br>`138679165+SadmanRahman12` | **Lead Architect & Full-Stack Core Engineer**<br>Core architecture, Identity/RBAC, AI Chatbot, ML.NET Classifier, Admin Dashboard, Monetization | 17 (70.8%) | 122,330 | **96.5%** |
 | **Nafis Fuad** | `nafisfuadisc@gmail.com`<br>`165877137+fuad023` | **Telemedicine, Database, Cloud Deployment, DevOps & QA Lead**<br>Telemedicine (WebRTC/SignalR), 4-Stage QA Test Suite, PostgreSQL Migration, Render/Supabase Deployment, Docker, GIS Maps, Docs | 6 (25.0%) | 3,780 | **3.0%** |
 | **Md. Adnan** | `madnan4980@gmail.com`<br>`madnan4980-dot` | **Clinical Decision Support & Patient Education Specialist**<br>Fluid management, risk mapping, emergency guidance, education content, and deployment hardening | 6 on `main`<br>21 across refs | History-based update | — |
+| **Sajid Al Amin** | `sajid.cse.20230104025@aust.edu`<br>`sajid-25` | **PWA, Offline Reporting & Payment Integration Contributor**<br>Offline report queueing, IndexedDB photo uploads, bKash/SSLCommerz scaffolding, and About-page integration | PR #11<br>5 authored branch commits | History-based update | — |
 
 ---
 
@@ -88,28 +89,6 @@ Project-Larvax/
 
 ---
 
-### New Contribution: sajid-25
-**Role:** Feature contributor (PWA + Payment integration scaffolding)
-**Git Identity:** `sajid-25` <sajid.cse.20230104025@aust.edu>
-
-#### Summary of contributions (branch: feature/about)
-- Implemented initial PWA offline support: service worker (sw.js), offline fallback page (wwwroot/offline.html), and client queue helper (wwwroot/js/pwa.js).
-- Modified Reports Create view to queue reports while offline and added a lightweight API endpoint (POST /api/reports) to accept queued reports when the user is authenticated.
-- Scaffolding for bKash payment integration: added IBkashClient, BkashOptions, and a placeholder BkashClient implementation; added Checkout UI wiring for SSLCOMMERZ redirect and webhook endpoint skeleton for bKash notifications.
-- Added About page and wiring to Dashboard.
-
-### New Contribution: sajid-25 (continued)
-**PWA Offline Photo Queue (IndexedDB)**
-- Implemented an IndexedDB-based offline queue for reports including photo blob storage:
-  - Added wwwroot/js/idb-wrapper.js (minimal promise-based IndexedDB helper).
-  - Migrated PWA queue from localStorage to IndexedDB in wwwroot/js/pwa.js; stores report metadata in 'reports' and photos in 'blobs'.
-  - Updated Views/Reports/Create.cshtml to capture photo files when offline and queue them with a single-click flow; added manual "Retry queued uploads" button.
-  - Sync logic now posts multipart/form-data to existing /api/reports endpoint and removes queued items on success.
-
-
-Commit: feat: add PWA offline queue for reports; add service worker fallback and API endpoint; scaffold bKash client files
-Branch: feature/about
-
 ---
 
 6. **GIS Tile Layer Modernization ([PR #8](LarvaX.Web/Views/Home/Index.cshtml)):**
@@ -167,6 +146,27 @@ Branch: feature/about
 
 ---
 
+### 4. Sajid Al Amin (`sajid-25`)
+**Role:** PWA, Offline Reporting & Payment Integration Contributor
+**Activity Period:** Sep 26–27, 2026
+**Metrics:** 5 authored feature/documentation commits on `feature/about`, merged through PR #11 (`9cd1578`)
+
+#### Key Deliverables & Modules Implemented:
+1. **Progressive Web App and Offline Reporting:**
+   - Added the service worker, offline fallback page, and browser-side report queue for unreliable-connectivity scenarios.
+   - Updated report submission flow to queue unauthenticated/offline reports and synchronize them through the reports API when connectivity returns.
+2. **IndexedDB Photo Queue:**
+   - Added IndexedDB storage for queued report metadata and photo blobs, replacing the earlier local-only queue approach for richer offline reports.
+   - Added retry controls and multipart synchronization that removes queued items after successful upload.
+3. **Payment Integration Scaffolding:**
+   - Added bKash client/options interfaces and a local bKash mock flow.
+   - Added SSLCommerz client/options, checkout redirect wiring, payment controller endpoints, webhook scaffolding, and subscription integration updates.
+4. **Product and PWA Support Pages:**
+   - Added the About page and dashboard navigation wiring.
+   - Added placeholder PWA icons and the bKash logo used by the payment and installable-app experiences.
+
+---
+
 ## 4. Pull Request & Commit History Log on `main`
 
 | PR / Commit | Primary Contributor | Title / Scope | Key Modules Touched |
@@ -185,6 +185,7 @@ Branch: feature/about
 | **#13** (`611505e`) | **Md. Adnan** | Add education content and ICU bed guidance | Bilingual articles/quizzes and ICU reference information |
 | **#12** (`bc651f7`) | **Md. Adnan** | Testing branch temp/demo | Branch validation and integration work |
 | **#3** (`db73b79`) | **Md. Adnan** | Feature/eduhealth v2 | Dengue IV fluid calculator, formula references, patient education |
+| **#11** (`9cd1578`) | **Sajid Al Amin** | Feature/about | PWA offline queue, IndexedDB photo uploads, bKash/SSLCommerz scaffolding, About page |
 | **#2** (`55e0c84`)\* | **Nafis Fuad** | feature(telemedicine): VideoConsultHub & Appointments | WebRTC Video Consultation Room, `VideoConsultHub`, `AppointmentsController` |
 | **#1** (`23eb00c`) | **Sadman Rahman Arnab** | Core application loop & Phase 2 features | Core loop, First Aid guides, Phase 2 features |
 | **—** (`8ec959c`) | **Sadman Rahman Arnab** | Implement Phase 1 core architecture | Identity auth, RBAC approval flow, EF Core, Citizen reporting |
@@ -198,3 +199,4 @@ Branch: feature/about
 - **Sadman Rahman Arnab** served as the platform architect and primary full-stack engineer, building the core Clean Architecture framework, Identity/RBAC system, Citizen outbreak reporting, QuestPDF analytics, ML.NET intent classifier, Administrator control center, and monetization engine.
 - **Nafis Fuad** led the Telemedicine & Video Consultation suite (WebRTC/SignalR), architected and executed cloud deployments on **Render** (.NET 10 Docker container) and **Supabase** (managed PostgreSQL database), authored the comprehensive 4-stage 32-scenario QA test matrix and test suite, resolved GIS map tile dependencies, and maintained system technical documentation.
 - **Md. Adnan** developed the clinical Dengue IV fluid resuscitation tools based on WHO and Holliday-Segar principles, then expanded LarvaX with bilingual education content, ICU bed guidance, regional risk-map calculations, First Aid and symptom-checker references, and a PostgreSQL UTC seeding fix. His contribution is best represented by the feature history and commits listed above because the repository contains branch and merge counterparts.
+- **Sajid Al Amin** delivered the PWA and payment integration contribution merged through PR #11. He added offline report queuing, service-worker fallback behavior, IndexedDB-backed photo synchronization, local bKash/SSLCommerz payment scaffolding, the About page, and supporting dashboard/report workflow integration.
