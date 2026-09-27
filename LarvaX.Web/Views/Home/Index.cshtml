@@ -41,15 +41,17 @@
                 let bounds = [];
                 data.forEach(zone => {
                     let color = zone.riskLevel === 'High' ? '#dc3545' : (zone.riskLevel === 'Medium' ? '#ffc107' : '#198754');
+                    let fillOpacity = zone.riskLevel === 'High' ? 0.48 : (zone.riskLevel === 'Medium' ? 0.42 : 0.3);
                     
                     let circle = L.circle([zone.lat, zone.lng], {
                         color: color,
                         fillColor: color,
-                        fillOpacity: 0.4,
+                        fillOpacity: fillOpacity,
+                        weight: 2,
                         radius: zone.radius
                     }).addTo(map);
 
-                    circle.bindPopup(`<b>${zone.region}</b><br>Risk: <span class="badge" style="background-color:${color}">${zone.riskLevel}</span><br>Confidence: ${(zone.confidence * 100).toFixed(0)}%`);
+                    circle.bindPopup(`<b>${zone.region}</b><br>Risk: <span class="badge" style="background-color:${color}">${zone.riskLevel}</span><br>Confidence: ${(zone.confidence * 100).toFixed(0)}%<br>Data: ${zone.dataSufficiency}`);
                     bounds.push([zone.lat, zone.lng]);
                 });
 
