@@ -9,6 +9,7 @@
         _ => "bg-success"
     };
     string textColor = (risk == "High" || risk == "Emergency") ? "text-white" : "text-dark";
+    var warningFlags = ViewBag.WarningFlags as IEnumerable<string> ?? Enumerable.Empty<string>();
 }
 
 @if (isEmergency)
@@ -47,6 +48,24 @@
             <div class="card-body p-4">
                 <h5 class="fw-semibold"><i class="bi bi-clipboard2-pulse me-2 text-primary"></i>What This Means</h5>
                 <p class="text-muted">@ViewBag.Advice</p>
+
+                <div class="row g-3 mb-3 small">
+                    <div class="col-sm-6"><div class="border rounded p-3 h-100"><span class="text-muted">Screening score</span><div class="fs-5 fw-bold">@ViewBag.Score</div><span class="text-muted">This is an internal screening score, not a probability or diagnosis.</span></div></div>
+                    <div class="col-sm-6"><div class="border rounded p-3 h-100"><span class="text-muted">What to do next</span><div class="fw-bold">Follow the urgency above</div><span class="text-muted">A worsening condition overrides any earlier result.</span></div></div>
+                </div>
+
+                @if (warningFlags.Any())
+                {
+                    <div class="alert alert-warning small" role="alert">
+                        <strong><i class="bi bi-exclamation-triangle me-1"></i>Warning flags detected</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach (var flag in warningFlags)
+                            {
+                                <li>@flag</li>
+                            }
+                        </ul>
+                    </div>
+                }
 
                 <hr />
 
@@ -94,7 +113,27 @@
                     <a asp-controller="Chatbot" asp-action="Index" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots me-1"></i>Ask DenAI</a>
                     <a asp-controller="FirstAid" asp-action="Index" class="btn btn-outline-danger btn-sm"><i class="bi bi-heart-pulse me-1"></i>First Aid Guide</a>
                 </div>
+
+                <div class="alert alert-secondary small mt-4 mb-0" role="alert">
+                    <strong>Important limitation:</strong> This result is based only on the symptoms selected. It does not include examination findings, blood tests, pregnancy status, age-related risk, medicines, or other causes of fever. A low-risk result does not rule out dengue or another serious illness. Seek care if symptoms worsen or you are concerned.
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<section class="row justify-content-center mt-4">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 small">
+                <h5 class="fw-bold"><i class="bi bi-journal-medical text-primary me-2"></i>References</h5>
+                <p class="text-muted">Educational content is based on public dengue guidance. Recommendations may vary by country and patient condition; clinicians should follow current local protocols.</p>
+                <ul class="mb-0">
+                    <li><a href="https://www.who.int/publications/i/item/9789241547871" target="_blank" rel="noopener noreferrer">World Health Organization: Dengue guidelines</a></li>
+                    <li><a href="https://www.cdc.gov/dengue/signs-symptoms/index.html" target="_blank" rel="noopener noreferrer">CDC: Signs and symptoms of dengue</a></li>
+                    <li><a href="https://www.who.int/news-room/fact-sheets/detail/dengue-and-severe-dengue" target="_blank" rel="noopener noreferrer">WHO: Dengue and severe dengue</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
