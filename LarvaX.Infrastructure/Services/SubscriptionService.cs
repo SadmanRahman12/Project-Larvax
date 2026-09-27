@@ -170,7 +170,8 @@ namespace LarvaX.Infrastructure.Services
             PaymentMethod method, 
             string transactionRef, 
             decimal paidAmount, 
-            string? couponCode = null)
+            string? couponCode = null,
+            string? gatewayTransactionId = null)
         {
             var plan = await _db.SubscriptionPlans.FindAsync(planId)
                        ?? throw new InvalidOperationException($"Subscription plan with ID {planId} not found.");
@@ -217,7 +218,9 @@ namespace LarvaX.Infrastructure.Services
                 Currency = plan.Currency,
                 Method = method,
                 TransactionReference = transactionRef,
-                GatewayTransactionId = $"GW-{Guid.NewGuid().ToString("N")[..10].ToUpperInvariant()}",
+                GatewayTransactionId = string.IsNullOrWhiteSpace(gatewayTransactionId)
+                    ? $"GW-{Guid.NewGuid().ToString("N")[..10].ToUpperInvariant()}"
+                    : gatewayTransactionId,
                 Status = PaymentStatus.Completed,
                 CreatedAt = now
             };

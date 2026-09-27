@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using LarvaX.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 using LarvaX.Core.Interfaces;
 using LarvaX.Web.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -16,15 +17,166 @@ namespace LarvaX.Web.Controllers
         private readonly ISubscriptionService _subscriptionService;
         private readonly IPaymentService _paymentService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly LarvaX.Infrastructure.Data.ApplicationDbContext _db;
+        private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
+        private readonly Microsoft.Extensions.Logging.ILogger<SubscriptionController> _logger;
+        private readonly LarvaX.Core.Interfaces.ISslCommerzClient _sslClient;
 
         public SubscriptionController(
             ISubscriptionService subscriptionService,
             IPaymentService paymentService,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            LarvaX.Infrastructure.Data.ApplicationDbContext db,
+            Microsoft.Extensions.Configuration.IConfiguration config,
+            LarvaX.Core.Interfaces.ISslCommerzClient sslClient,
+            Microsoft.Extensions.Logging.ILogger<SubscriptionController> logger)
         {
             _subscriptionService = subscriptionService;
             _paymentService = paymentService;
             _userManager = userManager;
+            _db = db;
+            _config = config;
+            _sslClient = sslClient ?? throw new ArgumentNullException(nameof(sslClient));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        // ==========================================
+        // 6. Pay with bKash via SSLCOMMERZ redirect
+        // ==========================================
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PayWithSslCommerz(CheckoutViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var plan = await _subscriptionService.GetPlanByIdAsync(model.PlanId);
+            if (plan == null)
+            {
+                TempData["ErrorMessage"] = "Selected plan not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            decimal amount = model.FinalPrice;
+            var now = DateTime.UtcNow;
+
+            // Create a transaction reference embedding planId and cycle so callback can restore context
+            var gid = Guid.NewGuid().ToString("N");
+            var txnRef = $"BKS-P{plan.Id}-C{(int)model.Cycle}-{now:yyyyMMdd}-{gid.Substring(0,8).ToUpperInvariant()}";
+
+            var txn = new LarvaX.Core.Entities.PaymentTransaction
+            {
+                UserId = user.Id,
+                Amount = amount,
+                Currency = plan.Currency,
+                Method = PaymentMethod.Bkash,
+                TransactionReference = txnRef,
+                Status = PaymentStatus.Pending,
+                CreatedAt = now
+            };
+
+            _db.PaymentTransactions.Add(txn);
+            await _db.SaveChangesAsync();
+
+            // Build redirect to SSLCOMMERZ (simple GET with query string for demo). Configure in appsettings or user-secrets.
+            // Use server-side SSLCOMMERZ create API
+            var returnUrl = Url.Action("SslCommerzCallback", "Subscription", new { refId = txnRef }, Request.Scheme);
+            var failUrl = returnUrl;
+            var cancelUrl = returnUrl;
+
+            // If configured to use local mock or SSLCOMMERZ is not configured, redirect to local bKash mock page for testing
+            var useMock = string.Equals(_config["Payment:UseMockBkash"], "true", StringComparison.OrdinalIgnoreCase);
+            var sslBase = _config["SslCommerz:BaseUrl"];
+            if (useMock || string.IsNullOrWhiteSpace(sslBase))
+            {
+                var mockUrl = Url.Action("BkashMock", "Payment", new { refId = txnRef, amount = amount, planId = plan.Id });
+                return Redirect(mockUrl!);
+            }
+
+            try
+            {
+                var result = await _sslClient.CreatePaymentAsync(amount, plan.Currency, txnRef, returnUrl, failUrl, cancelUrl);
+                if (!result.Success)
+                {
+                    _logger.LogWarning("SslCommerz create failed: {msg} - raw: {raw}", result.Message, result.RawResponse);
+
+                    // Provide actionable debug feedback so developer can understand why create failed.
+                    var fallbackBase = _config["SslCommerz:BaseUrl"] ?? "https://sandbox.sslcommerz.com/bkash/pay";
+                    var storeId = _config["SslCommerz:StoreId"] ?? string.Empty;
+                    var storePass = _config["SslCommerz:StorePassword"] ?? string.Empty;
+                    var fallbackUrl = $"{fallbackBase}?store_id={Uri.EscapeDataString(storeId)}&store_passwd={Uri.EscapeDataString(storePass)}&tran_id={Uri.EscapeDataString(txnRef)}&total_amount={amount}&currency={plan.Currency}&success_url={Uri.EscapeDataString(returnUrl)}&fail_url={Uri.EscapeDataString(returnUrl)}&cancel_url={Uri.EscapeDataString(returnUrl)}";
+
+                    // Return a small debug page showing the error and a fallback link the developer can click to continue testing.
+                    var backUrl = Url.Action("Index", "Subscription");
+                    var html = $@"<html><body><h3>Payment gateway create failed</h3><p><strong>Message:</strong> {System.Net.WebUtility.HtmlEncode(result.Message)}</p><p><strong>Raw response:</strong><pre>{System.Net.WebUtility.HtmlEncode(result.RawResponse ?? "(empty)")}</pre></p><p>You can try the legacy fallback URL for testing: <a href='{fallbackUrl}' target='_blank'>Open payment gateway</a></p><p><a href='{backUrl}'>Back to plans</a></p></body></html>";
+
+                    return Content(html, "text/html");
+                }
+
+                if (!string.IsNullOrWhiteSpace(result.RedirectUrl))
+                {
+                    return Redirect(result.RedirectUrl);
+                }
+
+                // fallback: if redirect not present but gateway id returned, show confirmation instructing user to continue
+                _logger.LogInformation("SslCommerz created transaction {tx} gatewayId={gid}", txnRef, result.GatewayTransactionId);
+                TempData["InfoMessage"] = "Payment initiated. Please complete payment on the gateway page.";
+                return RedirectToAction(nameof(Confirmation), new { refId = txnRef });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SslCommerz create flow failed for txn {tx}", txnRef);
+                TempData["ErrorMessage"] = "Unexpected payment error. Try again later.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // Minimal callback endpoint that SSLCOMMERZ will redirect to after payment attempt
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> SslCommerzCallback(string refId)
+        {
+            if (string.IsNullOrWhiteSpace(refId)) return RedirectToAction(nameof(Index));
+
+            var txn = await _db.PaymentTransactions.FirstOrDefaultAsync(t => t.TransactionReference == refId);
+            if (txn == null) return RedirectToAction(nameof(Index));
+
+            // Map common query params returned by gateway
+            var status = Request.Query["status"].ToString(); // e.g., VALID, FAILED
+            var gatewayId = Request.Query["bank_tran_id"].ToString();
+
+            if (!string.IsNullOrWhiteSpace(status) && status.Equals("VALID", StringComparison.OrdinalIgnoreCase))
+            {
+                txn.Status = PaymentStatus.Completed;
+                if (!string.IsNullOrWhiteSpace(gatewayId)) txn.GatewayTransactionId = gatewayId;
+                await _db.SaveChangesAsync();
+
+                // Extract planId and cycle from refId (format: BKS-P{planId}-C{cycle}-...)
+                try
+                {
+                    var parts = refId.Split('-', StringSplitOptions.RemoveEmptyEntries);
+                    var planPart = parts.FirstOrDefault(p => p.StartsWith("P"));
+                    var cyclePart = parts.FirstOrDefault(p => p.StartsWith("C"));
+                    if (planPart != null && int.TryParse(planPart.Substring(1), out var planId))
+                    {
+                        var cycle = BillingCycle.Monthly;
+                        if (cyclePart != null && int.TryParse(cyclePart.Substring(1), out var c)) cycle = (BillingCycle)c;
+
+                        // Create subscription now that payment succeeded
+                        var subscription = await _subscriptionService.SubscribeUserAsync(txn.UserId, planId, cycle, PaymentMethod.Bkash, txn.TransactionReference, txn.Amount, null, txn.GatewayTransactionId);
+                    }
+                }
+                catch { /* ignore parsing errors */ }
+            }
+            else
+            {
+                txn.Status = PaymentStatus.Failed;
+                await _db.SaveChangesAsync();
+            }
+
+            // Show confirmation page
+            return RedirectToAction(nameof(Confirmation), new { refId = txn.TransactionReference });
         }
 
         // ==========================================

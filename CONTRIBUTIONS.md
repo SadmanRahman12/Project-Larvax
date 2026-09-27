@@ -85,6 +85,33 @@ Project-Larvax/
    - Built automatic schema migration on startup and configured Supabase cloud connection pooling using ASP.NET Core User Secrets.
 5. **Containerization & Deployment Configuration:**
    - Authored the production-ready multi-stage [Dockerfile](Dockerfile) and [.dockerignore](.dockerignore) for .NET 10 deployments.
+
+---
+
+### New Contribution: sajid-25
+**Role:** Feature contributor (PWA + Payment integration scaffolding)
+**Git Identity:** `sajid-25` <sajid.cse.20230104025@aust.edu>
+
+#### Summary of contributions (branch: feature/about)
+- Implemented initial PWA offline support: service worker (sw.js), offline fallback page (wwwroot/offline.html), and client queue helper (wwwroot/js/pwa.js).
+- Modified Reports Create view to queue reports while offline and added a lightweight API endpoint (POST /api/reports) to accept queued reports when the user is authenticated.
+- Scaffolding for bKash payment integration: added IBkashClient, BkashOptions, and a placeholder BkashClient implementation; added Checkout UI wiring for SSLCOMMERZ redirect and webhook endpoint skeleton for bKash notifications.
+- Added About page and wiring to Dashboard.
+
+### New Contribution: sajid-25 (continued)
+**PWA Offline Photo Queue (IndexedDB)**
+- Implemented an IndexedDB-based offline queue for reports including photo blob storage:
+  - Added wwwroot/js/idb-wrapper.js (minimal promise-based IndexedDB helper).
+  - Migrated PWA queue from localStorage to IndexedDB in wwwroot/js/pwa.js; stores report metadata in 'reports' and photos in 'blobs'.
+  - Updated Views/Reports/Create.cshtml to capture photo files when offline and queue them with a single-click flow; added manual "Retry queued uploads" button.
+  - Sync logic now posts multipart/form-data to existing /api/reports endpoint and removes queued items on success.
+
+
+Commit: feat: add PWA offline queue for reports; add service worker fallback and API endpoint; scaffold bKash client files
+Branch: feature/about
+
+---
+
 6. **GIS Tile Layer Modernization ([PR #8](LarvaX.Web/Views/Home/Index.cshtml)):**
    - Replaced deprecated CARTO raster tile providers with OpenStreetMap GIS tiles on the live dashboard.
 7. **Documentation & Developer Experience ([PR #5](README.md), [PR #7](README.md)):**

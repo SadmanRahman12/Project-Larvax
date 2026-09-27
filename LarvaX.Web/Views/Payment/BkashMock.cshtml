@@ -1,0 +1,43 @@
+@model LarvaX.Web.Models.BkashMockViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-header text-center bg-white py-4">
+                    <img src="/img/bkash-logo.png" alt="bKash" style="height:48px;" />
+                </div>
+                <div class="card-body text-center" style="background-color:#e2136e;color:white;">
+                    <h4 class="fw-bold mb-3">Your bKash Account Number</h4>
+                    <form id="bkashForm" method="post" asp-controller="Payment" asp-action="BkashMockConfirm">
+                        <input type="hidden" name="TransactionReference" value="@Model.TransactionReference" />
+                        <input type="hidden" name="Amount" value="@Model.Amount" />
+                        <div class="mb-3">
+                            <input name="MobileNumber" id="bkashMobile" class="form-control form-control-lg" placeholder="e.g 01XXXXXXXXX" />
+                        </div>
+                        <div class="mb-2 text-white-50">Confirm and proceed, <a href="#" class="text-white">terms &amp; conditions</a></div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-light flex-fill" onclick="window.history.back()">Cancel</button>
+                            <button type="submit" class="btn btn-secondary disabled flex-fill" id="bkashConfirm">Confirm</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center small">
+                    <div>© 2026 bKash, All Rights Reserved</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const mobileInput = document.getElementById('bkashMobile');
+    const confirmBtn = document.getElementById('bkashConfirm');
+    mobileInput.addEventListener('input', function() {
+        const v = mobileInput.value.replace(/\D/g, '');
+        if (v.length >= 11) { confirmBtn.classList.remove('disabled'); } else { confirmBtn.classList.add('disabled'); }
+    });
+</script>

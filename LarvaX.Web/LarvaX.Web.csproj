@@ -23,4 +23,8 @@
     <ProjectReference Include="..\LarvaX.Infrastructure\LarvaX.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Options\" />
+  </ItemGroup>
+
 </Project>

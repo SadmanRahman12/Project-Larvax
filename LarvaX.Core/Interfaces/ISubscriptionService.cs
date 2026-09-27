@@ -22,7 +22,7 @@ namespace LarvaX.Core.Interfaces
         Task<bool> HasFeatureAccessAsync(string? userId, string featureKey);
         Task<(bool Allowed, int Remaining, int Limit)> CheckDailyQuotaAsync(string? userId, string featureKey);
         Task RecordFeatureUsageAsync(string? userId, string featureKey);
-        Task<UserSubscription> SubscribeUserAsync(string userId, int planId, BillingCycle cycle, PaymentMethod method, string transactionRef, decimal paidAmount, string? couponCode = null);
+        Task<UserSubscription> SubscribeUserAsync(string userId, int planId, BillingCycle cycle, PaymentMethod method, string transactionRef, decimal paidAmount, string? couponCode = null, string? gatewayTransactionId = null);
         Task<bool> CancelSubscriptionAsync(string userId);
         Task<List<Invoice>> GetUserInvoicesAsync(string userId);
         Task<Invoice?> GetInvoiceByIdAsync(int invoiceId, string userId);

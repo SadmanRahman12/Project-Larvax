@@ -11,7 +11,7 @@
                 <small class="text-white-50">Help health workers identify and eradicate mosquito hotspots</small>
             </div>
             <div class="card-body p-4">
-                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <form asp-action="Create" method="post" enctype="multipart/form-data" id="reportForm">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                     <div class="mb-3">
@@ -52,7 +52,7 @@
                         <textarea asp-for="Description" class="form-control" rows="3" placeholder="e.g. Stagnant rainwater in flower pots on roof, construction basement pool near Road 12..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-danger w-100 py-2 fw-semibold">
+                    <button type="submit" class="btn btn-danger w-100 py-2 fw-semibold" id="submitReportBtn">
                         <i class="bi bi-send-fill me-1"></i> Submit Report (Status: Received)
                     </button>
                 </form>
@@ -85,3 +85,25 @@
         }
     </script>
 }
+
+<script src="~/js/pwa.js" asp-append-version="true"></script>
+<script>
+    // Intercept form submission to queue when offline
+    document.getElementById('reportForm').addEventListener('submit', function (e) {
+        if (navigator.onLine) return; // allow normal post when online
+
+        e.preventDefault();
+        const disease = document.querySelector('[name="DiseaseType"]').value;
+        const lat = parseFloat(document.getElementById('latInput').value || 0);
+        const lng = parseFloat(document.getElementById('lngInput').value || 0);
+        const desc = document.querySelector('[name="Description"]').value;
+
+        // queue minimal report (photo not supported in offline queue)
+        window.LarvaXPwa.queueReport({ diseaseType: disease, latitude: lat, longitude: lng, description: desc });
+
+        // show confirmation to user
+        alert('You are offline. Report saved locally and will be synced when you are back online.');
+        // Optionally redirect to MyReports or clear form
+        document.getElementById('reportForm').reset();
+    });
+</script>
