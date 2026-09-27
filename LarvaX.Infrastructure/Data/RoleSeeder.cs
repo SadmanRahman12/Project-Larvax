@@ -152,14 +152,14 @@ namespace LarvaX.Infrastructure.Data
                         Title = "Dengue Prevention Starts at Home",
                         Content = "Aedes mosquitoes can breed in small amounts of standing water. Empty buckets, flowerpots, discarded containers, and roof gutters every week. Keep water containers covered, use screens or mosquito nets, and wear clothing that covers your arms and legs. These simple steps help protect your family and your community.",
                         Language = "en",
-                        PublishedDate = new DateTime(2026, 9, 1)
+                        PublishedDate = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc)
                     },
                     new Core.Entities.Article
                     {
                         Title = "Dengue Warning Signs to Watch For",
                         Content = "Most people recover from dengue with rest and careful hydration, but warning signs can appear when the fever begins to fall. Seek urgent medical care for severe abdominal pain, repeated vomiting, bleeding, extreme weakness, difficulty breathing, pale or cold skin, or very little urine. Do not take aspirin or ibuprofen unless a clinician tells you to.",
                         Language = "en",
-                        PublishedDate = new DateTime(2026, 9, 2)
+                        PublishedDate = new DateTime(2026, 9, 2, 0, 0, 0, DateTimeKind.Utc)
                     }
                 );
             }
@@ -172,14 +172,14 @@ namespace LarvaX.Infrastructure.Data
                         Title = "বাড়ি থেকেই ডেঙ্গু প্রতিরোধ শুরু করুন",
                         Content = "এডিস মশা অল্প জমা পানিতেও বংশবিস্তার করতে পারে। প্রতি সপ্তাহে বালতি, ফুলের টব, ফেলে রাখা পাত্র এবং ছাদের নালা পরিষ্কার করুন। পানির পাত্র ঢেকে রাখুন, মশারি ব্যবহার করুন এবং শরীর ঢেকে রাখা পোশাক পরুন। এই সহজ পদক্ষেপগুলো পরিবার ও প্রতিবেশীদের সুরক্ষিত রাখতে সাহায্য করে।",
                         Language = "bn",
-                        PublishedDate = new DateTime(2026, 9, 1)
+                        PublishedDate = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc)
                     },
                     new Core.Entities.Article
                     {
                         Title = "ডেঙ্গুর সতর্কতা চিহ্ন চিনুন",
                         Content = "জ্বর কমে যাওয়ার সময়ও ডেঙ্গুতে সতর্কতা চিহ্ন দেখা দিতে পারে। তীব্র পেটব্যথা, বারবার বমি, রক্তপাত, চরম দুর্বলতা, শ্বাসকষ্ট, ফ্যাকাশে বা ঠান্ডা ত্বক এবং প্রস্রাব কমে গেলে দ্রুত চিকিৎসা নিন। চিকিৎসকের পরামর্শ ছাড়া অ্যাসপিরিন বা আইবুপ্রোফেন খাবেন না।",
                         Language = "bn",
-                        PublishedDate = new DateTime(2026, 9, 2)
+                        PublishedDate = new DateTime(2026, 9, 2, 0, 0, 0, DateTimeKind.Utc)
                     }
                 );
             }
