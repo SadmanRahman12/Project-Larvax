@@ -85,6 +85,24 @@ Project-Larvax/
    - Built automatic schema migration on startup and configured Supabase cloud connection pooling using ASP.NET Core User Secrets.
 5. **Containerization & Deployment Configuration:**
    - Authored the production-ready multi-stage [Dockerfile](Dockerfile) and [.dockerignore](.dockerignore) for .NET 10 deployments.
+
+---
+
+### New Contribution: sajid-25
+**Role:** Feature contributor (PWA + Payment integration scaffolding)
+**Git Identity:** `sajid-25` <sajid.cse.20230104025@aust.edu>
+
+#### Summary of contributions (branch: feature/about)
+- Implemented initial PWA offline support: service worker (sw.js), offline fallback page (wwwroot/offline.html), and client queue helper (wwwroot/js/pwa.js).
+- Modified Reports Create view to queue reports while offline and added a lightweight API endpoint (POST /api/reports) to accept queued reports when the user is authenticated.
+- Scaffolding for bKash payment integration: added IBkashClient, BkashOptions, and a placeholder BkashClient implementation; added Checkout UI wiring for SSLCOMMERZ redirect and webhook endpoint skeleton for bKash notifications.
+- Added About page and wiring to Dashboard.
+
+Commit: feat: add PWA offline queue for reports; add service worker fallback and API endpoint; scaffold bKash client files
+Branch: feature/about
+
+---
+
 6. **GIS Tile Layer Modernization ([PR #8](LarvaX.Web/Views/Home/Index.cshtml)):**
    - Replaced deprecated CARTO raster tile providers with OpenStreetMap GIS tiles on the live dashboard.
 7. **Documentation & Developer Experience ([PR #5](README.md), [PR #7](README.md)):**
