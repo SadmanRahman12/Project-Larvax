@@ -98,6 +98,15 @@ Project-Larvax/
 - Scaffolding for bKash payment integration: added IBkashClient, BkashOptions, and a placeholder BkashClient implementation; added Checkout UI wiring for SSLCOMMERZ redirect and webhook endpoint skeleton for bKash notifications.
 - Added About page and wiring to Dashboard.
 
+### New Contribution: sajid-25 (continued)
+**PWA Offline Photo Queue (IndexedDB)**
+- Implemented an IndexedDB-based offline queue for reports including photo blob storage:
+  - Added wwwroot/js/idb-wrapper.js (minimal promise-based IndexedDB helper).
+  - Migrated PWA queue from localStorage to IndexedDB in wwwroot/js/pwa.js; stores report metadata in 'reports' and photos in 'blobs'.
+  - Updated Views/Reports/Create.cshtml to capture photo files when offline and queue them with a single-click flow; added manual "Retry queued uploads" button.
+  - Sync logic now posts multipart/form-data to existing /api/reports endpoint and removes queued items on success.
+
+
 Commit: feat: add PWA offline queue for reports; add service worker fallback and API endpoint; scaffold bKash client files
 Branch: feature/about
 
