@@ -142,6 +142,137 @@ namespace LarvaX.Infrastructure.Data
 
             // Seed initial Inventory Items if empty
             var db = serviceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Seed starter education content for both supported languages
+            if (!db.Articles.Any(a => a.Language == "en"))
+            {
+                db.Articles.AddRange(
+                    new Core.Entities.Article
+                    {
+                        Title = "Dengue Prevention Starts at Home",
+                        Content = "Aedes mosquitoes can breed in small amounts of standing water. Empty buckets, flowerpots, discarded containers, and roof gutters every week. Keep water containers covered, use screens or mosquito nets, and wear clothing that covers your arms and legs. These simple steps help protect your family and your community.",
+                        Language = "en",
+                        PublishedDate = new DateTime(2026, 9, 1)
+                    },
+                    new Core.Entities.Article
+                    {
+                        Title = "Dengue Warning Signs to Watch For",
+                        Content = "Most people recover from dengue with rest and careful hydration, but warning signs can appear when the fever begins to fall. Seek urgent medical care for severe abdominal pain, repeated vomiting, bleeding, extreme weakness, difficulty breathing, pale or cold skin, or very little urine. Do not take aspirin or ibuprofen unless a clinician tells you to.",
+                        Language = "en",
+                        PublishedDate = new DateTime(2026, 9, 2)
+                    }
+                );
+            }
+
+            if (!db.Articles.Any(a => a.Language == "bn"))
+            {
+                db.Articles.AddRange(
+                    new Core.Entities.Article
+                    {
+                        Title = "বাড়ি থেকেই ডেঙ্গু প্রতিরোধ শুরু করুন",
+                        Content = "এডিস মশা অল্প জমা পানিতেও বংশবিস্তার করতে পারে। প্রতি সপ্তাহে বালতি, ফুলের টব, ফেলে রাখা পাত্র এবং ছাদের নালা পরিষ্কার করুন। পানির পাত্র ঢেকে রাখুন, মশারি ব্যবহার করুন এবং শরীর ঢেকে রাখা পোশাক পরুন। এই সহজ পদক্ষেপগুলো পরিবার ও প্রতিবেশীদের সুরক্ষিত রাখতে সাহায্য করে।",
+                        Language = "bn",
+                        PublishedDate = new DateTime(2026, 9, 1)
+                    },
+                    new Core.Entities.Article
+                    {
+                        Title = "ডেঙ্গুর সতর্কতা চিহ্ন চিনুন",
+                        Content = "জ্বর কমে যাওয়ার সময়ও ডেঙ্গুতে সতর্কতা চিহ্ন দেখা দিতে পারে। তীব্র পেটব্যথা, বারবার বমি, রক্তপাত, চরম দুর্বলতা, শ্বাসকষ্ট, ফ্যাকাশে বা ঠান্ডা ত্বক এবং প্রস্রাব কমে গেলে দ্রুত চিকিৎসা নিন। চিকিৎসকের পরামর্শ ছাড়া অ্যাসপিরিন বা আইবুপ্রোফেন খাবেন না।",
+                        Language = "bn",
+                        PublishedDate = new DateTime(2026, 9, 2)
+                    }
+                );
+            }
+
+            if (!db.Quizzes.Any(q => q.Language == "en"))
+            {
+                db.Quizzes.Add(new Core.Entities.Quiz
+                {
+                    Title = "Dengue Safety Check",
+                    Language = "en",
+                    Questions = new List<Core.Entities.QuizQuestion>
+                    {
+                        new Core.Entities.QuizQuestion
+                        {
+                            Text = "How often should standing water containers be emptied?",
+                            Options = new List<Core.Entities.QuizOption>
+                            {
+                                new Core.Entities.QuizOption { Text = "Every week", IsCorrect = true },
+                                new Core.Entities.QuizOption { Text = "Once a year" },
+                                new Core.Entities.QuizOption { Text = "Only after rain" }
+                            }
+                        },
+                        new Core.Entities.QuizQuestion
+                        {
+                            Text = "Which medicine should generally be avoided in dengue unless advised by a clinician?",
+                            Options = new List<Core.Entities.QuizOption>
+                            {
+                                new Core.Entities.QuizOption { Text = "Aspirin", IsCorrect = true },
+                                new Core.Entities.QuizOption { Text = "Oral rehydration salts" },
+                                new Core.Entities.QuizOption { Text = "Water" }
+                            }
+                        },
+                        new Core.Entities.QuizQuestion
+                        {
+                            Text = "What should you do if a dengue warning sign appears?",
+                            Options = new List<Core.Entities.QuizOption>
+                            {
+                                new Core.Entities.QuizOption { Text = "Seek urgent medical care", IsCorrect = true },
+                                new Core.Entities.QuizOption { Text = "Wait several more days" },
+                                new Core.Entities.QuizOption { Text = "Stop drinking fluids" }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (!db.Quizzes.Any(q => q.Language == "bn"))
+            {
+                db.Quizzes.Add(new Core.Entities.Quiz
+                {
+                    Title = "ডেঙ্গু নিরাপত্তা যাচাই",
+                    Language = "bn",
+                    Questions = new List<Core.Entities.QuizQuestion>
+                    {
+                        new Core.Entities.QuizQuestion
+                        {
+                            Text = "জমে থাকা পানির পাত্র কত ঘন ঘন খালি করা উচিত?",
+                            Options = new List<Core.Entities.QuizOption>
+                            {
+                                new Core.Entities.QuizOption { Text = "প্রতি সপ্তাহে", IsCorrect = true },
+                                new Core.Entities.QuizOption { Text = "বছরে একবার" },
+                                new Core.Entities.QuizOption { Text = "শুধু বৃষ্টির পরে" }
+                            }
+                        },
+                        new Core.Entities.QuizQuestion
+                        {
+                            Text = "চিকিৎসকের পরামর্শ ছাড়া ডেঙ্গুতে কোন ওষুধ এড়ানো উচিত?",
+                            Options = new List<Core.Entities.QuizOption>
+                            {
+                                new Core.Entities.QuizOption { Text = "অ্যাসপিরিন", IsCorrect = true },
+                                new Core.Entities.QuizOption { Text = "খাবার স্যালাইন" },
+                                new Core.Entities.QuizOption { Text = "পানি" }
+                            }
+                        },
+                        new Core.Entities.QuizQuestion
+                        {
+                            Text = "ডেঙ্গুর সতর্কতা চিহ্ন দেখা দিলে কী করা উচিত?",
+                            Options = new List<Core.Entities.QuizOption>
+                            {
+                                new Core.Entities.QuizOption { Text = "দ্রুত চিকিৎসা নিন", IsCorrect = true },
+                                new Core.Entities.QuizOption { Text = "আরও কয়েক দিন অপেক্ষা করুন" },
+                                new Core.Entities.QuizOption { Text = "তরল পান বন্ধ করুন" }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (db.ChangeTracker.HasChanges())
+            {
+                await db.SaveChangesAsync();
+            }
+
             if (!db.InventoryItems.Any())
             {
                 db.InventoryItems.AddRange(

@@ -23,6 +23,30 @@
         <div><strong>Call first.</strong> This directory is a reference, not live bed availability. Phone the hospital before travelling and ask about an ICU bed, dengue care, admission requirements, and referral rules. For a life-threatening emergency, call 999.</div>
     </div>
 
+    <section class="row g-3 mb-4" aria-label="Before you travel">
+        <div class="col-md-4">
+            <div class="h-100 border rounded-3 p-3 bg-light">
+                <i class="bi bi-telephone-outbound text-success fs-4"></i>
+                <h2 class="h6 fw-bold mt-2">Confirm by phone</h2>
+                <p class="small text-muted mb-0">Ask whether an ICU bed is available now, whether the hospital accepts dengue patients, and who must provide the referral.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="h-100 border rounded-3 p-3 bg-light">
+                <i class="bi bi-file-earmark-medical text-primary fs-4"></i>
+                <h2 class="h6 fw-bold mt-2">Take key information</h2>
+                <p class="small text-muted mb-0">Keep the patient's ID, recent prescriptions, test reports, blood group, allergies, and an emergency contact ready.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="h-100 border rounded-3 p-3 bg-light">
+                <i class="bi bi-shield-exclamation text-danger fs-4"></i>
+                <h2 class="h6 fw-bold mt-2">Do not delay emergencies</h2>
+                <p class="small text-muted mb-0">Severe breathing difficulty, bleeding, confusion, fainting, or cold and pale skin needs urgent care. Call 999 if necessary.</p>
+            </div>
+        </div>
+    </section>
+
     <form method="get" class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
             <label for="city" class="form-label fw-semibold">Filter by city</label>
@@ -61,7 +85,17 @@
                         </div>
                         <h3 class="h5 fw-bold">@hospital.Name</h3>
                         <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>@hospital.Address</p>
-                        <p class="small mb-3">@hospital.Type</p>
+                        <p class="small mb-2">@hospital.Type</p>
+                        <div class="border-top border-bottom py-2 mb-3 small text-muted">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span><i class="bi bi-clock-history me-1"></i>Last checked</span>
+                                <span class="fw-semibold text-dark">@hospital.LastUpdated.ToLocalTime().ToString("dd MMM yyyy, h:mm tt")</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-2 mt-1">
+                                <span><i class="bi bi-cash-coin me-1"></i>Estimated daily cost</span>
+                                <span class="fw-semibold text-dark">BDT @hospital.EstimatedCostPerDay.ToString("N0")</span>
+                            </div>
+                        </div>
                         <a class="btn btn-outline-success w-100" href="tel:@hospital.Phone.Replace("-", "")"><i class="bi bi-telephone me-1"></i>Call @hospital.Phone</a>
                     </div>
                 </article>
