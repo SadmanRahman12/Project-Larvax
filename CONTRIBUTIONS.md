@@ -16,7 +16,7 @@ Project LarvaX was engineered by a 3-member development team with distinct owner
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **Sadman Rahman Arnab** | `sadmanrahman438@gmail.com`<br>`138679165+SadmanRahman12` | **Lead Architect & Full-Stack Core Engineer**<br>Core architecture, Identity/RBAC, AI Chatbot, ML.NET Classifier, Admin Dashboard, Monetization | 17 (70.8%) | 122,330 | **96.5%** |
 | **Nafis Fuad** | `nafisfuadisc@gmail.com`<br>`165877137+fuad023` | **Telemedicine, Database, Cloud Deployment, DevOps & QA Lead**<br>Telemedicine (WebRTC/SignalR), 4-Stage QA Test Suite, PostgreSQL Migration, Render/Supabase Deployment, Docker, GIS Maps, Docs | 6 (25.0%) | 3,780 | **3.0%** |
-| **Md. Adnan** | `madnan4980@gmail.com`<br>`madnan4980-dot` | **Clinical Fluid Management Specialist**<br>Dengue IV Fluid Calculator, Scientific Formula References, Patient Education | 1 (4.2%) | 708 | **0.6%** |
+| **Md. Adnan** | `madnan4980@gmail.com`<br>`madnan4980-dot` | **Clinical Decision Support & Patient Education Specialist**<br>Fluid management, risk mapping, emergency guidance, education content, and deployment hardening | 6 on `main`<br>21 across refs | History-based update | — |
 
 ---
 
@@ -35,11 +35,11 @@ Project-Larvax/
 
 | Layer / Subsystem | Total Active Lines | Sadman Rahman Arnab | Nafis Fuad | Md. Adnan |
 | :--- | :---: | :---: | :---: | :---: |
-| [LarvaX.Web](LarvaX.Web) | **104,775** | 103,736 (99.0%) | 331 (0.3%) | 708 (0.7%) |
-| [LarvaX.Infrastructure](LarvaX.Infrastructure) | **15,126** | 14,001 (92.6%) | 1,125 (7.4%) | 0 (0.0%) |
+| [LarvaX.Web](LarvaX.Web) | **104,775** | 103,736 (99.0%) | 331 (0.3%) | Updated in profile below |
+| [LarvaX.Infrastructure](LarvaX.Infrastructure) | **15,126** | 14,001 (92.6%) | 1,125 (7.4%) | Updated in profile below |
 | [LarvaX.Tests](LarvaX.Tests) | **2,845** | 1,534 (53.9%) | 1,311 (46.1%) | 0 (0.0%) |
 | [LarvaX.Application](LarvaX.Application) | **1,493** | 1,493 (100.0%) | 0 (0.0%) | 0 (0.0%) |
-| [LarvaX.Core](LarvaX.Core) | **1,102** | 1,064 (96.6%) | 38 (3.4%) | 0 (0.0%) |
+| [LarvaX.Core](LarvaX.Core) | **1,102** | 1,064 (96.6%) | 38 (3.4%) | Updated in profile below |
 | **Root / Docs / Configs** | **1,484** | 502 (33.8%) | 975 (65.7%) | 0 (0.0%) |
 
 ### Code Ownership by File Extension
@@ -145,15 +145,25 @@ Branch: feature/about
 ---
 
 ### 3. Md. Adnan (`madnan4980-dot`)
-**Role:** Clinical Fluid Management Specialist  
-**Activity Period:** Aug 30, 2026  
-**Metrics:** 1 Commit on `main` (PR #3) | +964 Additions / 0 Deletions | 708 Active Lines (HEAD)  
+**Role:** Clinical Decision Support & Patient Education Specialist  
+**Activity Period:** Aug 30, 2026 – Sep 27, 2026  
+**Metrics:** 6 commits on `main` (including PR #3 and PRs #12–#16) | 21 authored commits across all refs, including branch/merge counterparts | Ownership summarized by feature history below  
 
 #### Key Deliverables & Modules Implemented:
-1. **Clinical Dengue Fluid Management System ([PR #3](LarvaX.Web/Views/Clinical)):**
-   - Engineered the interactive Dengue IV Fluid Calculator implementing Holliday-Segar maintenance fluid calculations and WHO fluid resuscitation rate guidelines.
-   - Built the Hematocrit (HCT) monitoring guide and dynamic fluid titration protocol views.
-   - Authored patient clinical education guides and scientific medical formula reference sections.
+1. **Clinical Dengue Fluid Management System ([PR #3](LarvaX.Web/Views/FluidManagement/Index.cshtml))** (`db73b79`):
+   - Engineered the interactive Dengue IV Fluid Calculator using Holliday-Segar maintenance estimates, dehydration deficit calculations, bolus protocols, safety thresholds, and serum sodium guidance.
+   - Added hematocrit monitoring, fluid-overload cautions, scientific formula explanations, oral rehydration planning, and clinician-only safety disclaimers.
+2. **Education Content and ICU Bed Guidance** (`611505e`, PR #13):
+   - Added bilingual dengue articles and quizzes through idempotent startup seeding in [RoleSeeder.cs](LarvaX.Infrastructure/Data/RoleSeeder.cs).
+   - Expanded the ICU Bed Finder with verification timestamps, estimated daily costs, call-first guidance, emergency escalation information, and patient-preparation advice.
+3. **Regional Live Risk Map** (`1f0f466`, PR #15):
+   - Corrected the risk job so reports are attributed to their nearest known region instead of applying one global count to every zone.
+   - Improved map severity rendering and popup metadata so high, medium, and low regions are distinguishable.
+4. **First Aid and Symptom Checker Education** (`2903dc4`, `788e8fa`):
+   - Expanded emergency first-aid pages with escalation guidance, safety limitations, responder instructions, and WHO/Red Cross/AHA references.
+   - Added symptom-checker context, warning-flag display, screening limitations, urgent-care guidance, and WHO/CDC references without adding persistence.
+5. **Deployment Hardening** (`93cbeff`, PR #16):
+   - Fixed PostgreSQL startup failure by marking seeded article publication dates as explicit UTC values, satisfying Npgsql `timestamp with time zone` requirements.
 
 ---
 
@@ -169,6 +179,11 @@ Branch: feature/about
 | **#7** (`3630a41`) | **Nafis Fuad** | Docs/concise readme | Concise setup & operational documentation |
 | **#6** (`f6b6ac1`) | **Nafis Fuad** | Feature/postgres migration | Npgsql PostgreSQL migration, Dockerfile, Supabase config |
 | **#5** (`8a13b28`) | **Nafis Fuad** | Feature/setup and docs | Initial PostgreSQL & LocalDB setup guides |
+| **#16** (`37bd727`) | **Md. Adnan** | Fix UTC timestamps in education seed | PostgreSQL-compatible UTC article seed dates |
+| **#15** (`1f0f466`) | **Md. Adnan** | Improve regional live risk map | Nearest-region risk attribution and severity visualization |
+| **#14** (`1a76e6f`) | **Md. Adnan** | Expand fluid management guidance | Clinical workflow, limitations, and healthcare-professional disclaimer |
+| **#13** (`611505e`) | **Md. Adnan** | Add education content and ICU bed guidance | Bilingual articles/quizzes and ICU reference information |
+| **#12** (`bc651f7`) | **Md. Adnan** | Testing branch temp/demo | Branch validation and integration work |
 | **#3** (`db73b79`) | **Md. Adnan** | Feature/eduhealth v2 | Dengue IV fluid calculator, formula references, patient education |
 | **#2** (`55e0c84`)\* | **Nafis Fuad** | feature(telemedicine): VideoConsultHub & Appointments | WebRTC Video Consultation Room, `VideoConsultHub`, `AppointmentsController` |
 | **#1** (`23eb00c`) | **Sadman Rahman Arnab** | Core application loop & Phase 2 features | Core loop, First Aid guides, Phase 2 features |
@@ -182,4 +197,4 @@ Branch: feature/about
 
 - **Sadman Rahman Arnab** served as the platform architect and primary full-stack engineer, building the core Clean Architecture framework, Identity/RBAC system, Citizen outbreak reporting, QuestPDF analytics, ML.NET intent classifier, Administrator control center, and monetization engine.
 - **Nafis Fuad** led the Telemedicine & Video Consultation suite (WebRTC/SignalR), architected and executed cloud deployments on **Render** (.NET 10 Docker container) and **Supabase** (managed PostgreSQL database), authored the comprehensive 4-stage 32-scenario QA test matrix and test suite, resolved GIS map tile dependencies, and maintained system technical documentation.
-- **Md. Adnan** developed the clinical Dengue IV fluid resuscitation calculation tools based on WHO and Holliday-Segar standards, hematocrit monitoring guidelines, and clinical patient education resources.
+- **Md. Adnan** developed the clinical Dengue IV fluid resuscitation tools based on WHO and Holliday-Segar principles, then expanded LarvaX with bilingual education content, ICU bed guidance, regional risk-map calculations, First Aid and symptom-checker references, and a PostgreSQL UTC seeding fix. His contribution is best represented by the feature history and commits listed above because the repository contains branch and merge counterparts.
