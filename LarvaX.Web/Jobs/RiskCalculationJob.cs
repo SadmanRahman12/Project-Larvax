@@ -59,14 +59,24 @@ namespace LarvaX.Web.Jobs
                 .Where(r => r.CreatedAt >= cutoffDate)
                 .ToListAsync();
 
-            // Ensure every known seed region has a zone entry
+            // Attribute each report to its nearest known region so one city's activity
+            // does not incorrectly paint every region with the same risk level.
+            var reportsByRegion = allRecentReports
+                .Where(report => report.Latitude != 0 || report.Longitude != 0)
+                .GroupBy(report => FindNearestRegion(report.Latitude, report.Longitude))
+                .ToDictionary(group => group.Key, group => group.ToList());
+
+            // Ensure every known region has a zone entry, including quiet green regions.
             foreach (var kvp in KnownRegions)
             {
                 var regionName = kvp.Key;
                 var (lat, lng, radius) = kvp.Value;
 
-                int verifiedCount = verifiedReports.Count;
-                int totalCount    = allRecentReports.Count;
+                reportsByRegion.TryGetValue(regionName, out var regionReports);
+                regionReports ??= new List<Core.Entities.Report>();
+
+                int verifiedCount = regionReports.Count(report => report.Verification == ReportVerification.Verified);
+                int totalCount    = regionReports.Count;
 
                 var riskLevel   = _riskAssessmentService.CalculateRiskLevel(verifiedCount, totalCount);
                 var sufficiency = _riskAssessmentService.DetermineDataSufficiency(totalCount);
@@ -120,6 +130,21 @@ namespace LarvaX.Web.Jobs
             }
 
             _logger.LogInformation("RiskCalculationJob completed — {Count} zones processed.", KnownRegions.Count);
+        }
+
+        private static string FindNearestRegion(double latitude, double longitude)
+        {
+            return KnownRegions
+                .OrderBy(region => DistanceSquared(latitude, longitude, region.Value.Lat, region.Value.Lng))
+                .Select(region => region.Key)
+                .First();
+        }
+
+        private static double DistanceSquared(double latitude, double longitude, double regionLatitude, double regionLongitude)
+        {
+            var latitudeDelta = latitude - regionLatitude;
+            var longitudeDelta = (longitude - regionLongitude) * Math.Cos(latitude * Math.PI / 180d);
+            return (latitudeDelta * latitudeDelta) + (longitudeDelta * longitudeDelta);
         }
 
         private async Task DispatchAlertAsync(RiskZone zone, RiskLevel riskLevel)
