@@ -12,6 +12,49 @@
         <span class="badge bg-primary px-3 py-2">English / বাংলা</span>
     </div>
 
+    <div class="alert alert-danger d-flex gap-3 align-items-start shadow-sm" role="alert">
+        <i class="bi bi-shield-exclamation fs-4"></i>
+        <div>
+            <strong>Healthcare professional use only.</strong>
+            This tool is clinical decision support for qualified healthcare professionals. It is not a diagnosis, prescription, or replacement for bedside assessment, local protocols, senior review, or emergency care. Do not use its output to self-treat or to delay referral.
+        </div>
+    </div>
+
+    <section class="row g-4 mb-4" aria-label="Why fluid management matters">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100 bg-primary-subtle">
+                <div class="card-body p-4">
+                    <i class="bi bi-droplet-half text-primary fs-2"></i>
+                    <h3 class="h5 fw-bold mt-3">Why this page matters</h3>
+                    <p class="mb-0">Dengue patients can move quickly from fever to a critical phase. Too little fluid may worsen shock, while too much can cause pulmonary edema and other dangerous complications. Structured tracking helps a clinical team compare intake, losses, perfusion, urine output, and laboratory trends over time.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100 bg-light">
+                <div class="card-body p-4">
+                    <i class="bi bi-clipboard2-pulse text-success fs-2"></i>
+                    <h3 class="h5 fw-bold mt-3">Use it as a shared record</h3>
+                    <p class="mb-0">Record the time of each assessment, the fluid type and volume given, ongoing losses, urine output, vital signs, capillary refill, oxygen saturation, and hematocrit trend. Document who reviewed the plan and when the next reassessment is due.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100 bg-warning-subtle">
+                <div class="card-body p-4">
+                    <i class="bi bi-arrow-repeat text-warning-emphasis fs-2"></i>
+                    <h3 class="h5 fw-bold mt-3">Reassess after every change</h3>
+                    <p class="mb-0">A calculated rate is only a starting point. Reassess perfusion, respiratory effort, lung sounds, blood pressure, pulse pressure, mental status, urine output, and signs of fluid overload after a bolus or any clinical deterioration.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="alert alert-info d-flex gap-2 align-items-start" role="alert">
+        <i class="bi bi-info-circle-fill fs-5"></i>
+        <div><strong>Before calculating:</strong> confirm the patient's current weight and clinical mode, enter measurements with the correct units, check the time window for ongoing losses and urine output, and review heart failure, kidney disease, pregnancy, and electrolyte results with the responsible clinician.</div>
+    </div>
+
     <form asp-action="Index" method="post" class="row g-4">
         @Html.AntiForgeryToken()
 
@@ -130,6 +173,11 @@
 
     @if (Model.Results != null)
     {
+        <div class="alert alert-warning d-flex gap-2 align-items-start mt-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div><strong>Clinical review is required.</strong> Compare these values with the patient's current examination and local dengue protocol. Stop and escalate for worsening shock, respiratory distress, bleeding, altered mental status, falling urine output, or suspected fluid overload.</div>
+        </div>
+
         <div class="row g-4 mt-2">
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 h-100">
@@ -225,6 +273,38 @@
                     <li>Holliday-Segar maintenance fluid estimation</li>
                     <li>Resuscitation and shock management protocols</li>
                 </ul>
+            </div>
+
+            <div class="row g-4 mt-1">
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-primary">How to interpret the output</h6>
+                        <ul class="mb-0">
+                            <li><strong>Maintenance:</strong> an estimate of baseline fluid needs, not a complete treatment order.</li>
+                            <li><strong>Deficit:</strong> an estimated replacement volume based on the entered dehydration percentage.</li>
+                            <li><strong>Bolus:</strong> a protocol-dependent volume that requires immediate reassessment of response.</li>
+                            <li><strong>Safety target:</strong> a review threshold, not a target that must be reached regardless of the patient's condition.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h6 class="fw-bold text-primary">Important limitations</h6>
+                        <p class="mb-2">This page does not replace a complete clinical assessment, laboratory review, fluid balance chart, imaging, or specialist consultation.</p>
+                        <p class="mb-0 text-muted">The current calculation uses weight, dehydration percentage, ongoing losses, selected clinical mode, heart failure, chronic kidney disease, and serum sodium. Other observations shown on the form provide clinical context and still require professional interpretation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-dark mt-4 mb-0" role="alert">
+        <div class="d-flex gap-3 align-items-start">
+            <i class="bi bi-person-badge fs-4"></i>
+            <div>
+                <strong>Final safety disclaimer</strong>
+                <p class="mb-2">Only qualified healthcare professionals should enter patient data, interpret this page, track fluid balance, or act on the calculated values. A clinician must verify the patient's identity, measurements, diagnosis, treatment plan, contraindications, and response at the bedside.</p>
+                <p class="mb-0">For an emergency, follow local emergency procedures and seek immediate medical care. Never use this calculator as a substitute for urgent assessment or a senior clinical decision.</p>
             </div>
         </div>
     </div>
